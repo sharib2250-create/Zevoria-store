@@ -1,29 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
 
   <meta
     name="viewport"
     content="width=device-width, initial-scale=1.0"
-  >
+  />
 
-  <title>ZEVORIA Admin Dashboard</title>
+  <title>ZEVORIA — Admin Dashboard</title>
 
   <style>
-
     * {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
     }
 
     body {
-      font-family: Arial, sans-serif;
-      background: #0b0b0b;
-      color: #f5f5f5;
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f1e8;
+      color: #111;
     }
 
     button,
@@ -36,1472 +32,973 @@
       display: none !important;
     }
 
-    /* =========================
-       LOGIN
-    ========================= */
+    /* LOGIN */
 
     .login-page {
       min-height: 100vh;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       padding: 20px;
     }
 
     .login-box {
       width: 100%;
       max-width: 420px;
-      background: #151515;
-      border: 1px solid #333;
-      border-radius: 15px;
-      padding: 35px;
-      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+      background: #fff;
+      padding: 40px;
+      border: 1px solid #ddd;
+      border-radius: 14px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
     }
 
     .logo {
-      text-align: center;
-      color: #d4af37;
+      font-family: Georgia, serif;
+      letter-spacing: 5px;
       font-size: 30px;
-      font-weight: bold;
-      letter-spacing: 3px;
+      text-align: center;
       margin-bottom: 8px;
     }
 
     .login-subtitle {
       text-align: center;
-      color: #aaa;
+      color: #777;
       margin-bottom: 30px;
-    }
-
-    .security-note {
-      background: #101010;
-      border: 1px solid #292929;
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 22px;
-      color: #888;
-      font-size: 12px;
-      line-height: 1.5;
-      text-align: center;
     }
 
     label {
       display: block;
+      font-size: 13px;
+      font-weight: 600;
       margin-bottom: 8px;
-      color: #ccc;
-      font-size: 14px;
     }
 
     input,
     select {
       width: 100%;
-      background: #0d0d0d;
-      color: white;
-      border: 1px solid #444;
+      padding: 13px 14px;
+      border: 1px solid #ccc;
       border-radius: 8px;
-      padding: 12px;
+      background: white;
       outline: none;
     }
 
     input:focus,
     select:focus {
-      border-color: #d4af37;
-    }
-
-    .form-group {
-      margin-bottom: 18px;
+      border-color: #b89b5e;
     }
 
     .btn {
       border: none;
-      border-radius: 8px;
-      padding: 12px 18px;
       cursor: pointer;
-      font-weight: bold;
+      border-radius: 8px;
+      padding: 13px 18px;
+      font-weight: 600;
     }
 
-    .btn-gold {
+    .btn-dark {
       width: 100%;
-      background: #d4af37;
-      color: #111;
+      background: #111;
+      color: white;
+      margin-top: 18px;
     }
 
-    .btn-gold:hover {
-      background: #e5c354;
-    }
-
-    .btn-gold:disabled {
-      opacity: .6;
-      cursor: not-allowed;
+    .btn-dark:hover {
+      background: #222;
     }
 
     .error {
-      color: #ff6b6b;
-      margin-top: 15px;
-      text-align: center;
+      color: #b00020;
       font-size: 14px;
+      margin-top: 12px;
     }
 
-    /* =========================
-       HEADER
-    ========================= */
+    /* DASHBOARD */
 
-    .admin-header {
+    .dashboard {
+      min-height: 100vh;
+    }
+
+    .topbar {
       background: #111;
-      border-bottom: 1px solid #333;
+      color: white;
       padding: 18px 30px;
-
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 20px;
     }
 
-    .admin-logo {
-      color: #d4af37;
-      font-size: 22px;
-      font-weight: bold;
-      letter-spacing: 2px;
+    .brand {
+      font-family: Georgia, serif;
+      letter-spacing: 4px;
+      font-size: 24px;
     }
 
-    .header-actions {
-      display: flex;
-      gap: 10px;
+    .admin-label {
+      color: #c8a96b;
+      font-size: 12px;
+      letter-spacing: 1px;
+      margin-top: 4px;
     }
 
-    .header-btn {
-      background: #1d1d1d;
+    .logout-btn {
+      background: transparent;
+      border: 1px solid #777;
       color: white;
-      border: 1px solid #444;
-      padding: 9px 14px;
+      padding: 9px 15px;
       border-radius: 7px;
       cursor: pointer;
     }
 
-    .header-btn:hover {
-      border-color: #d4af37;
-      color: #d4af37;
+    .logout-btn:hover {
+      border-color: #c8a96b;
+      color: #c8a96b;
     }
 
-    /* =========================
-       DASHBOARD
-    ========================= */
-
-    .dashboard {
+    .content {
       max-width: 1400px;
       margin: auto;
       padding: 30px;
     }
 
-    .dashboard-title {
-      margin-bottom: 25px;
-    }
-
-    .dashboard-title h1 {
-      font-size: 30px;
-      margin-bottom: 5px;
-    }
-
-    .dashboard-title p {
-      color: #999;
-    }
-
-    /* =========================
-       SECURITY BAR
-    ========================= */
-
-    .security-bar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-
-      background: #111;
-      border: 1px solid #292929;
-      border-radius: 10px;
-
-      padding: 12px 15px;
-      margin-bottom: 25px;
-
-      color: #999;
-      font-size: 13px;
-    }
-
-    .security-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #2ecc71;
-      box-shadow: 0 0 8px rgba(46,204,113,.5);
-    }
-
-    .security-text {
-      color: #aaa;
-    }
-
-    /* =========================
-       STATS
-    ========================= */
-
     .stats {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       gap: 15px;
-      margin-bottom: 30px;
+      margin-bottom: 25px;
     }
 
-    .stat-card {
-      background: #151515;
-      border: 1px solid #303030;
-      border-radius: 12px;
+    .stat {
+      background: white;
       padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
     }
 
-    .stat-label {
-      color: #999;
-      font-size: 13px;
-      margin-bottom: 10px;
+    .stat-title {
+      font-size: 12px;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .stat-value {
-      color: #d4af37;
-      font-size: 25px;
-      font-weight: bold;
+      font-size: 27px;
+      font-weight: 700;
+      margin-top: 8px;
     }
 
-    /* =========================
-       CONTROLS
-    ========================= */
-
-    .controls {
-      background: #151515;
-      border: 1px solid #303030;
-      border-radius: 12px;
+    .toolbar {
+      background: white;
       padding: 18px;
-
-      display: grid;
-      grid-template-columns: 1fr 220px;
-      gap: 15px;
-
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      display: flex;
+      gap: 12px;
       margin-bottom: 20px;
     }
 
-    /* =========================
-       ORDERS
-    ========================= */
+    .toolbar input {
+      flex: 1;
+    }
+
+    .toolbar select {
+      width: 200px;
+    }
 
     .orders-box {
-      background: #151515;
-      border: 1px solid #303030;
+      background: white;
+      border: 1px solid #ddd;
       border-radius: 12px;
       overflow: hidden;
     }
 
     .orders-header {
-      padding: 18px;
-      border-bottom: 1px solid #303030;
-
+      padding: 20px;
+      border-bottom: 1px solid #ddd;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
 
     .orders-header h2 {
+      margin: 0;
       font-size: 20px;
     }
 
-    .order-count {
-      color: #999;
-      font-size: 14px;
+    .refresh-btn {
+      background: #111;
+      color: white;
+      border: none;
+      padding: 9px 15px;
+      border-radius: 7px;
+      cursor: pointer;
     }
 
-    .table-wrapper {
+    .table-wrap {
       overflow-x: auto;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 1050px;
+      min-width: 1000px;
     }
 
     th,
     td {
-      padding: 15px;
       text-align: left;
-      border-bottom: 1px solid #292929;
+      padding: 15px;
+      border-bottom: 1px solid #eee;
       vertical-align: top;
     }
 
     th {
-      color: #d4af37;
-      font-size: 13px;
-      background: #111;
+      background: #faf8f3;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
     }
 
     td {
-      color: #ddd;
       font-size: 14px;
     }
 
-    tr:hover td {
-      background: #181818;
-    }
-
     .order-id {
-      color: #d4af37;
-      font-weight: bold;
+      font-weight: 700;
     }
 
     .customer-name {
-      font-weight: bold;
-      margin-bottom: 5px;
+      font-weight: 700;
     }
 
     .customer-email {
-      color: #aaa;
-      font-size: 12px;
-      margin-bottom: 4px;
-      word-break: break-word;
-    }
-
-    .phone {
-      color: #999;
-      font-size: 13px;
-    }
-
-    .address {
-      color: #aaa;
-      line-height: 1.5;
-      max-width: 230px;
-    }
-
-    /* =========================
-       ITEMS
-    ========================= */
-
-    .items {
-      min-width: 190px;
-    }
-
-    .item {
-      margin-bottom: 8px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #292929;
-    }
-
-    .item:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-    }
-
-    .item-name {
-      color: white;
-      font-weight: bold;
-    }
-
-    .item-info {
-      color: #999;
+      color: #777;
       font-size: 12px;
       margin-top: 3px;
     }
 
-    /* =========================
-       STATUS
-    ========================= */
+    .address {
+      max-width: 250px;
+      color: #555;
+      line-height: 1.5;
+    }
 
-    .status-box {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      min-width: 150px;
+    .products {
+      max-width: 250px;
+      line-height: 1.6;
+    }
+
+    .total {
+      font-weight: 700;
+      white-space: nowrap;
     }
 
     .status-select {
-      padding: 9px;
-      border-radius: 7px;
-      background: #0c0c0c;
-      color: white;
-      border: 1px solid #444;
+      min-width: 130px;
     }
 
-    .status-select.pending {
-      border-color: #e6a700;
+    .message {
+      padding: 15px 20px;
+      color: #777;
     }
 
-    .status-select.confirmed {
-      border-color: #4dabf7;
-    }
-
-    .status-select.shipped {
-      border-color: #9b59b6;
-    }
-
-    .status-select.delivered {
-      border-color: #2ecc71;
-    }
-
-    .status-select.cancelled {
-      border-color: #e74c3c;
-    }
-
-    .update-btn {
-      background: #d4af37;
-      color: #111;
-      border: none;
-      padding: 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .update-btn:hover {
-      background: #e5c354;
-    }
-
-    .update-btn:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-    }
-
-    /* =========================
-       DATE / TOTAL
-    ========================= */
-
-    .total {
-      color: #d4af37;
-      font-weight: bold;
-      white-space: nowrap;
-    }
-
-    .date {
-      color: #999;
-      white-space: nowrap;
-    }
-
-    /* =========================
-       EMPTY
-    ========================= */
-
-    .empty {
-      padding: 50px;
-      text-align: center;
-      color: #888;
-    }
-
-    /* =========================
-       TOAST
-    ========================= */
-
-    .toast {
-      position: fixed;
-      right: 20px;
-      bottom: 20px;
-
-      background: #1d1d1d;
-      border: 1px solid #d4af37;
-      color: white;
-
-      padding: 14px 18px;
-      border-radius: 8px;
-
-      display: none;
-      z-index: 9999;
-    }
-
-    .toast.show {
-      display: block;
-    }
-
-    /* =========================
-       MOBILE
-    ========================= */
-
-    @media (max-width: 1100px) {
-
+    @media (max-width: 1000px) {
       .stats {
         grid-template-columns: repeat(3, 1fr);
       }
-
     }
 
-    @media (max-width: 700px) {
-
-      .admin-header {
+    @media (max-width: 650px) {
+      .topbar {
         padding: 15px;
       }
 
-      .admin-logo {
-        font-size: 18px;
-      }
-
-      .header-actions {
-        gap: 5px;
-      }
-
-      .header-btn {
-        padding: 8px 9px;
-        font-size: 12px;
-      }
-
-      .dashboard {
+      .content {
         padding: 15px;
-      }
-
-      .dashboard-title h1 {
-        font-size: 24px;
       }
 
       .stats {
         grid-template-columns: repeat(2, 1fr);
       }
 
-      .stat-card {
-        padding: 15px;
-      }
-
-      .stat-value {
-        font-size: 21px;
-      }
-
-      .controls {
-        grid-template-columns: 1fr;
-      }
-
-      .orders-header {
-        padding: 15px;
-      }
-
-    }
-
-    @media (max-width: 420px) {
-
-      .stats {
-        grid-template-columns: 1fr;
-      }
-
-      .admin-header {
+      .toolbar {
         flex-direction: column;
-        align-items: flex-start;
       }
 
-      .header-actions {
+      .toolbar select {
         width: 100%;
       }
 
-      .header-btn {
-        flex: 1;
+      .login-box {
+        padding: 28px 22px;
       }
-
     }
-
   </style>
-
 </head>
 
 <body>
 
+  <!-- LOGIN -->
 
-<!-- =========================
-     LOGIN PAGE
-========================= -->
+  <section id="loginPage" class="login-page">
 
-<div
-  id="loginView"
-  class="login-page"
->
+    <div class="login-box">
 
-  <div class="login-box">
+      <div class="logo">
+        ZEVORIA
+      </div>
 
-    <div class="logo">
-      ZEVORIA
-    </div>
+      <div class="login-subtitle">
+        Secure Admin Dashboard
+      </div>
 
-    <div class="login-subtitle">
-      Secure Admin Dashboard
-    </div>
-
-    <div class="security-note">
-      🔒 Your admin key is verified by the ZEVORIA
-      server and is not stored in the page.
-    </div>
-
-    <form id="adminLoginForm">
-
-      <div class="form-group">
+      <form id="loginForm">
 
         <label for="adminKey">
           Admin Key
         </label>
 
         <input
-          type="password"
           id="adminKey"
+          type="password"
           placeholder="Enter admin key"
           autocomplete="current-password"
           required
-        >
+        />
 
+        <button
+          type="submit"
+          class="btn btn-dark"
+          id="loginButton"
+        >
+          Login
+        </button>
+
+        <div
+          id="loginError"
+          class="error"
+        ></div>
+
+      </form>
+
+    </div>
+
+  </section>
+
+
+  <!-- DASHBOARD -->
+
+  <section
+    id="dashboard"
+    class="dashboard hidden"
+  >
+
+    <header class="topbar">
+
+      <div>
+        <div class="brand">
+          ZEVORIA
+        </div>
+
+        <div class="admin-label">
+          ADMIN DASHBOARD
+        </div>
       </div>
 
       <button
-        type="submit"
-        class="btn btn-gold"
-        id="loginButton"
-      >
-        Login to Dashboard
-      </button>
-
-      <div
-        id="loginError"
-        class="error"
-      ></div>
-
-    </form>
-
-  </div>
-
-</div>
-
-
-<!-- =========================
-     DASHBOARD
-========================= -->
-
-<div
-  id="dashboardView"
-  class="hidden"
->
-
-  <header class="admin-header">
-
-    <div class="admin-logo">
-      ZEVORIA ADMIN
-    </div>
-
-    <div class="header-actions">
-
-      <button
-        class="header-btn"
-        id="refreshBtn"
-      >
-        ↻ Refresh
-      </button>
-
-      <button
-        class="header-btn"
-        id="logoutBtn"
+        id="logoutButton"
+        class="logout-btn"
       >
         Logout
       </button>
 
-    </div>
-
-  </header>
+    </header>
 
 
-  <main class="dashboard">
+    <main class="content">
 
-    <div class="dashboard-title">
+      <!-- STATS -->
 
-      <h1>
-        Dashboard
-      </h1>
+      <div class="stats">
 
-      <p>
-        Manage your ZEVORIA orders
-      </p>
+        <div class="stat">
+          <div class="stat-title">
+            Total Orders
+          </div>
 
-    </div>
-
-
-    <div class="security-bar">
-
-      <span class="security-dot"></span>
-
-      <span class="security-text">
-        Secure administrator session active
-      </span>
-
-    </div>
-
-
-    <!-- =========================
-         STATS
-    ========================= -->
-
-    <section class="stats">
-
-      <div class="stat-card">
-
-        <div class="stat-label">
-          Total Orders
+          <div
+            id="totalOrders"
+            class="stat-value"
+          >
+            0
+          </div>
         </div>
+
+
+        <div class="stat">
+          <div class="stat-title">
+            Total Sales
+          </div>
+
+          <div
+            id="totalSales"
+            class="stat-value"
+          >
+            ₹0
+          </div>
+        </div>
+
+
+        <div class="stat">
+          <div class="stat-title">
+            Pending
+          </div>
+
+          <div
+            id="pendingOrders"
+            class="stat-value"
+          >
+            0
+          </div>
+        </div>
+
+
+        <div class="stat">
+          <div class="stat-title">
+            Confirmed
+          </div>
+
+          <div
+            id="confirmedOrders"
+            class="stat-value"
+          >
+            0
+          </div>
+        </div>
+
+
+        <div class="stat">
+          <div class="stat-title">
+            Shipped
+          </div>
+
+          <div
+            id="shippedOrders"
+            class="stat-value"
+          >
+            0
+          </div>
+        </div>
+
+
+        <div class="stat">
+          <div class="stat-title">
+            Delivered
+          </div>
+
+          <div
+            id="deliveredOrders"
+            class="stat-value"
+          >
+            0
+          </div>
+        </div>
+
+      </div>
+
+
+      <!-- SEARCH -->
+
+      <div class="toolbar">
+
+        <input
+          id="searchInput"
+          type="search"
+          placeholder="Search order, customer, email or phone..."
+        />
+
+        <select id="statusFilter">
+
+          <option value="all">
+            All Status
+          </option>
+
+          <option value="pending">
+            Pending
+          </option>
+
+          <option value="confirmed">
+            Confirmed
+          </option>
+
+          <option value="shipped">
+            Shipped
+          </option>
+
+          <option value="delivered">
+            Delivered
+          </option>
+
+          <option value="cancelled">
+            Cancelled
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <!-- ORDERS -->
+
+      <section class="orders-box">
+
+        <div class="orders-header">
+
+          <h2>
+            All Orders
+          </h2>
+
+          <button
+            id="refreshButton"
+            class="refresh-btn"
+          >
+            Refresh
+          </button>
+
+        </div>
+
 
         <div
-          class="stat-value"
-          id="totalOrders"
+          id="message"
+          class="message"
         >
-          0
+          Loading orders...
         </div>
 
-      </div>
 
+        <div class="table-wrap">
 
-      <div class="stat-card">
+          <table>
 
-        <div class="stat-label">
-          Total Sales
+            <thead>
+
+              <tr>
+
+                <th>
+                  Order
+                </th>
+
+                <th>
+                  Customer
+                </th>
+
+                <th>
+                  Address
+                </th>
+
+                <th>
+                  Products
+                </th>
+
+                <th>
+                  Total
+                </th>
+
+                <th>
+                  Date
+                </th>
+
+                <th>
+                  Status
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody id="ordersBody"></tbody>
+
+          </table>
+
         </div>
 
-        <div
-          class="stat-value"
-          id="totalSales"
-        >
-          ₹0
-        </div>
+      </section>
 
-      </div>
+    </main>
 
-
-      <div class="stat-card">
-
-        <div class="stat-label">
-          Pending
-        </div>
-
-        <div
-          class="stat-value"
-          id="pendingOrders"
-        >
-          0
-        </div>
-
-      </div>
-
-
-      <div class="stat-card">
-
-        <div class="stat-label">
-          Confirmed
-        </div>
-
-        <div
-          class="stat-value"
-          id="confirmedOrders"
-        >
-          0
-        </div>
-
-      </div>
-
-
-      <div class="stat-card">
-
-        <div class="stat-label">
-          Shipped
-        </div>
-
-        <div
-          class="stat-value"
-          id="shippedOrders"
-        >
-          0
-        </div>
-
-      </div>
-
-
-      <div class="stat-card">
-
-        <div class="stat-label">
-          Delivered
-        </div>
-
-        <div
-          class="stat-value"
-          id="deliveredOrders"
-        >
-          0
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- =========================
-         CONTROLS
-    ========================= -->
-
-    <section class="controls">
-
-      <input
-        type="search"
-        id="searchInput"
-        placeholder="Search by order, customer, phone, address or product..."
-      >
-
-      <select id="statusFilter">
-
-        <option value="all">
-          All Status
-        </option>
-
-        <option value="pending">
-          Pending
-        </option>
-
-        <option value="confirmed">
-          Confirmed
-        </option>
-
-        <option value="shipped">
-          Shipped
-        </option>
-
-        <option value="delivered">
-          Delivered
-        </option>
-
-        <option value="cancelled">
-          Cancelled
-        </option>
-
-      </select>
-
-    </section>
-
-
-    <!-- =========================
-         ORDERS
-    ========================= -->
-
-    <section class="orders-box">
-
-      <div class="orders-header">
-
-        <h2>
-          Orders
-        </h2>
-
-        <div
-          class="order-count"
-          id="orderCount"
-        >
-          0 orders
-        </div>
-
-      </div>
-
-
-      <div class="table-wrapper">
-
-        <table>
-
-          <thead>
-
-            <tr>
-
-              <th>
-                Order
-              </th>
-
-              <th>
-                Customer
-              </th>
-
-              <th>
-                Address
-              </th>
-
-              <th>
-                Products
-              </th>
-
-              <th>
-                Total
-              </th>
-
-              <th>
-                Date
-              </th>
-
-              <th>
-                Status
-              </th>
-
-            </tr>
-
-          </thead>
-
-          <tbody id="ordersBody">
-          </tbody>
-
-        </table>
-
-      </div>
-
-      <div
-        id="emptyOrders"
-        class="empty hidden"
-      >
-        No orders found.
-      </div>
-
-    </section>
-
-  </main>
-
-</div>
-
-
-<div
-  id="toast"
-  class="toast"
-></div>
+  </section>
 
 
 <script>
 
-  const API_BASE =
-    "https://zevoria-backend.onrender.com";
+const API_BASE =
+  "https://zevoria-backend.onrender.com";
+
+let csrfToken = "";
+
+let allOrders = [];
 
 
-  /*
-    IMPORTANT:
+/* =====================================================
+   ELEMENTS
+===================================================== */
 
-    We now store the temporary ADMIN TOKEN,
-    NOT the actual ADMIN_KEY.
-  */
+const loginPage =
+  document.getElementById("loginPage");
 
-  let adminToken =
-    sessionStorage.getItem(
-      "zevoriaAdminToken"
-    ) || "";
+const dashboard =
+  document.getElementById("dashboard");
 
+const loginForm =
+  document.getElementById("loginForm");
 
-  let allOrders = [];
+const adminKey =
+  document.getElementById("adminKey");
 
+const loginButton =
+  document.getElementById("loginButton");
 
-  /* =========================
-     ELEMENTS
-  ========================= */
+const loginError =
+  document.getElementById("loginError");
 
-  const loginView =
-    document.getElementById(
-      "loginView"
-    );
+const logoutButton =
+  document.getElementById("logoutButton");
 
-  const dashboardView =
-    document.getElementById(
-      "dashboardView"
-    );
+const searchInput =
+  document.getElementById("searchInput");
 
-  const adminLoginForm =
-    document.getElementById(
-      "adminLoginForm"
-    );
+const statusFilter =
+  document.getElementById("statusFilter");
 
-  const adminKeyInput =
-    document.getElementById(
-      "adminKey"
-    );
+const refreshButton =
+  document.getElementById("refreshButton");
 
-  const loginError =
-    document.getElementById(
-      "loginError"
-    );
+const ordersBody =
+  document.getElementById("ordersBody");
 
-  const loginButton =
-    document.getElementById(
-      "loginButton"
-    );
-
-  const ordersBody =
-    document.getElementById(
-      "ordersBody"
-    );
-
-  const emptyOrders =
-    document.getElementById(
-      "emptyOrders"
-    );
-
-  const searchInput =
-    document.getElementById(
-      "searchInput"
-    );
-
-  const statusFilter =
-    document.getElementById(
-      "statusFilter"
-    );
+const message =
+  document.getElementById("message");
 
 
-  /* =========================
-     AUTH HEADERS
-  ========================= */
+/* =====================================================
+   LOGIN
+===================================================== */
 
-  function authHeaders() {
+loginForm.addEventListener(
+  "submit",
+  async (event) => {
 
-    return {
+    event.preventDefault();
 
-      "Authorization":
-        `Bearer ${adminToken}`
+    loginError.textContent = "";
 
-    };
+    const key =
+      adminKey.value.trim();
 
-  }
-
-
-  /* =========================
-     FORMAT MONEY
-  ========================= */
-
-  function money(value) {
-
-    return new Intl.NumberFormat(
-      "en-IN",
-      {
-        style: "currency",
-        currency: "INR",
-        maximumFractionDigits: 0
-      }
-    ).format(
-      Number(value) || 0
-    );
-
-  }
-
-
-  /* =========================
-     ESCAPE HTML
-  ========================= */
-
-  function escapeHTML(value) {
-
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-
-  }
-
-
-  /* =========================
-     DATE
-  ========================= */
-
-  function formatDate(value) {
-
-    if (!value) {
-      return "-";
-    }
-
-    const date =
-      new Date(
-        value.replace(
-          " ",
-          "T"
-        ) + "Z"
-      );
-
-    if (
-      Number.isNaN(
-        date.getTime()
-      )
-    ) {
-
-      return value;
-
-    }
-
-    return date.toLocaleString(
-      "en-IN",
-      {
-        dateStyle: "medium",
-        timeStyle: "short"
-      }
-    );
-
-  }
-
-
-  /* =========================
-     TOAST
-  ========================= */
-
-  function showToast(message) {
-
-    const toast =
-      document.getElementById(
-        "toast"
-      );
-
-    toast.textContent =
-      message;
-
-    toast.classList.add(
-      "show"
-    );
-
-    setTimeout(
-      () => {
-
-        toast.classList.remove(
-          "show"
-        );
-
-      },
-      2500
-    );
-
-  }
-
-
-  /* =========================
-     ADMIN LOGIN
-  ========================= */
-
-  adminLoginForm.addEventListener(
-    "submit",
-    async (event) => {
-
-      event.preventDefault();
-
-      const key =
-        adminKeyInput.value.trim();
-
-      if (!key) {
-        return;
-      }
-
+    if (!key) {
       loginError.textContent =
-        "Checking...";
+        "Please enter your Admin Key.";
 
-      loginButton.disabled =
-        true;
-
-      loginButton.textContent =
-        "Signing in...";
-
-
-      try {
-
-        /*
-          Send the admin key ONLY to the
-          backend login endpoint.
-        */
-
-        const response =
-          await fetch(
-            `${API_BASE}/api/admin/login`,
-            {
-              method: "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
-
-              body:
-                JSON.stringify({
-                  key
-                })
-            }
-          );
-
-
-        const data =
-          await response.json();
-
-
-        if (!response.ok) {
-
-          loginError.textContent =
-            data.error ||
-            "Invalid admin credentials.";
-
-          return;
-
-        }
-
-
-        /*
-          Store temporary token.
-
-          The actual ADMIN_KEY is NOT stored.
-        */
-
-        adminToken =
-          data.token;
-
-        sessionStorage.setItem(
-          "zevoriaAdminToken",
-          adminToken
-        );
-
-
-        /*
-          Remove the key from memory/UI
-          immediately after authentication.
-        */
-
-        adminKeyInput.value = "";
-
-        loginError.textContent = "";
-
-
-        loginView.classList.add(
-          "hidden"
-        );
-
-        dashboardView.classList.remove(
-          "hidden"
-        );
-
-
-        await loadOrders();
-
-      }
-
-      catch (error) {
-
-        console.error(
-          error
-        );
-
-        loginError.textContent =
-          "Could not connect to ZEVORIA server.";
-
-      }
-
-      finally {
-
-        loginButton.disabled =
-          false;
-
-        loginButton.textContent =
-          "Login to Dashboard";
-
-      }
-
+      return;
     }
-  );
 
+    loginButton.disabled = true;
 
-  /* =========================
-     LOAD ORDERS
-  ========================= */
-
-  async function loadOrders() {
+    loginButton.textContent =
+      "Logging in...";
 
     try {
 
       const response =
         await fetch(
-          `${API_BASE}/api/admin/orders`,
+          `${API_BASE}/api/admin/login`,
           {
-            headers:
-              authHeaders()
+            method: "POST",
+
+            credentials: "include",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body: JSON.stringify({
+              adminKey: key
+            })
           }
         );
 
-
-      if (
-        response.status === 401 ||
-        response.status === 403
-      ) {
-
-        logout(
-          "Your admin session has expired."
-        );
-
-        return;
-
-      }
-
+      const data =
+        await response.json();
 
       if (!response.ok) {
 
         throw new Error(
-          "Could not load orders."
+          data.error ||
+          "Login failed"
         );
 
       }
 
+      csrfToken =
+        data.csrfToken;
 
-      allOrders =
-        await response.json();
+      /*
+        IMPORTANT:
+        Admin Key is NOT saved
+        in localStorage.
+      */
 
+      adminKey.value = "";
 
-      updateStats();
+      showDashboard();
 
-      renderOrders();
+      await loadDashboard();
 
-    }
+    } catch (error) {
 
-    catch (error) {
+      loginError.textContent =
+        error.message;
 
-      console.error(
-        error
-      );
+    } finally {
 
-      showToast(
-        "Could not load orders."
-      );
+      loginButton.disabled = false;
+
+      loginButton.textContent =
+        "Login";
 
     }
 
   }
+);
 
 
-  /* =========================
-     STATS
-  ========================= */
+/* =====================================================
+   CHECK EXISTING SESSION
+===================================================== */
 
-  function updateStats() {
+async function checkSession() {
 
-    const total =
-      allOrders.length;
+  try {
 
+    const response =
+      await fetch(
+        `${API_BASE}/api/admin/me`,
+        {
+          method: "GET",
+          credentials: "include"
+        }
+      );
 
-    const sales =
-      allOrders
-        .filter(
-          order =>
-            order.status !==
-            "cancelled"
-        )
-        .reduce(
-          (
-            sum,
-            order
-          ) =>
-            sum +
-            Number(
-              order.total || 0
-            ),
-          0
-        );
+    if (!response.ok) {
 
+      showLogin();
 
-    const pending =
-      allOrders.filter(
-        order =>
-          order.status ===
-          "pending"
-      ).length;
+      return;
 
+    }
 
-    const confirmed =
-      allOrders.filter(
-        order =>
-          order.status ===
-          "confirmed"
-      ).length;
+    const data =
+      await response.json();
 
+    csrfToken =
+      data.csrfToken;
 
-    const shipped =
-      allOrders.filter(
-        order =>
-          order.status ===
-          "shipped"
-      ).length;
+    showDashboard();
 
+    await loadDashboard();
 
-    const delivered =
-      allOrders.filter(
-        order =>
-          order.status ===
-          "delivered"
-      ).length;
+  } catch (error) {
 
-
-    document.getElementById(
-      "totalOrders"
-    ).textContent =
-      total;
-
-
-    document.getElementById(
-      "totalSales"
-    ).textContent =
-      money(sales);
-
-
-    document.getElementById(
-      "pendingOrders"
-    ).textContent =
-      pending;
-
-
-    document.getElementById(
-      "confirmedOrders"
-    ).textContent =
-      confirmed;
-
-
-    document.getElementById(
-      "shippedOrders"
-    ).textContent =
-      shipped;
-
-
-    document.getElementById(
-      "deliveredOrders"
-    ).textContent =
-      delivered;
+    showLogin();
 
   }
 
-
-  /* =========================
-     FILTER
-  ========================= */
-
-  function getFilteredOrders() {
-
-    const search =
-      searchInput.value
-        .trim()
-        .toLowerCase();
+}
 
 
-    const status =
-      statusFilter.value;
+/* =====================================================
+   SHOW LOGIN
+===================================================== */
+
+function showLogin() {
+
+  loginPage.classList.remove(
+    "hidden"
+  );
+
+  dashboard.classList.add(
+    "hidden"
+  );
+
+}
 
 
-    return allOrders.filter(
-      order => {
+/* =====================================================
+   SHOW DASHBOARD
+===================================================== */
 
-        if (
-          status !== "all" &&
-          order.status !== status
-        ) {
+function showDashboard() {
 
-          return false;
+  loginPage.classList.add(
+    "hidden"
+  );
 
+  dashboard.classList.remove(
+    "hidden"
+  );
+
+}
+
+
+/* =====================================================
+   LOAD DASHBOARD
+===================================================== */
+
+async function loadDashboard() {
+
+  message.textContent =
+    "Loading orders...";
+
+  try {
+
+    const [
+      ordersResponse,
+      statsResponse
+    ] = await Promise.all([
+
+      fetch(
+        `${API_BASE}/api/admin/orders`,
+        {
+          credentials: "include"
         }
+      ),
 
-
-        if (!search) {
-          return true;
+      fetch(
+        `${API_BASE}/api/admin/stats`,
+        {
+          credentials: "include"
         }
+      )
+
+    ]);
 
 
-        const productText =
-          (order.items || [])
-            .map(
-              item =>
-                item.name
-            )
-            .join(" ");
+    if (
+      ordersResponse.status === 401 ||
+      statsResponse.status === 401
+    ) {
+
+      showLogin();
+
+      return;
+
+    }
 
 
-        const text = [
+    if (
+      !ordersResponse.ok ||
+      !statsResponse.ok
+    ) {
+
+      throw new Error(
+        "Could not load dashboard"
+      );
+
+    }
+
+
+    allOrders =
+      await ordersResponse.json();
+
+    const stats =
+      await statsResponse.json();
+
+
+    updateStats(stats);
+
+    renderOrders();
+
+    message.textContent = "";
+
+  } catch (error) {
+
+    message.textContent =
+      error.message;
+
+  }
+
+}
+
+
+/* =====================================================
+   UPDATE STATS
+===================================================== */
+
+function updateStats(stats) {
+
+  document.getElementById(
+    "totalOrders"
+  ).textContent =
+    stats.totalOrders || 0;
+
+
+  document.getElementById(
+    "totalSales"
+  ).textContent =
+    formatMoney(
+      stats.totalSales || 0
+    );
+
+
+  document.getElementById(
+    "pendingOrders"
+  ).textContent =
+    stats.pending || 0;
+
+
+  document.getElementById(
+    "confirmedOrders"
+  ).textContent =
+    stats.confirmed || 0;
+
+
+  document.getElementById(
+    "shippedOrders"
+  ).textContent =
+    stats.shipped || 0;
+
+
+  document.getElementById(
+    "deliveredOrders"
+  ).textContent =
+    stats.delivered || 0;
+
+}
+
+
+/* =====================================================
+   RENDER ORDERS
+===================================================== */
+
+function renderOrders() {
+
+  const search =
+    searchInput.value
+      .trim()
+      .toLowerCase();
+
+  const filter =
+    statusFilter.value;
+
+
+  const filtered =
+    allOrders.filter(
+      (order) => {
+
+        const searchable = [
 
           order.id,
 
@@ -1511,598 +1008,451 @@
 
           order.phone,
 
-          order.address,
-
-          order.status,
-
-          productText
+          order.address
 
         ]
           .join(" ")
           .toLowerCase();
 
 
-        return text.includes(
-          search
+        const matchesSearch =
+          !search ||
+          searchable.includes(search);
+
+
+        const matchesStatus =
+          filter === "all" ||
+          order.status === filter;
+
+
+        return (
+          matchesSearch &&
+          matchesStatus
         );
 
       }
     );
 
+
+  ordersBody.innerHTML = "";
+
+
+  if (!filtered.length) {
+
+    message.textContent =
+      "No orders found.";
+
+    return;
+
   }
 
 
-  /* =========================
-     RENDER ORDERS
-  ========================= */
-
-  function renderOrders() {
-
-    const orders =
-      getFilteredOrders();
+  message.textContent = "";
 
 
-    document.getElementById(
-      "orderCount"
-    ).textContent =
-      `${orders.length} ${
-        orders.length === 1
-          ? "order"
-          : "orders"
-      }`;
+  filtered.forEach(
+    (order) => {
+
+      const row =
+        document.createElement("tr");
 
 
-    if (!orders.length) {
+      const products =
+        (order.items || [])
+          .map(
+            (item) =>
+              `${escapeHtml(item.name)}
+              × ${item.qty}`
+          )
+          .join("<br>");
 
-      ordersBody.innerHTML =
-        "";
 
-      emptyOrders.classList.remove(
-        "hidden"
-      );
+      row.innerHTML = `
 
-      return;
+        <td>
+
+          <div class="order-id">
+            #${order.id}
+          </div>
+
+        </td>
+
+
+        <td>
+
+          <div class="customer-name">
+            ${escapeHtml(
+              order.customer_name
+            )}
+          </div>
+
+          <div class="customer-email">
+            ${escapeHtml(
+              order.customer_email || ""
+            )}
+          </div>
+
+          <div class="customer-email">
+            ${escapeHtml(
+              order.phone || ""
+            )}
+          </div>
+
+        </td>
+
+
+        <td>
+
+          <div class="address">
+            ${escapeHtml(
+              order.address
+            )}
+          </div>
+
+        </td>
+
+
+        <td>
+
+          <div class="products">
+            ${products}
+          </div>
+
+        </td>
+
+
+        <td>
+
+          <div class="total">
+            ${formatMoney(
+              order.total
+            )}
+          </div>
+
+          <div class="customer-email">
+            COD
+          </div>
+
+        </td>
+
+
+        <td>
+
+          ${formatDate(
+            order.created_at
+          )}
+
+        </td>
+
+
+        <td>
+
+          <select
+            class="status-select"
+            data-order-id="${order.id}"
+          >
+
+            ${statusOption(
+              "pending",
+              order.status
+            )}
+
+            ${statusOption(
+              "confirmed",
+              order.status
+            )}
+
+            ${statusOption(
+              "shipped",
+              order.status
+            )}
+
+            ${statusOption(
+              "delivered",
+              order.status
+            )}
+
+            ${statusOption(
+              "cancelled",
+              order.status
+            )}
+
+          </select>
+
+        </td>
+
+      `;
+
+
+      ordersBody.appendChild(row);
 
     }
+  );
 
 
-    emptyOrders.classList.add(
-      "hidden"
-    );
+  document
+    .querySelectorAll(
+      ".status-select"
+    )
+    .forEach(
+      (select) => {
 
+        select.addEventListener(
+          "change",
+          async () => {
 
-    ordersBody.innerHTML =
-      orders
-        .map(
-          order => {
+            const orderId =
+              select.dataset.orderId;
 
-            const itemsHTML =
-              (order.items || [])
-                .map(
-                  item => `
-
-                    <div class="item">
-
-                      <div class="item-name">
-                        ${escapeHTML(
-                          item.name
-                        )}
-                      </div>
-
-                      <div class="item-info">
-                        Qty: ${item.qty}
-                        × ${money(item.price)}
-                      </div>
-
-                    </div>
-
-                  `
-                )
-                .join("");
-
-
-            return `
-
-              <tr>
-
-                <td>
-
-                  <div class="order-id">
-                    #${order.id}
-                  </div>
-
-                </td>
-
-
-                <td>
-
-                  <div class="customer-name">
-                    ${escapeHTML(
-                      order.customer_name
-                    )}
-                  </div>
-
-                  <div class="customer-email">
-                    ${escapeHTML(
-                      order.customer_email ||
-                      "No email"
-                    )}
-                  </div>
-
-                  <div class="phone">
-                    ${escapeHTML(
-                      order.phone
-                    )}
-                  </div>
-
-                </td>
-
-
-                <td>
-
-                  <div class="address">
-                    ${escapeHTML(
-                      order.address
-                    )}
-                  </div>
-
-                </td>
-
-
-                <td>
-
-                  <div class="items">
-                    ${itemsHTML}
-                  </div>
-
-                </td>
-
-
-                <td>
-
-                  <div class="total">
-                    ${money(
-                      order.total
-                    )}
-                  </div>
-
-                </td>
-
-
-                <td>
-
-                  <div class="date">
-                    ${formatDate(
-                      order.created_at
-                    )}
-                  </div>
-
-                </td>
-
-
-                <td>
-
-                  <div class="status-box">
-
-                    <select
-                      class="status-select ${escapeHTML(
-                        order.status
-                      )}"
-                      data-order-id="${order.id}"
-                    >
-
-                      <option
-                        value="pending"
-                        ${
-                          order.status ===
-                          "pending"
-                            ? "selected"
-                            : ""
-                        }
-                      >
-                        Pending
-                      </option>
-
-                      <option
-                        value="confirmed"
-                        ${
-                          order.status ===
-                          "confirmed"
-                            ? "selected"
-                            : ""
-                        }
-                      >
-                        Confirmed
-                      </option>
-
-                      <option
-                        value="shipped"
-                        ${
-                          order.status ===
-                          "shipped"
-                            ? "selected"
-                            : ""
-                        }
-                      >
-                        Shipped
-                      </option>
-
-                      <option
-                        value="delivered"
-                        ${
-                          order.status ===
-                          "delivered"
-                            ? "selected"
-                            : ""
-                        }
-                      >
-                        Delivered
-                      </option>
-
-                      <option
-                        value="cancelled"
-                        ${
-                          order.status ===
-                          "cancelled"
-                            ? "selected"
-                            : ""
-                        }
-                      >
-                        Cancelled
-                      </option>
-
-                    </select>
-
-
-                    <button
-                      class="update-btn"
-                      data-update-id="${order.id}"
-                    >
-                      Update
-                    </button>
-
-                  </div>
-
-                </td>
-
-              </tr>
-
-            `;
+            await updateOrderStatus(
+              orderId,
+              select.value
+            );
 
           }
-        )
-        .join("");
+        );
+
+      }
+    );
+
+}
 
 
-    attachUpdateButtons();
+/* =====================================================
+   STATUS OPTION
+===================================================== */
 
-  }
+function statusOption(
+  value,
+  current
+) {
 
+  const label =
+    value.charAt(0).toUpperCase() +
+    value.slice(1);
 
-  /* =========================
-     UPDATE BUTTONS
-  ========================= */
+  return `
 
-  function attachUpdateButtons() {
+    <option
+      value="${value}"
+      ${value === current ? "selected" : ""}
+    >
+      ${label}
+    </option>
 
-    document
-      .querySelectorAll(
-        ".update-btn"
-      )
-      .forEach(
-        button => {
+  `;
 
-          button.addEventListener(
-            "click",
-            () => {
-
-              const orderId =
-                button.dataset
-                  .updateId;
-
-
-              const select =
-                document.querySelector(
-                  `.status-select[data-order-id="${orderId}"]`
-                );
+}
 
 
-              if (!select) {
-                return;
-              }
+/* =====================================================
+   UPDATE ORDER STATUS
+===================================================== */
 
+async function updateOrderStatus(
+  orderId,
+  status
+) {
 
-              updateOrderStatus(
-                orderId,
-                select.value,
-                button
-              );
+  try {
 
-            }
-          );
+    const response =
+      await fetch(
+        `${API_BASE}/api/admin/orders/${orderId}/status`,
+        {
+          method: "PATCH",
 
+          credentials: "include",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            "X-CSRF-Token":
+              csrfToken
+          },
+
+          body: JSON.stringify({
+            status
+          })
         }
       );
 
-  }
 
+    if (
+      response.status === 401
+    ) {
 
-  /* =========================
-     UPDATE STATUS
-  ========================= */
+      showLogin();
 
-  async function updateOrderStatus(
-    orderId,
-    status,
-    button
-  ) {
-
-    const oldText =
-      button.textContent;
-
-
-    button.disabled =
-      true;
-
-    button.textContent =
-      "Updating...";
-
-
-    try {
-
-      const response =
-        await fetch(
-          `${API_BASE}/api/admin/orders/${orderId}/status`,
-          {
-            method: "PATCH",
-
-            headers: {
-
-              "Content-Type":
-                "application/json",
-
-              ...authHeaders()
-
-            },
-
-            body:
-              JSON.stringify({
-                status
-              })
-
-          }
-        );
-
-
-      if (
-        response.status === 401 ||
-        response.status === 403
-      ) {
-
-        logout(
-          "Your admin session has expired."
-        );
-
-        return;
-
-      }
-
-
-      const data =
-        await response.json();
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          data.error ||
-          "Could not update status."
-        );
-
-      }
-
-
-      const order =
-        allOrders.find(
-          item =>
-            Number(item.id) ===
-            Number(orderId)
-        );
-
-
-      if (order) {
-
-        order.status =
-          status;
-
-      }
-
-
-      updateStats();
-
-      renderOrders();
-
-
-      showToast(
-        `Order #${orderId} updated to ${status}.`
-      );
-
-    }
-
-    catch (error) {
-
-      console.error(
-        error
-      );
-
-      showToast(
-        error.message ||
-        "Could not update order."
-      );
-
-      button.disabled =
-        false;
-
-      button.textContent =
-        oldText;
-
-    }
-
-  }
-
-
-  /* =========================
-     SEARCH
-  ========================= */
-
-  searchInput.addEventListener(
-    "input",
-    renderOrders
-  );
-
-
-  /* =========================
-     FILTER
-  ========================= */
-
-  statusFilter.addEventListener(
-    "change",
-    renderOrders
-  );
-
-
-  /* =========================
-     REFRESH
-  ========================= */
-
-  document
-    .getElementById(
-      "refreshBtn"
-    )
-    .addEventListener(
-      "click",
-      async () => {
-
-        await loadOrders();
-
-        showToast(
-          "Orders refreshed."
-        );
-
-      }
-    );
-
-
-  /* =========================
-     LOGOUT
-  ========================= */
-
-  function logout(
-    message = ""
-  ) {
-
-    sessionStorage.removeItem(
-      "zevoriaAdminToken"
-    );
-
-    adminToken =
-      "";
-
-    allOrders =
-      [];
-
-    dashboardView.classList.add(
-      "hidden"
-    );
-
-    loginView.classList.remove(
-      "hidden"
-    );
-
-    adminKeyInput.value =
-      "";
-
-    loginError.textContent =
-      message;
-
-  }
-
-
-  document
-    .getElementById(
-      "logoutBtn"
-    )
-    .addEventListener(
-      "click",
-      () => logout()
-    );
-
-
-  /* =========================
-     CHECK EXISTING SESSION
-  ========================= */
-
-  async function startAdmin() {
-
-    if (!adminToken) {
       return;
-    }
-
-
-    try {
-
-      const response =
-        await fetch(
-          `${API_BASE}/api/admin/me`,
-          {
-            headers:
-              authHeaders()
-          }
-        );
-
-
-      if (!response.ok) {
-
-        sessionStorage.removeItem(
-          "zevoriaAdminToken"
-        );
-
-        adminToken =
-          "";
-
-        return;
-
-      }
-
-
-      loginView.classList.add(
-        "hidden"
-      );
-
-      dashboardView.classList.remove(
-        "hidden"
-      );
-
-
-      await loadOrders();
 
     }
 
-    catch (error) {
 
-      console.error(
-        error
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "Could not update status"
       );
 
     }
+
+
+    await loadDashboard();
+
+
+  } catch (error) {
+
+    alert(error.message);
 
   }
 
+}
 
-  startAdmin();
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+logoutButton.addEventListener(
+  "click",
+  async () => {
+
+    try {
+
+      await fetch(
+        `${API_BASE}/api/admin/logout`,
+        {
+          method: "POST",
+
+          credentials: "include",
+
+          headers: {
+            "X-CSRF-Token":
+              csrfToken
+          }
+        }
+      );
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
+
+
+    csrfToken = "";
+
+    allOrders = [];
+
+    showLogin();
+
+  }
+);
+
+
+/* =====================================================
+   REFRESH
+===================================================== */
+
+refreshButton.addEventListener(
+  "click",
+  async () => {
+
+    await loadDashboard();
+
+  }
+);
+
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+searchInput.addEventListener(
+  "input",
+  renderOrders
+);
+
+
+statusFilter.addEventListener(
+  "change",
+  renderOrders
+);
+
+
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function formatMoney(value) {
+
+  return new Intl.NumberFormat(
+    "en-IN",
+    {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0
+    }
+  ).format(
+    Number(value) || 0
+  );
+
+}
+
+
+function formatDate(value) {
+
+  if (!value) return "-";
+
+  const date =
+    new Date(
+      value.replace(" ", "T") +
+      "Z"
+    );
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+
+    return value;
+
+  }
+
+  return date.toLocaleString(
+    "en-IN"
+  );
+
+}
+
+
+function escapeHtml(value) {
+
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+}
+
+
+/* =====================================================
+   START
+===================================================== */
+
+checkSession();
 
 </script>
 
 </body>
-
 </html>
