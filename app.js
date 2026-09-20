@@ -2,12 +2,13 @@
    ZEVORIA — APP.JS
    ========================================================= */
 
-const API_BASE = "https://zevoria-backend.onrender.com";
+const API_BASE =
+  "https://zevoria-backend.onrender.com";
 
 
 /* =========================================================
    PRODUCTS
-   ========================================================= */
+========================================================= */
 
 const products = [
   {
@@ -69,7 +70,7 @@ const products = [
 
 /* =========================================================
    LOCAL STORAGE KEYS
-   ========================================================= */
+========================================================= */
 
 const CART_KEY = "zevoriaCart";
 const USER_KEY = "zevoriaUser";
@@ -83,9 +84,11 @@ const COUPON_KEY = "zevoriaCoupon";
 
 /* =========================================================
    STATE
-   ========================================================= */
+========================================================= */
 
-let cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+let cart = JSON.parse(
+  localStorage.getItem(CART_KEY) || "[]"
+);
 
 let wishlist = JSON.parse(
   localStorage.getItem(WISHLIST_KEY) || "[]"
@@ -96,9 +99,7 @@ let recentSearches = JSON.parse(
 );
 
 let currentFilter = "all";
-
 let currentSearch = "";
-
 let currentSort = "default";
 
 let appliedCoupon = JSON.parse(
@@ -108,7 +109,7 @@ let appliedCoupon = JSON.parse(
 
 /* =========================================================
    HELPERS
-   ========================================================= */
+========================================================= */
 
 function money(value) {
   return `₹${Number(value).toLocaleString("en-IN")}`;
@@ -161,7 +162,7 @@ function getProductByBackendId(id) {
 
 
 function escapeHTML(value) {
-  return String(value)
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -172,13 +173,14 @@ function escapeHTML(value) {
 
 /* =========================================================
    TOAST
-   ========================================================= */
+========================================================= */
 
 let toastTimer;
 
 function toast(message) {
 
-  const el = document.getElementById("toast");
+  const el =
+    document.getElementById("toast");
 
   if (!el) return;
 
@@ -196,14 +198,16 @@ function toast(message) {
 
 /* =========================================================
    MODAL SYSTEM
-   ========================================================= */
+========================================================= */
 
-const overlay = document.getElementById("overlay");
+const overlay =
+  document.getElementById("overlay");
 
 
 function openModal(id) {
 
-  const modal = document.getElementById(id);
+  const modal =
+    document.getElementById(id);
 
   if (!modal) return;
 
@@ -211,28 +215,42 @@ function openModal(id) {
 
   overlay?.classList.add("show");
 
-  document.body.style.overflow = "hidden";
+  document.body.style.overflow =
+    "hidden";
 }
 
 
 function closeModal(id) {
 
-  const modal = document.getElementById(id);
+  const modal =
+    document.getElementById(id);
 
   if (!modal) return;
 
   modal.classList.remove("show");
 
   const anyModalOpen =
-    document.querySelector(".modal.show");
+    document.querySelector(
+      ".modal.show"
+    );
 
   const drawerOpen =
-    document.getElementById("cartDrawer")
+    document
+      .getElementById("cartDrawer")
       ?.classList.contains("open");
 
-  if (!anyModalOpen && !drawerOpen) {
-    overlay?.classList.remove("show");
-    document.body.style.overflow = "";
+  if (
+    !anyModalOpen &&
+    !drawerOpen
+  ) {
+
+    overlay?.classList.remove(
+      "show"
+    );
+
+    document.body.style.overflow =
+      "";
+
   }
 }
 
@@ -259,36 +277,52 @@ document
   .querySelectorAll("[data-close]")
   .forEach(button => {
 
-    button.addEventListener("click", closeAll);
+    button.addEventListener(
+      "click",
+      closeAll
+    );
 
   });
 
 
-overlay?.addEventListener("click", closeAll);
+overlay?.addEventListener(
+  "click",
+  closeAll
+);
 
 
-document.addEventListener("keydown", event => {
+document.addEventListener(
+  "keydown",
+  event => {
 
-  if (event.key === "Escape") {
-    closeAll();
+    if (event.key === "Escape") {
+      closeAll();
+    }
+
   }
-
-});
+);
 
 
 /* =========================================================
    CART
-   ========================================================= */
+========================================================= */
 
-function addToCart(productId, quantity = 1) {
+function addToCart(
+  productId,
+  quantity = 1
+) {
 
-  const product = getProduct(productId);
+  const product =
+    getProduct(productId);
 
   if (!product) return;
 
-  const existing = cart.find(
-    item => item.i === product.id
-  );
+  const existing =
+    cart.find(
+      item =>
+        item.i === product.id
+    );
+
 
   if (existing) {
 
@@ -303,33 +337,45 @@ function addToCart(productId, quantity = 1) {
 
   }
 
+
   saveCart();
 
   renderCart();
 
   updateCounts();
 
-  toast(`${product.name} added to your bag.`);
+  toast(
+    `${product.name} added to your bag.`
+  );
 }
 
 
-function changeQty(productId, amount) {
+function changeQty(
+  productId,
+  amount
+) {
 
-  const item = cart.find(
-    item => item.i === Number(productId)
-  );
+  const item =
+    cart.find(
+      item =>
+        item.i === Number(productId)
+    );
 
   if (!item) return;
 
   item.q += amount;
 
+
   if (item.q <= 0) {
 
-    cart = cart.filter(
-      x => x.i !== Number(productId)
-    );
+    cart =
+      cart.filter(
+        x =>
+          x.i !== Number(productId)
+      );
 
   }
+
 
   saveCart();
 
@@ -341,9 +387,11 @@ function changeQty(productId, amount) {
 
 function removeFromCart(productId) {
 
-  cart = cart.filter(
-    item => item.i !== Number(productId)
-  );
+  cart =
+    cart.filter(
+      item =>
+        item.i !== Number(productId)
+    );
 
   saveCart();
 
@@ -351,39 +399,61 @@ function removeFromCart(productId) {
 
   updateCounts();
 
-  toast("Item removed from your bag.");
+  toast(
+    "Item removed from your bag."
+  );
 }
 
 
 function cartSubtotal() {
 
-  return cart.reduce((sum, item) => {
+  return cart.reduce(
+    (sum, item) => {
 
-    const product = getProduct(item.i);
+      const product =
+        getProduct(item.i);
 
-    if (!product) return sum;
+      if (!product) return sum;
 
-    return sum + product.price * item.q;
+      return (
+        sum +
+        product.price *
+        item.q
+      );
 
-  }, 0);
+    },
+    0
+  );
 }
 
 
-function calculateDiscount(subtotal) {
+function calculateDiscount(
+  subtotal
+) {
 
   if (!appliedCoupon) {
     return 0;
   }
 
-  if (appliedCoupon.type === "percent") {
+
+  if (
+    appliedCoupon.type ===
+    "percent"
+  ) {
 
     return Math.round(
-      subtotal * appliedCoupon.value / 100
+      subtotal *
+      appliedCoupon.value /
+      100
     );
 
   }
 
-  if (appliedCoupon.type === "fixed") {
+
+  if (
+    appliedCoupon.type ===
+    "fixed"
+  ) {
 
     return Math.min(
       appliedCoupon.value,
@@ -392,36 +462,53 @@ function calculateDiscount(subtotal) {
 
   }
 
+
   return 0;
 }
 
 
 function cartTotal() {
 
-  const subtotal = cartSubtotal();
+  const subtotal =
+    cartSubtotal();
 
-  return subtotal - calculateDiscount(subtotal);
+  return (
+    subtotal -
+    calculateDiscount(subtotal)
+  );
 }
 
 
 /* =========================================================
    RENDER CART
-   ========================================================= */
+========================================================= */
 
 function renderCart() {
 
   const container =
-    document.getElementById("cartItems");
+    document.getElementById(
+      "cartItems"
+    );
 
   if (!container) return;
+
 
   if (!cart.length) {
 
     container.innerHTML = `
+
       <div class="empty-products">
-        <h3>Your bag is empty</h3>
-        <p>Discover something you will love.</p>
+
+        <h3>
+          Your bag is empty
+        </h3>
+
+        <p>
+          Discover something you will love.
+        </p>
+
       </div>
+
     `;
 
     updateCartTotals();
@@ -430,68 +517,94 @@ function renderCart() {
   }
 
 
-  container.innerHTML = cart.map(item => {
+  container.innerHTML =
+    cart
+      .map(item => {
 
-    const product = getProduct(item.i);
+        const product =
+          getProduct(item.i);
 
-    if (!product) return "";
+        if (!product) return "";
 
-    return `
-      <div class="cart-item">
 
-        <div class="cart-item-image">
-          <div class="mini-bottle"></div>
-        </div>
+        return `
 
-        <div class="cart-item-info">
+          <div class="cart-item">
 
-          <h4>
-            ${escapeHTML(product.name)}
-          </h4>
+            <div class="cart-item-image">
+              <div class="mini-bottle"></div>
+            </div>
 
-          <p>
-            ${escapeHTML(product.type)}
-          </p>
 
-          <div class="qty">
+            <div class="cart-item-info">
 
-            <button
-              type="button"
-              onclick="changeQty(${product.id}, -1)"
-            >
-              −
-            </button>
+              <h4>
+                ${escapeHTML(
+                  product.name
+                )}
+              </h4>
 
-            <span>
-              ${item.q}
-            </span>
+              <p>
+                ${escapeHTML(
+                  product.type
+                )}
+              </p>
 
-            <button
-              type="button"
-              onclick="changeQty(${product.id}, 1)"
-            >
-              +
-            </button>
+
+              <div class="qty">
+
+                <button
+                  type="button"
+                  onclick="changeQty(
+                    ${product.id},
+                    -1
+                  )"
+                >
+                  −
+                </button>
+
+                <span>
+                  ${item.q}
+                </span>
+
+                <button
+                  type="button"
+                  onclick="changeQty(
+                    ${product.id},
+                    1
+                  )"
+                >
+                  +
+                </button>
+
+              </div>
+
+
+              <button
+                class="remove-cart"
+                onclick="removeFromCart(
+                  ${product.id}
+                )"
+              >
+                Remove
+              </button>
+
+            </div>
+
+
+            <div class="cart-price">
+              ${money(
+                product.price *
+                item.q
+              )}
+            </div>
 
           </div>
 
-          <button
-            class="remove-cart"
-            onclick="removeFromCart(${product.id})"
-          >
-            Remove
-          </button>
+        `;
 
-        </div>
-
-        <div class="cart-price">
-          ${money(product.price * item.q)}
-        </div>
-
-      </div>
-    `;
-
-  }).join("");
+      })
+      .join("");
 
 
   updateCartTotals();
@@ -500,32 +613,48 @@ function renderCart() {
 
 function updateCartTotals() {
 
-  const subtotal = cartSubtotal();
+  const subtotal =
+    cartSubtotal();
 
-  const discount = calculateDiscount(subtotal);
+  const discount =
+    calculateDiscount(
+      subtotal
+    );
 
-  const total = subtotal - discount;
+  const total =
+    subtotal - discount;
 
 
   const subtotalEl =
-    document.getElementById("subtotal");
+    document.getElementById(
+      "subtotal"
+    );
 
   const totalEl =
-    document.getElementById("cartTotal");
+    document.getElementById(
+      "cartTotal"
+    );
 
   const discountRow =
-    document.getElementById("discountRow");
+    document.getElementById(
+      "discountRow"
+    );
 
   const discountEl =
-    document.getElementById("discountAmount");
+    document.getElementById(
+      "discountAmount"
+    );
 
 
   if (subtotalEl) {
-    subtotalEl.textContent = money(subtotal);
+    subtotalEl.textContent =
+      money(subtotal);
   }
 
+
   if (totalEl) {
-    totalEl.textContent = money(total);
+    totalEl.textContent =
+      money(total);
   }
 
 
@@ -536,14 +665,16 @@ function updateCartTotals() {
 
     if (discount > 0) {
 
-      discountRow.style.display = "flex";
+      discountRow.style.display =
+        "flex";
 
       discountEl.textContent =
         `-${money(discount)}`;
 
     } else {
 
-      discountRow.style.display = "none";
+      discountRow.style.display =
+        "none";
 
     }
 
@@ -553,7 +684,7 @@ function updateCartTotals() {
 
 /* =========================================================
    CART DRAWER
-   ========================================================= */
+========================================================= */
 
 function openCart() {
 
@@ -565,113 +696,151 @@ function openCart() {
 
   overlay?.classList.add("show");
 
-  document.body.style.overflow = "hidden";
+  document.body.style.overflow =
+    "hidden";
 }
 
 
 document
   .getElementById("cartBtn")
-  ?.addEventListener("click", openCart);
+  ?.addEventListener(
+    "click",
+    openCart
+  );
 
 
 /* =========================================================
    COUNTS
-   ========================================================= */
+========================================================= */
 
 function updateCounts() {
 
   const cartCount =
     cart.reduce(
-      (sum, item) => sum + item.q,
+      (sum, item) =>
+        sum + item.q,
       0
     );
+
 
   const wishlistCount =
     wishlist.length;
 
 
   const cartEl =
-    document.getElementById("cartCount");
+    document.getElementById(
+      "cartCount"
+    );
 
   const wishEl =
-    document.getElementById("wishlistCount");
+    document.getElementById(
+      "wishlistCount"
+    );
 
 
   if (cartEl) {
-    cartEl.textContent = cartCount;
+    cartEl.textContent =
+      cartCount;
   }
 
+
   if (wishEl) {
-    wishEl.textContent = wishlistCount;
+    wishEl.textContent =
+      wishlistCount;
   }
 }
 
 
 /* =========================================================
-   PRODUCT FILTER + SEARCH + SORT
-   ========================================================= */
+   PRODUCT FILTER / SEARCH / SORT
+========================================================= */
 
 function getVisibleProducts() {
 
   let list = [...products];
 
 
-  if (currentFilter !== "all") {
+  if (
+    currentFilter !==
+    "all"
+  ) {
 
-    list = list.filter(
-      product =>
-        product.category === currentFilter
-    );
+    list =
+      list.filter(
+        product =>
+          product.category ===
+          currentFilter
+      );
 
   }
 
 
-  if (currentSearch.trim()) {
+  if (
+    currentSearch.trim()
+  ) {
 
     const query =
       currentSearch
         .toLowerCase()
         .trim();
 
-    list = list.filter(product => {
 
-      const searchable = [
-        product.name,
-        product.category,
-        product.type,
-        product.notes
-      ]
-        .join(" ")
-        .toLowerCase();
+    list =
+      list.filter(
+        product => {
 
-      return searchable.includes(query);
+          const searchable = [
+            product.name,
+            product.category,
+            product.type,
+            product.notes
+          ]
+            .join(" ")
+            .toLowerCase();
 
-    });
+          return searchable.includes(
+            query
+          );
 
-  }
-
-
-  if (currentSort === "low") {
-
-    list.sort(
-      (a, b) => a.price - b.price
-    );
+        }
+      );
 
   }
 
-  if (currentSort === "high") {
 
-    list.sort(
-      (a, b) => b.price - a.price
-    );
-
-  }
-
-  if (currentSort === "name") {
+  if (
+    currentSort === "low"
+  ) {
 
     list.sort(
       (a, b) =>
-        a.name.localeCompare(b.name)
+        a.price - b.price
+    );
+
+  }
+
+
+  if (
+    currentSort === "high"
+  ) {
+
+    list.sort(
+      (a, b) =>
+        b.price - a.price
+    );
+
+  }
+
+
+  if (
+    currentSort === "name"
+  ) {
+
+    list.sort(
+      (a, b) =>
+        a.name.localeCompare(
+          b.name
+        )
     );
 
   }
@@ -683,15 +852,18 @@ function getVisibleProducts() {
 
 /* =========================================================
    PRODUCT CARD
-   ========================================================= */
+========================================================= */
 
 function productCard(product) {
 
   const wished =
-    wishlist.includes(product.id);
+    wishlist.includes(
+      product.id
+    );
 
 
   return `
+
     <article
       class="product-card"
       data-product="${product.id}"
@@ -707,15 +879,25 @@ function productCard(product) {
         <div class="product-actions">
 
           <button
-            class="product-icon ${wished ? "wish-active" : ""}"
-            onclick="toggleWishlist(${product.id})"
+            class="product-icon ${
+              wished
+                ? "wish-active"
+                : ""
+            }"
+            onclick="toggleWishlist(
+              ${product.id}
+            )"
             aria-label="Wishlist"
             title="Wishlist"
           >
 
             <i
               data-lucide="heart"
-              ${wished ? 'fill="currentColor"' : ""}
+              ${
+                wished
+                  ? 'fill="currentColor"'
+                  : ""
+              }
             ></i>
 
           </button>
@@ -723,12 +905,16 @@ function productCard(product) {
 
           <button
             class="product-icon"
-            onclick="quickView(${product.id})"
+            onclick="quickView(
+              ${product.id}
+            )"
             aria-label="Quick view"
             title="Quick view"
           >
 
-            <i data-lucide="eye"></i>
+            <i
+              data-lucide="eye"
+            ></i>
 
           </button>
 
@@ -740,22 +926,30 @@ function productCard(product) {
       <div class="product-info">
 
         <span class="product-category">
-          ${escapeHTML(product.category)}
+          ${escapeHTML(
+            product.category
+          )}
         </span>
 
         <h3>
-          ${escapeHTML(product.name)}
+          ${escapeHTML(
+            product.name
+          )}
         </h3>
 
         <p class="product-note">
-          ${escapeHTML(product.notes)}
+          ${escapeHTML(
+            product.notes
+          )}
         </p>
 
 
         <div class="product-bottom">
 
           <span class="product-price">
-            ${money(product.price)}
+            ${money(
+              product.price
+            )}
           </span>
 
 
@@ -763,14 +957,18 @@ function productCard(product) {
 
             <button
               class="quick-btn"
-              onclick="quickView(${product.id})"
+              onclick="quickView(
+                ${product.id}
+              )"
             >
               Quick view
             </button>
 
             <button
               class="add-btn"
-              onclick="addToCart(${product.id})"
+              onclick="addToCart(
+                ${product.id}
+              )"
             >
               Add
             </button>
@@ -782,18 +980,21 @@ function productCard(product) {
       </div>
 
     </article>
+
   `;
 }
 
 
 /* =========================================================
    RENDER PRODUCTS
-   ========================================================= */
+========================================================= */
 
 function renderProducts() {
 
   const container =
-    document.getElementById("products");
+    document.getElementById(
+      "products"
+    );
 
   if (!container) return;
 
@@ -805,6 +1006,7 @@ function renderProducts() {
   if (!list.length) {
 
     container.innerHTML = `
+
       <div class="empty-products">
 
         <h3>
@@ -816,6 +1018,7 @@ function renderProducts() {
         </p>
 
       </div>
+
     `;
 
     return;
@@ -823,7 +1026,9 @@ function renderProducts() {
 
 
   container.innerHTML =
-    list.map(productCard).join("");
+    list
+      .map(productCard)
+      .join("");
 
 
   refreshIcons();
@@ -832,8 +1037,12 @@ function renderProducts() {
 
 function refreshIcons() {
 
-  if (window.lucide) {
+  if (
+    window.lucide
+  ) {
+
     lucide.createIcons();
+
   }
 
 }
@@ -841,7 +1050,7 @@ function refreshIcons() {
 
 /* =========================================================
    FILTER BUTTONS
-   ========================================================= */
+========================================================= */
 
 document
   .querySelectorAll(".filter")
@@ -852,15 +1061,24 @@ document
       () => {
 
         document
-          .querySelectorAll(".filter")
+          .querySelectorAll(
+            ".filter"
+          )
           .forEach(btn =>
-            btn.classList.remove("active")
+            btn.classList.remove(
+              "active"
+            )
           );
 
-        button.classList.add("active");
+
+        button.classList.add(
+          "active"
+        );
+
 
         currentFilter =
           button.dataset.filter;
+
 
         renderProducts();
 
@@ -872,10 +1090,12 @@ document
 
 /* =========================================================
    SHOP SEARCH
-   ========================================================= */
+========================================================= */
 
 const shopSearch =
-  document.getElementById("shopSearch");
+  document.getElementById(
+    "shopSearch"
+  );
 
 
 shopSearch?.addEventListener(
@@ -893,7 +1113,7 @@ shopSearch?.addEventListener(
 
 /* =========================================================
    SORT
-   ========================================================= */
+========================================================= */
 
 document
   .getElementById("sortBtn")
@@ -901,31 +1121,48 @@ document
     "click",
     () => {
 
-      if (currentSort === "default") {
+      if (
+        currentSort ===
+        "default"
+      ) {
 
         currentSort = "low";
 
-        toast("Sorted by lowest price.");
+        toast(
+          "Sorted by lowest price."
+        );
 
-      } else if (currentSort === "low") {
+      } else if (
+        currentSort === "low"
+      ) {
 
         currentSort = "high";
 
-        toast("Sorted by highest price.");
+        toast(
+          "Sorted by highest price."
+        );
 
-      } else if (currentSort === "high") {
+      } else if (
+        currentSort === "high"
+      ) {
 
         currentSort = "name";
 
-        toast("Sorted alphabetically.");
+        toast(
+          "Sorted alphabetically."
+        );
 
       } else {
 
-        currentSort = "default";
+        currentSort =
+          "default";
 
-        toast("Default sorting restored.");
+        toast(
+          "Default sorting restored."
+        );
 
       }
+
 
       renderProducts();
 
@@ -934,8 +1171,8 @@ document
 
 
 /* =========================================================
-   ADVANCED SEARCH MODAL
-   ========================================================= */
+   ADVANCED SEARCH
+========================================================= */
 
 document
   .getElementById("searchBtn")
@@ -943,15 +1180,21 @@ document
     "click",
     () => {
 
-      openModal("searchModal");
+      openModal(
+        "searchModal"
+      );
+
 
       setTimeout(() => {
 
         document
-          .getElementById("searchInput")
+          .getElementById(
+            "searchInput"
+          )
           ?.focus();
 
       }, 100);
+
 
       renderSearchResults("");
 
@@ -960,59 +1203,74 @@ document
 
 
 const searchInput =
-  document.getElementById("searchInput");
+  document.getElementById(
+    "searchInput"
+  );
 
 
 searchInput?.addEventListener(
   "input",
   event => {
 
-    const query =
-      event.target.value;
-
-    renderSearchResults(query);
+    renderSearchResults(
+      event.target.value
+    );
 
   }
 );
 
 
-function renderSearchResults(query) {
+function renderSearchResults(
+  query
+) {
 
   const container =
-    document.getElementById("searchResults");
+    document.getElementById(
+      "searchResults"
+    );
 
   if (!container) return;
 
 
   const q =
-    query.trim().toLowerCase();
+    query
+      .trim()
+      .toLowerCase();
 
 
-  let list =
-    products.filter(product => {
+  const list =
+    products.filter(
+      product => {
 
-      if (!q) return true;
+        if (!q) return true;
 
-      const searchable = [
-        product.name,
-        product.category,
-        product.type,
-        product.notes
-      ]
-        .join(" ")
-        .toLowerCase();
 
-      return searchable.includes(q);
+        const searchable = [
+          product.name,
+          product.category,
+          product.type,
+          product.notes
+        ]
+          .join(" ")
+          .toLowerCase();
 
-    });
+
+        return searchable.includes(
+          q
+        );
+
+      }
+    );
 
 
   if (!list.length) {
 
     container.innerHTML = `
+
       <p class="muted">
         No fragrances match your search.
       </p>
+
     `;
 
     return;
@@ -1020,37 +1278,62 @@ function renderSearchResults(query) {
 
 
   container.innerHTML =
-    list.map(product => `
+    list
+      .map(
+        product => `
 
-      <div
-        class="search-result"
-        onclick="quickView(${product.id})"
-      >
+          <div
+            class="search-result"
+            onclick="quickView(
+              ${product.id}
+            )"
+          >
 
-        <div class="search-result-bottle"></div>
+            <div
+              class="search-result-bottle"
+            ></div>
 
-        <div class="search-result-info">
 
-          <strong>
-            ${escapeHTML(product.name)}
-          </strong>
+            <div
+              class="search-result-info"
+            >
 
-          <small>
-            ${escapeHTML(product.type)}
-            •
-            ${escapeHTML(product.notes)}
-          </small>
+              <strong>
+                ${escapeHTML(
+                  product.name
+                )}
+              </strong>
 
-        </div>
+              <small>
+                ${escapeHTML(
+                  product.type
+                )}
+                •
+                ${escapeHTML(
+                  product.notes
+                )}
+              </small>
 
-        <strong>
-          ${money(product.price)}
-        </strong>
+            </div>
 
-      </div>
 
-    `).join("");
+            <strong>
+              ${money(
+                product.price
+              )}
+            </strong>
 
+          </div>
+
+        `
+      )
+      .join("");
+
+
+  /*
+    Save only when the user actually
+    searches for something.
+  */
 
   if (q) {
 
@@ -1059,14 +1342,22 @@ function renderSearchResults(query) {
         x => x !== q
       );
 
+
     recentSearches.unshift(q);
 
+
     recentSearches =
-      recentSearches.slice(0, 8);
+      recentSearches.slice(
+        0,
+        8
+      );
+
 
     localStorage.setItem(
       SEARCH_KEY,
-      JSON.stringify(recentSearches)
+      JSON.stringify(
+        recentSearches
+      )
     );
 
   }
@@ -1076,9 +1367,11 @@ function renderSearchResults(query) {
 
 /* =========================================================
    QUICK VIEW
-   ========================================================= */
+========================================================= */
 
-function quickView(productId) {
+function quickView(
+  productId
+) {
 
   const product =
     getProduct(productId);
@@ -1087,7 +1380,9 @@ function quickView(productId) {
 
 
   const wished =
-    wishlist.includes(product.id);
+    wishlist.includes(
+      product.id
+    );
 
 
   const container =
@@ -1112,21 +1407,32 @@ function quickView(productId) {
     <div class="quick-view-info">
 
       <span class="category">
-        ${escapeHTML(product.type)}
+        ${escapeHTML(
+          product.type
+        )}
       </span>
 
+
       <h2>
-        ${escapeHTML(product.name)}
+        ${escapeHTML(
+          product.name
+        )}
       </h2>
 
+
       <div class="price">
-        ${money(product.price)}
+        ${money(
+          product.price
+        )}
       </div>
 
 
       <p class="description">
+
         A carefully composed ZEVORIA fragrance
-        designed to become part of your everyday signature.
+        designed to become part of your everyday
+        signature.
+
       </p>
 
 
@@ -1134,10 +1440,13 @@ function quickView(productId) {
 
         ${product.notes
           .split("•")
-          .map(note =>
-            `<span class="note">
-              ${escapeHTML(note.trim())}
-            </span>`
+          .map(
+            note =>
+              `<span class="note">
+                ${escapeHTML(
+                  note.trim()
+                )}
+              </span>`
           )
           .join("")}
 
@@ -1148,23 +1457,44 @@ function quickView(productId) {
 
         <button
           class="btn btn-dark"
-          onclick="addToCart(${product.id}); closeModal('quickViewModal')"
+          onclick="
+            addToCart(${product.id});
+            closeModal('quickViewModal')
+          "
         >
+
           Add to bag
-          <i data-lucide="shopping-bag"></i>
+
+          <i
+            data-lucide="shopping-bag"
+          ></i>
+
         </button>
 
 
         <button
           class="btn"
-          onclick="toggleWishlist(${product.id})"
+          onclick="
+            toggleWishlist(
+              ${product.id}
+            )
+          "
         >
+
           <i
             data-lucide="heart"
-            ${wished ? 'fill="currentColor"' : ""}
+            ${
+              wished
+                ? 'fill="currentColor"'
+                : ""
+            }
           ></i>
 
-          ${wished ? "Saved" : "Wishlist"}
+          ${
+            wished
+              ? "Saved"
+              : "Wishlist"
+          }
 
         </button>
 
@@ -1175,7 +1505,10 @@ function quickView(productId) {
   `;
 
 
-  openModal("quickViewModal");
+  openModal(
+    "quickViewModal"
+  );
+
 
   refreshIcons();
 }
@@ -1183,27 +1516,43 @@ function quickView(productId) {
 
 /* =========================================================
    WISHLIST
-   ========================================================= */
+========================================================= */
 
-function toggleWishlist(productId) {
+function toggleWishlist(
+  productId
+) {
 
-  productId = Number(productId);
+  productId =
+    Number(productId);
 
 
-  if (wishlist.includes(productId)) {
+  if (
+    wishlist.includes(
+      productId
+    )
+  ) {
 
     wishlist =
       wishlist.filter(
-        id => id !== productId
+        id =>
+          id !== productId
       );
 
-    toast("Removed from wishlist.");
+
+    toast(
+      "Removed from wishlist."
+    );
 
   } else {
 
-    wishlist.push(productId);
+    wishlist.push(
+      productId
+    );
 
-    toast("Saved to your wishlist.");
+
+    toast(
+      "Saved to your wishlist."
+    );
 
   }
 
@@ -1215,7 +1564,6 @@ function toggleWishlist(productId) {
   renderProducts();
 
   renderWishlist();
-
 }
 
 
@@ -1232,6 +1580,7 @@ function renderWishlist() {
   if (!wishlist.length) {
 
     container.innerHTML = `
+
       <div class="empty-products">
 
         <h3>
@@ -1243,6 +1592,7 @@ function renderWishlist() {
         </p>
 
       </div>
+
     `;
 
     return;
@@ -1250,83 +1600,117 @@ function renderWishlist() {
 
 
   container.innerHTML =
-    wishlist.map(id => {
+    wishlist
+      .map(id => {
 
-      const product =
-        getProduct(id);
+        const product =
+          getProduct(id);
 
-      if (!product) return "";
+        if (!product) return "";
 
-      return `
 
-        <div class="wishlist-card">
+        return `
 
-          <div class="wishlist-card-image">
+          <div class="wishlist-card">
 
-            <div class="product-bottle">
-              <div class="product-label"></div>
+            <div
+              class="wishlist-card-image"
+            >
+
+              <div class="product-bottle">
+                <div class="product-label"></div>
+              </div>
+
+            </div>
+
+
+            <h4>
+              ${escapeHTML(
+                product.name
+              )}
+            </h4>
+
+
+            <div
+              class="wishlist-card-price"
+            >
+              ${money(
+                product.price
+              )}
+            </div>
+
+
+            <div
+              class="wishlist-card-actions"
+            >
+
+              <button
+                onclick="
+                  addToCart(
+                    ${product.id}
+                  )
+                "
+              >
+                Add to bag
+              </button>
+
+
+              <button
+                onclick="
+                  toggleWishlist(
+                    ${product.id}
+                  )
+                "
+              >
+                Remove
+              </button>
+
             </div>
 
           </div>
 
-          <h4>
-            ${escapeHTML(product.name)}
-          </h4>
+        `;
 
-          <div class="wishlist-card-price">
-            ${money(product.price)}
-          </div>
-
-
-          <div class="wishlist-card-actions">
-
-            <button
-              onclick="addToCart(${product.id})"
-            >
-              Add to bag
-            </button>
-
-            <button
-              onclick="toggleWishlist(${product.id})"
-            >
-              Remove
-            </button>
-
-          </div>
-
-        </div>
-
-      `;
-
-    }).join("");
+      })
+      .join("");
 }
 
 
 document
-  .getElementById("wishlistBtn")
+  .getElementById(
+    "wishlistBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
 
       renderWishlist();
 
-      openModal("wishlistModal");
+      openModal(
+        "wishlistModal"
+      );
 
     }
   );
 
 
 document
-  .getElementById("viewWishlistBtn")
+  .getElementById(
+    "viewWishlistBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
 
-      closeModal("accountModal");
+      closeModal(
+        "accountModal"
+      );
 
       renderWishlist();
 
-      openModal("wishlistModal");
+      openModal(
+        "wishlistModal"
+      );
 
     }
   );
@@ -1334,7 +1718,7 @@ document
 
 /* =========================================================
    SCENT FINDER
-   ========================================================= */
+========================================================= */
 
 const scentMap = {
 
@@ -1355,22 +1739,29 @@ const scentMap = {
 
 function openScentFinder() {
 
-  openModal("scentFinderModal");
+  openModal(
+    "scentFinderModal"
+  );
+
 
   const result =
     document.getElementById(
       "scentResult"
     );
 
+
   if (result) {
-    result.style.display = "none";
+    result.style.display =
+      "none";
   }
 
 }
 
 
 document
-  .getElementById("scentFinderBtn")
+  .getElementById(
+    "scentFinderBtn"
+  )
   ?.addEventListener(
     "click",
     openScentFinder
@@ -1378,7 +1769,9 @@ document
 
 
 document
-  .getElementById("openScentFinder")
+  .getElementById(
+    "openScentFinder"
+  )
   ?.addEventListener(
     "click",
     openScentFinder
@@ -1386,17 +1779,18 @@ document
 
 
 document
-  .querySelectorAll(".scent-option")
+  .querySelectorAll(
+    ".scent-option"
+  )
   .forEach(button => {
 
     button.addEventListener(
       "click",
       () => {
 
-        const type =
-          button.dataset.scent;
-
-        showScentResult(type);
+        showScentResult(
+          button.dataset.scent
+        );
 
       }
     );
@@ -1404,7 +1798,9 @@ document
   });
 
 
-function showScentResult(type) {
+function showScentResult(
+  type
+) {
 
   const result =
     document.getElementById(
@@ -1415,12 +1811,15 @@ function showScentResult(type) {
 
 
   const ids =
-    scentMap[type] || [0];
+    scentMap[type] ||
+    [0];
 
 
   const recommended =
     ids
-      .map(id => getProduct(id))
+      .map(id =>
+        getProduct(id)
+      )
       .filter(Boolean);
 
 
@@ -1428,7 +1827,11 @@ function showScentResult(type) {
     recommended[0];
 
 
-  result.style.display = "block";
+  if (!main) return;
+
+
+  result.style.display =
+    "block";
 
 
   result.innerHTML = `
@@ -1437,45 +1840,51 @@ function showScentResult(type) {
       YOUR ZEVORIA MATCH
     </span>
 
+
     <h4>
-      ${escapeHTML(main.name)}
+      ${escapeHTML(
+        main.name
+      )}
     </h4>
 
+
     <p>
-      ${escapeHTML(main.notes)}
+      ${escapeHTML(
+        main.notes
+      )}
     </p>
+
 
     <button
       class="btn btn-dark"
-      onclick="quickView(${main.id})"
+      onclick="
+        quickView(
+          ${main.id}
+        )
+      "
     >
-      Explore ${escapeHTML(main.name)}
-      <i data-lucide="arrow-right"></i>
+
+      Explore
+      ${escapeHTML(
+        main.name
+      )}
+
+      <i
+        data-lucide="arrow-right"
+      ></i>
+
     </button>
 
   `;
 
 
   refreshIcons();
-
 }
 
 
 /* =========================================================
    COUPONS
-   ========================================================= */
-
-/*
-  These coupons currently work for the cart display.
-
-  IMPORTANT:
-  The current Render backend calculates the order total
-  itself and does not yet receive coupon information.
-
-  Therefore the coupon shown here is a frontend preview.
-  We will connect the discount to the server-side order
-  calculation when checkout/backend is upgraded.
-*/
+========================================================= */
 
 const coupons = {
 
@@ -1498,7 +1907,9 @@ const coupons = {
 
 
 document
-  .getElementById("applyCouponBtn")
+  .getElementById(
+    "applyCouponBtn"
+  )
   ?.addEventListener(
     "click",
     applyCoupon
@@ -1518,7 +1929,9 @@ function applyCoupon() {
     );
 
 
-  if (!input || !message) return;
+  if (!input || !message) {
+    return;
+  }
 
 
   const code =
@@ -1532,7 +1945,8 @@ function applyCoupon() {
     message.textContent =
       "Enter a coupon code.";
 
-    message.className = "error";
+    message.className =
+      "error";
 
     return;
 
@@ -1548,54 +1962,70 @@ function applyCoupon() {
     message.textContent =
       "Invalid coupon code.";
 
-    message.className = "error";
+    message.className =
+      "error";
+
 
     appliedCoupon = null;
+
 
     localStorage.removeItem(
       COUPON_KEY
     );
 
+
     updateCartTotals();
 
     return;
-
   }
 
 
   appliedCoupon = {
+
     code,
-    type: coupon.type,
-    value: coupon.value
+
+    type:
+      coupon.type,
+
+    value:
+      coupon.value
+
   };
 
 
   localStorage.setItem(
     COUPON_KEY,
-    JSON.stringify(appliedCoupon)
+    JSON.stringify(
+      appliedCoupon
+    )
   );
 
 
   message.textContent =
     `${code} applied successfully.`;
 
-  message.className = "success";
+  message.className =
+    "success";
 
 
   updateCartTotals();
 
-  toast("Coupon applied.");
+  toast(
+    "Coupon applied."
+  );
 }
 
 
 /* =========================================================
    ACCOUNT
-   ========================================================= */
+========================================================= */
 
 function getUser() {
 
   return JSON.parse(
-    localStorage.getItem(USER_KEY) || "null"
+    localStorage.getItem(
+      USER_KEY
+    ) || "null"
   );
 
 }
@@ -1618,14 +2048,18 @@ function updateAccountUI() {
     );
 
 
-  if (!loggedOut || !loggedIn) return;
+  if (!loggedOut || !loggedIn) {
+    return;
+  }
 
 
   if (user) {
 
-    loggedOut.style.display = "none";
+    loggedOut.style.display =
+      "none";
 
-    loggedIn.style.display = "block";
+    loggedIn.style.display =
+      "block";
 
 
     const name =
@@ -1644,17 +2078,30 @@ function updateAccountUI() {
       );
 
 
-    if (name) name.textContent = user.name || "";
+    if (name) {
+      name.textContent =
+        user.name || "";
+    }
 
-    if (email) email.textContent = user.email || "";
 
-    if (phone) phone.textContent = user.phone || "";
+    if (email) {
+      email.textContent =
+        user.email || "";
+    }
+
+
+    if (phone) {
+      phone.textContent =
+        user.phone || "";
+    }
 
   } else {
 
-    loggedOut.style.display = "block";
+    loggedOut.style.display =
+      "block";
 
-    loggedIn.style.display = "none";
+    loggedIn.style.display =
+      "none";
 
   }
 
@@ -1662,14 +2109,18 @@ function updateAccountUI() {
 
 
 document
-  .getElementById("accountBtn")
+  .getElementById(
+    "accountBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
 
       updateAccountUI();
 
-      openModal("accountModal");
+      openModal(
+        "accountModal"
+      );
 
     }
   );
@@ -1677,10 +2128,12 @@ document
 
 /* =========================================================
    LOGIN
-   ========================================================= */
+========================================================= */
 
 document
-  .getElementById("loginForm")
+  .getElementById(
+    "loginForm"
+  )
   ?.addEventListener(
     "submit",
     async event => {
@@ -1690,13 +2143,18 @@ document
 
       const email =
         document
-          .getElementById("loginEmail")
+          .getElementById(
+            "loginEmail"
+          )
           .value
           .trim();
 
+
       const password =
         document
-          .getElementById("loginPassword")
+          .getElementById(
+            "loginPassword"
+          )
           .value;
 
 
@@ -1706,17 +2164,21 @@ document
           await fetch(
             `${API_BASE}/api/auth/login`,
             {
-              method: "POST",
+
+              method:
+                "POST",
 
               headers: {
                 "Content-Type":
                   "application/json"
               },
 
-              body: JSON.stringify({
-                email,
-                password
-              })
+              body:
+                JSON.stringify({
+                  email,
+                  password
+                })
+
             }
           );
 
@@ -1728,7 +2190,6 @@ document
         if (!response.ok) {
 
           throw new Error(
-            data.message ||
             data.error ||
             "Login failed."
           );
@@ -1738,13 +2199,18 @@ document
 
         localStorage.setItem(
           USER_KEY,
-          JSON.stringify(data.user)
+          JSON.stringify(
+            data.user
+          )
         );
 
 
         updateAccountUI();
 
-        toast("Welcome back to ZEVORIA.");
+        toast(
+          "Welcome back to ZEVORIA."
+        );
+
 
       } catch (error) {
 
@@ -1761,10 +2227,12 @@ document
 
 /* =========================================================
    SIGNUP
-   ========================================================= */
+========================================================= */
 
 document
-  .getElementById("signupForm")
+  .getElementById(
+    "signupForm"
+  )
   ?.addEventListener(
     "submit",
     async event => {
@@ -1774,25 +2242,36 @@ document
 
       const name =
         document
-          .getElementById("signupName")
+          .getElementById(
+            "signupName"
+          )
           .value
           .trim();
+
 
       const email =
         document
-          .getElementById("signupEmail")
+          .getElementById(
+            "signupEmail"
+          )
           .value
           .trim();
+
 
       const phone =
         document
-          .getElementById("signupPhone")
+          .getElementById(
+            "signupPhone"
+          )
           .value
           .trim();
 
+
       const password =
         document
-          .getElementById("signupPassword")
+          .getElementById(
+            "signupPassword"
+          )
           .value;
 
 
@@ -1802,19 +2281,28 @@ document
           await fetch(
             `${API_BASE}/api/auth/signup`,
             {
-              method: "POST",
+
+              method:
+                "POST",
 
               headers: {
                 "Content-Type":
                   "application/json"
               },
 
-              body: JSON.stringify({
-                name,
-                email,
-                phone,
-                password
-              })
+              body:
+                JSON.stringify({
+
+                  name,
+
+                  email,
+
+                  phone,
+
+                  password
+
+                })
+
             }
           );
 
@@ -1826,7 +2314,6 @@ document
         if (!response.ok) {
 
           throw new Error(
-            data.message ||
             data.error ||
             "Account creation failed."
           );
@@ -1836,7 +2323,9 @@ document
 
         localStorage.setItem(
           USER_KEY,
-          JSON.stringify(data.user)
+          JSON.stringify(
+            data.user
+          )
         );
 
 
@@ -1862,47 +2351,73 @@ document
 
 /* =========================================================
    LOGIN / SIGNUP SWITCH
-   ========================================================= */
+========================================================= */
 
 document
-  .getElementById("showSignupBtn")
+  .getElementById(
+    "showSignupBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
 
       document
-        .getElementById("loginForm")
-        .style.display = "none";
+        .getElementById(
+          "loginForm"
+        )
+        .style.display =
+        "none";
+
 
       document
-        .getElementById("showSignupBtn")
-        .style.display = "none";
+        .getElementById(
+          "showSignupBtn"
+        )
+        .style.display =
+        "none";
+
 
       document
-        .getElementById("signupForm")
-        .style.display = "block";
+        .getElementById(
+          "signupForm"
+        )
+        .style.display =
+        "block";
 
     }
   );
 
 
 document
-  .getElementById("showLoginBtn")
+  .getElementById(
+    "showLoginBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
 
       document
-        .getElementById("signupForm")
-        .style.display = "none";
+        .getElementById(
+          "signupForm"
+        )
+        .style.display =
+        "none";
+
 
       document
-        .getElementById("loginForm")
-        .style.display = "block";
+        .getElementById(
+          "loginForm"
+        )
+        .style.display =
+        "block";
+
 
       document
-        .getElementById("showSignupBtn")
-        .style.display = "block";
+        .getElementById(
+          "showSignupBtn"
+        )
+        .style.display =
+        "block";
 
     }
   );
@@ -1910,10 +2425,12 @@ document
 
 /* =========================================================
    LOGOUT
-   ========================================================= */
+========================================================= */
 
 document
-  .getElementById("logoutBtn")
+  .getElementById(
+    "logoutBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
@@ -1922,9 +2439,13 @@ document
         USER_KEY
       );
 
+
       updateAccountUI();
 
-      toast("You have been signed out.");
+
+      toast(
+        "You have been signed out."
+      );
 
     }
   );
@@ -1932,24 +2453,32 @@ document
 
 /* =========================================================
    MOBILE MENU
-   ========================================================= */
+========================================================= */
 
 document
-  .getElementById("menuBtn")
+  .getElementById(
+    "menuBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
 
       document
-        .getElementById("nav")
-        ?.classList.toggle("open");
+        .getElementById(
+          "nav"
+        )
+        ?.classList.toggle(
+          "open"
+        );
 
     }
   );
 
 
 document
-  .querySelectorAll(".nav a")
+  .querySelectorAll(
+    ".nav a"
+  )
   .forEach(link => {
 
     link.addEventListener(
@@ -1957,8 +2486,12 @@ document
       () => {
 
         document
-          .getElementById("nav")
-          ?.classList.remove("open");
+          .getElementById(
+            "nav"
+          )
+          ?.classList.remove(
+            "open"
+          );
 
       }
     );
@@ -1968,27 +2501,37 @@ document
 
 /* =========================================================
    ATTAR BUTTON
-   ========================================================= */
+========================================================= */
 
 document
-  .getElementById("attarBtn")
+  .getElementById(
+    "attarBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
 
-      currentFilter = "unisex";
+      currentFilter =
+        "unisex";
 
-      currentSearch = "";
+      currentSearch =
+        "";
+
 
       if (shopSearch) {
-        shopSearch.value = "";
+        shopSearch.value =
+          "";
       }
 
 
       document
-        .querySelectorAll(".filter")
+        .querySelectorAll(
+          ".filter"
+        )
         .forEach(btn =>
-          btn.classList.remove("active")
+          btn.classList.remove(
+            "active"
+          )
         );
 
 
@@ -1996,13 +2539,18 @@ document
         .querySelector(
           '.filter[data-filter="unisex"]'
         )
-        ?.classList.add("active");
+        ?.classList.add(
+          "active"
+        );
 
 
       document
-        .getElementById("shop")
+        .getElementById(
+          "shop"
+        )
         ?.scrollIntoView({
-          behavior: "smooth"
+          behavior:
+            "smooth"
         });
 
 
@@ -2014,20 +2562,25 @@ document
 
 /* =========================================================
    NEWSLETTER
-   ========================================================= */
+========================================================= */
 
 document
-  .getElementById("newsletter")
+  .getElementById(
+    "newsletter"
+  )
   ?.addEventListener(
     "submit",
     event => {
 
       event.preventDefault();
 
+
       const input =
-        event.currentTarget.querySelector(
-          "input"
-        );
+        event.currentTarget
+          .querySelector(
+            "input"
+          );
+
 
       if (!input) return;
 
@@ -2042,7 +2595,9 @@ document
       );
 
 
-      input.value = "";
+      input.value =
+        "";
+
 
       toast(
         "You're on the ZEVORIA list."
@@ -2054,10 +2609,12 @@ document
 
 /* =========================================================
    CHECKOUT
-   ========================================================= */
+========================================================= */
 
 document
-  .getElementById("checkoutBtn")
+  .getElementById(
+    "checkoutBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
@@ -2073,11 +2630,6 @@ document
       }
 
 
-      /*
-        Checkout remains on the dedicated
-        checkout.html page.
-      */
-
       window.location.href =
         "checkout.html";
 
@@ -2086,10 +2638,12 @@ document
 
 
 /* =========================================================
-   SAVE ORDER LOCALLY
-   ========================================================= */
+   ORDER HISTORY
+========================================================= */
 
-function saveLocalOrder(orderData) {
+function saveLocalOrder(
+  orderData
+) {
 
   const orders =
     getOrders();
@@ -2098,50 +2652,85 @@ function saveLocalOrder(orderData) {
   const exists =
     orders.some(
       order =>
-        String(order.orderId) ===
-        String(orderData.orderId)
+        String(
+          order.orderId
+        ) ===
+        String(
+          orderData.orderId
+        )
     );
 
 
   if (!exists) {
 
-    orders.unshift({
-      orderId: orderData.orderId,
-      total: orderData.total,
-      createdAt:
-        orderData.createdAt ||
-        new Date().toISOString()
-    });
+    orders.unshift(
+      orderData
+    );
+
+  } else {
+
+    /*
+      If the order already exists,
+      update its token/details instead
+      of creating a duplicate.
+    */
+
+    const index =
+      orders.findIndex(
+        order =>
+          String(
+            order.orderId
+          ) ===
+          String(
+            orderData.orderId
+          )
+      );
 
 
-    saveOrders(orders);
+    if (index !== -1) {
+
+      orders[index] = {
+        ...orders[index],
+        ...orderData
+      };
+
+    }
 
   }
+
+
+  saveOrders(
+    orders
+  );
 
 }
 
 
-/* =========================================================
-   ORDER HISTORY
-   ========================================================= */
-
 document
-  .getElementById("viewOrdersBtn")
+  .getElementById(
+    "viewOrdersBtn"
+  )
   ?.addEventListener(
     "click",
     () => {
 
-      closeModal("accountModal");
+      closeModal(
+        "accountModal"
+      );
+
 
       renderOrderHistory();
 
-      openModal("ordersModal");
+
+      openModal(
+        "ordersModal"
+      );
 
     }
   );
 
 
-async function renderOrderHistory() {
+function renderOrderHistory() {
 
   const container =
     document.getElementById(
@@ -2158,6 +2747,7 @@ async function renderOrderHistory() {
   if (!orders.length) {
 
     container.innerHTML = `
+
       <div class="empty-products">
 
         <h3>
@@ -2169,6 +2759,7 @@ async function renderOrderHistory() {
         </p>
 
       </div>
+
     `;
 
     return;
@@ -2176,82 +2767,231 @@ async function renderOrderHistory() {
 
 
   container.innerHTML =
-    orders.map(order => `
+    orders
+      .map(
+        order => `
 
-      <div class="order-card">
+          <div
+            class="order-card"
+          >
 
-        <div class="order-card-head">
+            <div
+              class="order-card-head"
+            >
 
-          <div>
+              <div>
 
-            <div class="order-number">
-              Order #${escapeHTML(order.orderId)}
+                <div
+                  class="order-number"
+                >
+                  Order #${escapeHTML(
+                    order.orderId
+                  )}
+                </div>
+
+
+                <div
+                  class="order-date"
+                >
+                  ${formatDate(
+                    order.createdAt
+                  )}
+                </div>
+
+              </div>
+
+
+              <span
+                class="order-status"
+              >
+                ${
+                  escapeHTML(
+                    order.status ||
+                    "pending"
+                  )
+                }
+              </span>
+
             </div>
 
-            <div class="order-date">
-              ${formatDate(order.createdAt)}
+
+            <div
+              class="order-total"
+            >
+              ${money(
+                order.total
+              )}
+            </div>
+
+
+            <div
+              class="order-card-actions"
+            >
+
+              <button
+                onclick="
+                  trackOrder(
+                    '${escapeHTML(
+                      order.orderId
+                    )}'
+                  )
+                "
+              >
+                Track order
+              </button>
+
+
+              <button
+                onclick="
+                  reorder(
+                    '${escapeHTML(
+                      order.orderId
+                    )}'
+                  )
+                "
+              >
+                Reorder
+              </button>
+
             </div>
 
           </div>
 
-          <span class="order-status">
-            Saved order
-          </span>
-
-        </div>
-
-
-        <div class="order-total">
-          ${money(order.total)}
-        </div>
-
-
-        <div class="order-card-actions">
-
-          <button
-            onclick="trackOrder('${escapeHTML(order.orderId)}')"
-          >
-            Track order
-          </button>
-
-          <button
-            onclick="reorder('${escapeHTML(order.orderId)}')"
-          >
-            Reorder
-          </button>
-
-        </div>
-
-      </div>
-
-    `).join("");
-
+        `
+      )
+      .join("");
 }
 
 
-function formatDate(date) {
+function formatDate(
+  date
+) {
 
   if (!date) return "";
 
-  return new Date(date).toLocaleString(
+  const parsed =
+    new Date(date);
+
+
+  if (
+    Number.isNaN(
+      parsed.getTime()
+    )
+  ) {
+    return "";
+  }
+
+
+  return parsed.toLocaleString(
     "en-IN",
     {
-      day: "2-digit",
-      month: "short",
-      year: "numeric"
+      day:
+        "2-digit",
+
+      month:
+        "short",
+
+      year:
+        "numeric",
+
+      hour:
+        "2-digit",
+
+      minute:
+        "2-digit"
     }
+  );
+}
+
+
+/* =========================================================
+   FIND SAVED ORDER
+========================================================= */
+
+function getSavedOrder(
+  orderId
+) {
+
+  const orders =
+    getOrders();
+
+
+  return orders.find(
+    order =>
+      String(
+        order.orderId
+      ) ===
+      String(orderId)
   );
 
 }
 
 
 /* =========================================================
-   TRACK ORDER
-   ========================================================= */
+   SECURE TRACK ORDER
+========================================================= */
 
-async function trackOrder(orderId) {
+async function trackOrder(
+  orderId
+) {
 
-  openModal("trackingModal");
+  const savedOrder =
+    getSavedOrder(
+      orderId
+    );
+
+
+  /*
+    The backend now requires the private
+    order token. Do NOT request an order
+    without it.
+  */
+
+  if (
+    !savedOrder ||
+    !savedOrder.orderToken
+  ) {
+
+    openModal(
+      "trackingModal"
+    );
+
+
+    const container =
+      document.getElementById(
+        "trackingContent"
+      );
+
+
+    if (container) {
+
+      container.innerHTML = `
+
+        <div class="empty-products">
+
+          <h3>
+            Tracking information unavailable
+          </h3>
+
+          <p>
+            This order does not have
+            a saved private tracking token
+            on this browser.
+          </p>
+
+        </div>
+
+      `;
+
+    }
+
+    return;
+  }
+
+
+  openModal(
+    "trackingModal"
+  );
 
 
   const container =
@@ -2259,13 +2999,16 @@ async function trackOrder(orderId) {
       "trackingContent"
     );
 
+
   if (!container) return;
 
 
   container.innerHTML = `
+
     <p class="muted">
       Loading order information...
     </p>
+
   `;
 
 
@@ -2273,7 +3016,22 @@ async function trackOrder(orderId) {
 
     const response =
       await fetch(
-        `${API_BASE}/api/orders/${encodeURIComponent(orderId)}`
+        `${API_BASE}/api/orders/${encodeURIComponent(
+          orderId
+        )}`,
+        {
+
+          method:
+            "GET",
+
+          headers: {
+
+            "X-Order-Token":
+              savedOrder.orderToken
+
+          }
+
+        }
       );
 
 
@@ -2284,7 +3042,6 @@ async function trackOrder(orderId) {
     if (!response.ok) {
 
       throw new Error(
-        data.message ||
         data.error ||
         "Order not found."
       );
@@ -2292,7 +3049,46 @@ async function trackOrder(orderId) {
     }
 
 
-    renderTracking(data);
+    /*
+      IMPORTANT:
+      New backend returns the order
+      directly, not { order, items }.
+    */
+
+    renderTracking(
+      data
+    );
+
+
+    /*
+      Keep local status updated.
+    */
+
+    const orders =
+      getOrders();
+
+
+    const index =
+      orders.findIndex(
+        order =>
+          String(
+            order.orderId
+          ) ===
+          String(orderId)
+      );
+
+
+    if (index !== -1) {
+
+      orders[index].status =
+        data.status;
+
+
+      saveOrders(
+        orders
+      );
+
+    }
 
 
   } catch (error) {
@@ -2306,7 +3102,9 @@ async function trackOrder(orderId) {
         </h3>
 
         <p>
-          ${escapeHTML(error.message)}
+          ${escapeHTML(
+            error.message
+          )}
         </p>
 
       </div>
@@ -2318,7 +3116,13 @@ async function trackOrder(orderId) {
 }
 
 
-function renderTracking(order) {
+/* =========================================================
+   RENDER TRACKING
+========================================================= */
+
+function renderTracking(
+  order
+) {
 
   const container =
     document.getElementById(
@@ -2336,27 +3140,47 @@ function renderTracking(order) {
   ];
 
 
+  const currentStatus =
+    String(
+      order.status ||
+      "pending"
+    ).toLowerCase();
+
+
   let currentIndex =
     statuses.indexOf(
-      String(order.order.status)
-        .toLowerCase()
+      currentStatus
     );
 
 
-  if (currentIndex < 0) {
+  if (
+    currentIndex < 0
+  ) {
+
     currentIndex = 0;
+
   }
 
 
   const labels = {
-    pending: "Order received",
-    confirmed: "Order confirmed",
-    shipped: "Shipped",
-    delivered: "Delivered"
+
+    pending:
+      "Order received",
+
+    confirmed:
+      "Order confirmed",
+
+    shipped:
+      "Shipped",
+
+    delivered:
+      "Delivered"
+
   };
 
 
   const descriptions = {
+
     pending:
       "Your order has been received and is waiting for confirmation.",
 
@@ -2368,6 +3192,7 @@ function renderTracking(order) {
 
     delivered:
       "Your order has been delivered."
+
   };
 
 
@@ -2377,59 +3202,92 @@ function renderTracking(order) {
       ORDER TRACKING
     </span>
 
-    <h3 class="tracking-order-number">
-      #${escapeHTML(order.order.id)}
+
+    <h3
+      class="tracking-order-number"
+    >
+      #${escapeHTML(
+        order.id
+      )}
     </h3>
 
-    <p class="tracking-total">
-      Total: ${money(order.order.total)}
+
+    <p
+      class="tracking-total"
+    >
+      Total:
+      ${money(
+        order.total
+      )}
     </p>
 
 
     <div class="timeline">
 
-      ${statuses.map(
-        (status, index) => `
+      ${statuses
+        .map(
+          (
+            status,
+            index
+          ) => `
 
-          <div
-            class="timeline-step ${
-              index <= currentIndex
-                ? "active"
-                : ""
-            }"
-          >
+            <div
+              class="
+                timeline-step
+                ${
+                  index <=
+                  currentIndex
+                    ? "active"
+                    : ""
+                }
+              "
+            >
 
-            <div class="timeline-dot">
+              <div
+                class="timeline-dot"
+              >
 
-              ${
-                index <= currentIndex
-                  ? `<i data-lucide="check"></i>`
-                  : ""
-              }
+                ${
+                  index <=
+                  currentIndex
+                    ? `
+                      <i
+                        data-lucide="check"
+                      ></i>
+                    `
+                    : ""
+                }
+
+              </div>
+
+
+              <h4>
+                ${labels[status]}
+              </h4>
+
+
+              <p>
+                ${descriptions[status]}
+              </p>
 
             </div>
 
-
-            <h4>
-              ${labels[status]}
-            </h4>
-
-            <p>
-              ${descriptions[status]}
-            </p>
-
-          </div>
-
-        `
-      ).join("")}
+          `
+        )
+        .join("")}
 
     </div>
 
 
     ${
-      order.order.status === "cancelled"
+      currentStatus ===
+      "cancelled"
+
         ? `
-          <div class="scent-result">
+
+          <div
+            class="scent-result"
+          >
 
             <h4>
               Order cancelled
@@ -2440,7 +3298,9 @@ function renderTracking(order) {
             </p>
 
           </div>
+
         `
+
         : ""
     }
 
@@ -2448,21 +3308,57 @@ function renderTracking(order) {
 
 
   refreshIcons();
-
 }
 
 
 /* =========================================================
-   REORDER
-   ========================================================= */
+   SECURE REORDER
+========================================================= */
 
-async function reorder(orderId) {
+async function reorder(
+  orderId
+) {
+
+  const savedOrder =
+    getSavedOrder(
+      orderId
+    );
+
+
+  if (
+    !savedOrder ||
+    !savedOrder.orderToken
+  ) {
+
+    toast(
+      "This order cannot be accessed on this browser."
+    );
+
+    return;
+
+  }
+
 
   try {
 
     const response =
       await fetch(
-        `${API_BASE}/api/orders/${encodeURIComponent(orderId)}`
+        `${API_BASE}/api/orders/${encodeURIComponent(
+          orderId
+        )}`,
+        {
+
+          method:
+            "GET",
+
+          headers: {
+
+            "X-Order-Token":
+              savedOrder.orderToken
+
+          }
+
+        }
       );
 
 
@@ -2473,7 +3369,6 @@ async function reorder(orderId) {
     if (!response.ok) {
 
       throw new Error(
-        data.message ||
         data.error ||
         "Unable to load order."
       );
@@ -2488,27 +3383,41 @@ async function reorder(orderId) {
     let added = 0;
 
 
-    items.forEach(item => {
+    items.forEach(
+      item => {
 
-      const product =
-        getProductByBackendId(
-          item.product_id ||
-          item.productId
+        const backendProductId =
+          item.product_id ??
+          item.productId;
+
+
+        const product =
+          getProductByBackendId(
+            backendProductId
+          );
+
+
+        if (!product) {
+          return;
+        }
+
+
+        const quantity =
+          Number(
+            item.qty
+          ) || 1;
+
+
+        addToCart(
+          product.id,
+          quantity
         );
 
 
-      if (!product) return;
+        added++;
 
-
-      addToCart(
-        product.id,
-        Number(item.qty || 1)
-      );
-
-
-      added++;
-
-    });
+      }
+    );
 
 
     if (added) {
@@ -2517,7 +3426,9 @@ async function reorder(orderId) {
         "Previous order added to your bag."
       );
 
+
       closeAll();
+
 
       setTimeout(
         openCart,
@@ -2527,7 +3438,7 @@ async function reorder(orderId) {
     } else {
 
       toast(
-        "Some products from this order are no longer available."
+        "Products from this order are no longer available."
       );
 
     }
@@ -2546,35 +3457,44 @@ async function reorder(orderId) {
 
 
 /* =========================================================
-   ORDER TRACKING FROM LOCAL HISTORY
-   ========================================================= */
+   ORDER FROM CHECKOUT
+========================================================= */
 
 function rememberOrderFromCheckout(
   orderId,
-  total
+  total,
+  orderToken
 ) {
 
   saveLocalOrder({
+
     orderId,
+
+    orderToken,
+
     total,
+
+    paymentMethod:
+      "COD",
+
+    status:
+      "pending",
+
     createdAt:
       new Date().toISOString()
+
   });
 
 }
 
 
-/*
-  checkout.js can call this function after
-  a successful order.
-*/
 window.rememberOrderFromCheckout =
   rememberOrderFromCheckout;
 
 
 /* =========================================================
-   REVIEWS / RATINGS — LOCAL CUSTOMER REVIEWS
-   ========================================================= */
+   REVIEWS
+========================================================= */
 
 function getReviews() {
 
@@ -2587,35 +3507,48 @@ function getReviews() {
 }
 
 
-function saveReview(review) {
+function saveReview(
+  review
+) {
 
   const reviews =
     getReviews();
 
-  reviews.push(review);
+
+  reviews.push(
+    review
+  );
+
 
   localStorage.setItem(
     REVIEWS_KEY,
-    JSON.stringify(reviews)
+    JSON.stringify(
+      reviews
+    )
   );
 
 }
 
 
-function getProductReviews(productId) {
+function getProductReviews(
+  productId
+) {
 
-  return getReviews().filter(
-    review =>
-      Number(review.productId) ===
-      Number(productId)
-  );
+  return getReviews()
+    .filter(
+      review =>
+        Number(
+          review.productId
+        ) ===
+        Number(productId)
+    );
 
 }
 
 
 /* =========================================================
-   THEME SUPPORT
-   ========================================================= */
+   THEME
+========================================================= */
 
 function loadTheme() {
 
@@ -2625,9 +3558,13 @@ function loadTheme() {
     );
 
 
-  if (theme === "dark") {
+  if (
+    theme === "dark"
+  ) {
 
-    document.body.classList.add("dark");
+    document.body.classList.add(
+      "dark"
+    );
 
   }
 
@@ -2644,7 +3581,9 @@ function toggleTheme() {
 
   localStorage.setItem(
     THEME_KEY,
-    dark ? "dark" : "light"
+    dark
+      ? "dark"
+      : "light"
   );
 
 }
@@ -2655,8 +3594,8 @@ window.toggleZevoriaTheme =
 
 
 /* =========================================================
-   AUTO SAVE CURRENT CART
-   ========================================================= */
+   AUTO SAVE
+========================================================= */
 
 window.addEventListener(
   "beforeunload",
@@ -2665,8 +3604,50 @@ window.addEventListener(
 
 
 /* =========================================================
-   INITIALIZE
-   ========================================================= */
+   HANDLE TRACKING LINK
+========================================================= */
+
+function checkTrackingParameter() {
+
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+
+
+  const trackId =
+    params.get(
+      "track"
+    );
+
+
+  if (!trackId) {
+    return;
+  }
+
+
+  /*
+    Give the page a moment to finish
+    loading its HTML and modals.
+  */
+
+  setTimeout(
+    () => {
+
+      trackOrder(
+        trackId
+      );
+
+    },
+    500
+  );
+
+}
+
+
+ /* =========================================================
+    INITIALIZE
+ ========================================================= */
 
 function initialize() {
 
@@ -2684,6 +3665,8 @@ function initialize() {
 
   refreshIcons();
 
+  checkTrackingParameter();
+
 }
 
 
@@ -2692,13 +3675,19 @@ initialize();
 
 /* =========================================================
    GLOBAL FUNCTIONS
-   ========================================================= */
+========================================================= */
 
-window.addToCart = addToCart;
-window.changeQty = changeQty;
-window.removeFromCart = removeFromCart;
+window.addToCart =
+  addToCart;
 
-window.quickView = quickView;
+window.changeQty =
+  changeQty;
+
+window.removeFromCart =
+  removeFromCart;
+
+window.quickView =
+  quickView;
 
 window.toggleWishlist =
   toggleWishlist;
