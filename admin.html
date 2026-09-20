@@ -1,12 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>ZEVORIA Admin Dashboard</title>
 
   <style>
+
     * {
       box-sizing: border-box;
       margin: 0;
@@ -66,6 +73,18 @@
       margin-bottom: 30px;
     }
 
+    .security-note {
+      background: #101010;
+      border: 1px solid #292929;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 22px;
+      color: #888;
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
     label {
       display: block;
       margin-bottom: 8px;
@@ -109,6 +128,11 @@
 
     .btn-gold:hover {
       background: #e5c354;
+    }
+
+    .btn-gold:disabled {
+      opacity: .6;
+      cursor: not-allowed;
     }
 
     .error {
@@ -180,6 +204,38 @@
 
     .dashboard-title p {
       color: #999;
+    }
+
+    /* =========================
+       SECURITY BAR
+    ========================= */
+
+    .security-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      background: #111;
+      border: 1px solid #292929;
+      border-radius: 10px;
+
+      padding: 12px 15px;
+      margin-bottom: 25px;
+
+      color: #999;
+      font-size: 13px;
+    }
+
+    .security-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2ecc71;
+      box-shadow: 0 0 8px rgba(46,204,113,.5);
+    }
+
+    .security-text {
+      color: #aaa;
     }
 
     /* =========================
@@ -299,6 +355,13 @@
     .customer-name {
       font-weight: bold;
       margin-bottom: 5px;
+    }
+
+    .customer-email {
+      color: #aaa;
+      font-size: 12px;
+      margin-bottom: 4px;
+      word-break: break-word;
     }
 
     .phone {
@@ -532,6 +595,7 @@
     }
 
   </style>
+
 </head>
 
 <body>
@@ -541,7 +605,10 @@
      LOGIN PAGE
 ========================= -->
 
-<div id="loginView" class="login-page">
+<div
+  id="loginView"
+  class="login-page"
+>
 
   <div class="login-box">
 
@@ -550,7 +617,12 @@
     </div>
 
     <div class="login-subtitle">
-      Admin Dashboard
+      Secure Admin Dashboard
+    </div>
+
+    <div class="security-note">
+      🔒 Your admin key is verified by the ZEVORIA
+      server and is not stored in the page.
     </div>
 
     <form id="adminLoginForm">
@@ -565,6 +637,7 @@
           type="password"
           id="adminKey"
           placeholder="Enter admin key"
+          autocomplete="current-password"
           required
         >
 
@@ -573,6 +646,7 @@
       <button
         type="submit"
         class="btn btn-gold"
+        id="loginButton"
       >
         Login to Dashboard
       </button>
@@ -593,7 +667,10 @@
      DASHBOARD
 ========================= -->
 
-<div id="dashboardView" class="hidden">
+<div
+  id="dashboardView"
+  class="hidden"
+>
 
   <header class="admin-header">
 
@@ -633,6 +710,17 @@
       <p>
         Manage your ZEVORIA orders
       </p>
+
+    </div>
+
+
+    <div class="security-bar">
+
+      <span class="security-dot"></span>
+
+      <span class="security-text">
+        Secure administrator session active
+      </span>
 
     </div>
 
@@ -742,7 +830,7 @@
 
 
     <!-- =========================
-         SEARCH / FILTER
+         CONTROLS
     ========================= -->
 
     <section class="controls">
@@ -879,8 +967,18 @@
     "https://zevoria-backend.onrender.com";
 
 
-  let adminKey =
-    localStorage.getItem("zevoriaAdminKey") || "";
+  /*
+    IMPORTANT:
+
+    We now store the temporary ADMIN TOKEN,
+    NOT the actual ADMIN_KEY.
+  */
+
+  let adminToken =
+    sessionStorage.getItem(
+      "zevoriaAdminToken"
+    ) || "";
+
 
   let allOrders = [];
 
@@ -890,31 +988,70 @@
   ========================= */
 
   const loginView =
-    document.getElementById("loginView");
+    document.getElementById(
+      "loginView"
+    );
 
   const dashboardView =
-    document.getElementById("dashboardView");
+    document.getElementById(
+      "dashboardView"
+    );
 
   const adminLoginForm =
-    document.getElementById("adminLoginForm");
+    document.getElementById(
+      "adminLoginForm"
+    );
 
   const adminKeyInput =
-    document.getElementById("adminKey");
+    document.getElementById(
+      "adminKey"
+    );
 
   const loginError =
-    document.getElementById("loginError");
+    document.getElementById(
+      "loginError"
+    );
+
+  const loginButton =
+    document.getElementById(
+      "loginButton"
+    );
 
   const ordersBody =
-    document.getElementById("ordersBody");
+    document.getElementById(
+      "ordersBody"
+    );
 
   const emptyOrders =
-    document.getElementById("emptyOrders");
+    document.getElementById(
+      "emptyOrders"
+    );
 
   const searchInput =
-    document.getElementById("searchInput");
+    document.getElementById(
+      "searchInput"
+    );
 
   const statusFilter =
-    document.getElementById("statusFilter");
+    document.getElementById(
+      "statusFilter"
+    );
+
+
+  /* =========================
+     AUTH HEADERS
+  ========================= */
+
+  function authHeaders() {
+
+    return {
+
+      "Authorization":
+        `Bearer ${adminToken}`
+
+    };
+
+  }
 
 
   /* =========================
@@ -930,7 +1067,9 @@
         currency: "INR",
         maximumFractionDigits: 0
       }
-    ).format(Number(value) || 0);
+    ).format(
+      Number(value) || 0
+    );
 
   }
 
@@ -963,11 +1102,20 @@
 
     const date =
       new Date(
-        value.replace(" ", "T") + "Z"
+        value.replace(
+          " ",
+          "T"
+        ) + "Z"
       );
 
-    if (Number.isNaN(date.getTime())) {
+    if (
+      Number.isNaN(
+        date.getTime()
+      )
+    ) {
+
       return value;
+
     }
 
     return date.toLocaleString(
@@ -988,23 +1136,33 @@
   function showToast(message) {
 
     const toast =
-      document.getElementById("toast");
+      document.getElementById(
+        "toast"
+      );
 
-    toast.textContent = message;
+    toast.textContent =
+      message;
 
-    toast.classList.add("show");
+    toast.classList.add(
+      "show"
+    );
 
-    setTimeout(() => {
+    setTimeout(
+      () => {
 
-      toast.classList.remove("show");
+        toast.classList.remove(
+          "show"
+        );
 
-    }, 2500);
+      },
+      2500
+    );
 
   }
 
 
   /* =========================
-     LOGIN
+     ADMIN LOGIN
   ========================= */
 
   adminLoginForm.addEventListener(
@@ -1023,43 +1181,87 @@
       loginError.textContent =
         "Checking...";
 
+      loginButton.disabled =
+        true;
+
+      loginButton.textContent =
+        "Signing in...";
+
 
       try {
 
+        /*
+          Send the admin key ONLY to the
+          backend login endpoint.
+        */
+
         const response =
           await fetch(
-            `${API_BASE}/api/admin/orders`,
+            `${API_BASE}/api/admin/login`,
             {
+              method: "POST",
+
               headers: {
-                "x-admin-key": key
-              }
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify({
+                  key
+                })
             }
           );
+
+
+        const data =
+          await response.json();
 
 
         if (!response.ok) {
 
           loginError.textContent =
-            "Invalid admin key.";
+            data.error ||
+            "Invalid admin credentials.";
 
           return;
 
         }
 
 
-        adminKey = key;
+        /*
+          Store temporary token.
 
-        localStorage.setItem(
-          "zevoriaAdminKey",
-          adminKey
+          The actual ADMIN_KEY is NOT stored.
+        */
+
+        adminToken =
+          data.token;
+
+        sessionStorage.setItem(
+          "zevoriaAdminToken",
+          adminToken
         );
 
 
+        /*
+          Remove the key from memory/UI
+          immediately after authentication.
+        */
+
+        adminKeyInput.value = "";
+
         loginError.textContent = "";
 
-        loginView.classList.add("hidden");
 
-        dashboardView.classList.remove("hidden");
+        loginView.classList.add(
+          "hidden"
+        );
+
+        dashboardView.classList.remove(
+          "hidden"
+        );
+
 
         await loadOrders();
 
@@ -1067,10 +1269,22 @@
 
       catch (error) {
 
-        console.error(error);
+        console.error(
+          error
+        );
 
         loginError.textContent =
-          "Could not connect to backend.";
+          "Could not connect to ZEVORIA server.";
+
+      }
+
+      finally {
+
+        loginButton.disabled =
+          false;
+
+        loginButton.textContent =
+          "Login to Dashboard";
 
       }
 
@@ -1090,16 +1304,20 @@
         await fetch(
           `${API_BASE}/api/admin/orders`,
           {
-            headers: {
-              "x-admin-key": adminKey
-            }
+            headers:
+              authHeaders()
           }
         );
 
 
-      if (response.status === 401) {
+      if (
+        response.status === 401 ||
+        response.status === 403
+      ) {
 
-        logout();
+        logout(
+          "Your admin session has expired."
+        );
 
         return;
 
@@ -1109,7 +1327,7 @@
       if (!response.ok) {
 
         throw new Error(
-          "Could not load orders"
+          "Could not load orders."
         );
 
       }
@@ -1127,7 +1345,9 @@
 
     catch (error) {
 
-      console.error(error);
+      console.error(
+        error
+      );
 
       showToast(
         "Could not load orders."
@@ -1152,11 +1372,18 @@
       allOrders
         .filter(
           order =>
-            order.status !== "cancelled"
+            order.status !==
+            "cancelled"
         )
         .reduce(
-          (sum, order) =>
-            sum + Number(order.total || 0),
+          (
+            sum,
+            order
+          ) =>
+            sum +
+            Number(
+              order.total || 0
+            ),
           0
         );
 
@@ -1164,65 +1391,75 @@
     const pending =
       allOrders.filter(
         order =>
-          order.status === "pending"
+          order.status ===
+          "pending"
       ).length;
 
 
     const confirmed =
       allOrders.filter(
         order =>
-          order.status === "confirmed"
+          order.status ===
+          "confirmed"
       ).length;
 
 
     const shipped =
       allOrders.filter(
         order =>
-          order.status === "shipped"
+          order.status ===
+          "shipped"
       ).length;
 
 
     const delivered =
       allOrders.filter(
         order =>
-          order.status === "delivered"
+          order.status ===
+          "delivered"
       ).length;
 
 
     document.getElementById(
       "totalOrders"
-    ).textContent = total;
+    ).textContent =
+      total;
 
 
     document.getElementById(
       "totalSales"
-    ).textContent = money(sales);
+    ).textContent =
+      money(sales);
 
 
     document.getElementById(
       "pendingOrders"
-    ).textContent = pending;
+    ).textContent =
+      pending;
 
 
     document.getElementById(
       "confirmedOrders"
-    ).textContent = confirmed;
+    ).textContent =
+      confirmed;
 
 
     document.getElementById(
       "shippedOrders"
-    ).textContent = shipped;
+    ).textContent =
+      shipped;
 
 
     document.getElementById(
       "deliveredOrders"
-    ).textContent = delivered;
+    ).textContent =
+      delivered;
 
   }
 
 
   /* =========================
-     FILTER ORDERS
+     FILTER
   ========================= */
 
   function getFilteredOrders() {
@@ -1244,7 +1481,9 @@
           status !== "all" &&
           order.status !== status
         ) {
+
           return false;
+
         }
 
 
@@ -1255,7 +1494,10 @@
 
         const productText =
           (order.items || [])
-            .map(item => item.name)
+            .map(
+              item =>
+                item.name
+            )
             .join(" ");
 
 
@@ -1264,6 +1506,8 @@
           order.id,
 
           order.customer_name,
+
+          order.customer_email,
 
           order.phone,
 
@@ -1278,7 +1522,9 @@
           .toLowerCase();
 
 
-        return text.includes(search);
+        return text.includes(
+          search
+        );
 
       }
     );
@@ -1308,7 +1554,8 @@
 
     if (!orders.length) {
 
-      ordersBody.innerHTML = "";
+      ordersBody.innerHTML =
+        "";
 
       emptyOrders.classList.remove(
         "hidden"
@@ -1325,156 +1572,206 @@
 
 
     ordersBody.innerHTML =
-      orders.map(
-        order => {
+      orders
+        .map(
+          order => {
 
-          const itemsHTML =
-            (order.items || [])
-              .map(
-                item => `
-                  <div class="item">
+            const itemsHTML =
+              (order.items || [])
+                .map(
+                  item => `
 
-                    <div class="item-name">
-                      ${escapeHTML(item.name)}
+                    <div class="item">
+
+                      <div class="item-name">
+                        ${escapeHTML(
+                          item.name
+                        )}
+                      </div>
+
+                      <div class="item-info">
+                        Qty: ${item.qty}
+                        × ${money(item.price)}
+                      </div>
+
                     </div>
 
-                    <div class="item-info">
-                      Qty: ${item.qty}
-                      × ${money(item.price)}
-                    </div>
+                  `
+                )
+                .join("");
+
+
+            return `
+
+              <tr>
+
+                <td>
+
+                  <div class="order-id">
+                    #${order.id}
+                  </div>
+
+                </td>
+
+
+                <td>
+
+                  <div class="customer-name">
+                    ${escapeHTML(
+                      order.customer_name
+                    )}
+                  </div>
+
+                  <div class="customer-email">
+                    ${escapeHTML(
+                      order.customer_email ||
+                      "No email"
+                    )}
+                  </div>
+
+                  <div class="phone">
+                    ${escapeHTML(
+                      order.phone
+                    )}
+                  </div>
+
+                </td>
+
+
+                <td>
+
+                  <div class="address">
+                    ${escapeHTML(
+                      order.address
+                    )}
+                  </div>
+
+                </td>
+
+
+                <td>
+
+                  <div class="items">
+                    ${itemsHTML}
+                  </div>
+
+                </td>
+
+
+                <td>
+
+                  <div class="total">
+                    ${money(
+                      order.total
+                    )}
+                  </div>
+
+                </td>
+
+
+                <td>
+
+                  <div class="date">
+                    ${formatDate(
+                      order.created_at
+                    )}
+                  </div>
+
+                </td>
+
+
+                <td>
+
+                  <div class="status-box">
+
+                    <select
+                      class="status-select ${escapeHTML(
+                        order.status
+                      )}"
+                      data-order-id="${order.id}"
+                    >
+
+                      <option
+                        value="pending"
+                        ${
+                          order.status ===
+                          "pending"
+                            ? "selected"
+                            : ""
+                        }
+                      >
+                        Pending
+                      </option>
+
+                      <option
+                        value="confirmed"
+                        ${
+                          order.status ===
+                          "confirmed"
+                            ? "selected"
+                            : ""
+                        }
+                      >
+                        Confirmed
+                      </option>
+
+                      <option
+                        value="shipped"
+                        ${
+                          order.status ===
+                          "shipped"
+                            ? "selected"
+                            : ""
+                        }
+                      >
+                        Shipped
+                      </option>
+
+                      <option
+                        value="delivered"
+                        ${
+                          order.status ===
+                          "delivered"
+                            ? "selected"
+                            : ""
+                        }
+                      >
+                        Delivered
+                      </option>
+
+                      <option
+                        value="cancelled"
+                        ${
+                          order.status ===
+                          "cancelled"
+                            ? "selected"
+                            : ""
+                        }
+                      >
+                        Cancelled
+                      </option>
+
+                    </select>
+
+
+                    <button
+                      class="update-btn"
+                      data-update-id="${order.id}"
+                    >
+                      Update
+                    </button>
 
                   </div>
-                `
-              )
-              .join("");
 
+                </td>
 
-          return `
+              </tr>
 
-            <tr>
+            `;
 
-              <td>
-
-                <div class="order-id">
-                  #${order.id}
-                </div>
-
-              </td>
-
-
-              <td>
-
-                <div class="customer-name">
-                  ${escapeHTML(order.customer_name)}
-                </div>
-
-                <div class="phone">
-                  ${escapeHTML(order.phone)}
-                </div>
-
-              </td>
-
-
-              <td>
-
-                <div class="address">
-                  ${escapeHTML(order.address)}
-                </div>
-
-              </td>
-
-
-              <td>
-
-                <div class="items">
-                  ${itemsHTML}
-                </div>
-
-              </td>
-
-
-              <td>
-
-                <div class="total">
-                  ${money(order.total)}
-                </div>
-
-              </td>
-
-
-              <td>
-
-                <div class="date">
-                  ${formatDate(order.created_at)}
-                </div>
-
-              </td>
-
-
-              <td>
-
-                <div class="status-box">
-
-                  <select
-                    class="status-select ${escapeHTML(order.status)}"
-                    data-order-id="${order.id}"
-                  >
-
-                    <option
-                      value="pending"
-                      ${order.status === "pending" ? "selected" : ""}
-                    >
-                      Pending
-                    </option>
-
-                    <option
-                      value="confirmed"
-                      ${order.status === "confirmed" ? "selected" : ""}
-                    >
-                      Confirmed
-                    </option>
-
-                    <option
-                      value="shipped"
-                      ${order.status === "shipped" ? "selected" : ""}
-                    >
-                      Shipped
-                    </option>
-
-                    <option
-                      value="delivered"
-                      ${order.status === "delivered" ? "selected" : ""}
-                    >
-                      Delivered
-                    </option>
-
-                    <option
-                      value="cancelled"
-                      ${order.status === "cancelled" ? "selected" : ""}
-                    >
-                      Cancelled
-                    </option>
-
-                  </select>
-
-
-                  <button
-                    class="update-btn"
-                    data-update-id="${order.id}"
-                  >
-                    Update
-                  </button>
-
-                </div>
-
-              </td>
-
-            </tr>
-
-          `;
-
-        }
-      ).join("");
+          }
+        )
+        .join("");
 
 
     attachUpdateButtons();
@@ -1483,7 +1780,7 @@
 
 
   /* =========================
-     UPDATE STATUS BUTTONS
+     UPDATE BUTTONS
   ========================= */
 
   function attachUpdateButtons() {
@@ -1500,7 +1797,8 @@
             () => {
 
               const orderId =
-                button.dataset.updateId;
+                button.dataset
+                  .updateId;
 
 
               const select =
@@ -1530,7 +1828,7 @@
 
 
   /* =========================
-     UPDATE ORDER STATUS
+     UPDATE STATUS
   ========================= */
 
   async function updateOrderStatus(
@@ -1543,7 +1841,8 @@
       button.textContent;
 
 
-    button.disabled = true;
+    button.disabled =
+      true;
 
     button.textContent =
       "Updating...";
@@ -1558,20 +1857,31 @@
             method: "PATCH",
 
             headers: {
-              "Content-Type": "application/json",
-              "x-admin-key": adminKey
+
+              "Content-Type":
+                "application/json",
+
+              ...authHeaders()
+
             },
 
-            body: JSON.stringify({
-              status
-            })
+            body:
+              JSON.stringify({
+                status
+              })
+
           }
         );
 
 
-      if (response.status === 401) {
+      if (
+        response.status === 401 ||
+        response.status === 403
+      ) {
 
-        logout();
+        logout(
+          "Your admin session has expired."
+        );
 
         return;
 
@@ -1586,7 +1896,7 @@
 
         throw new Error(
           data.error ||
-          "Could not update status"
+          "Could not update status."
         );
 
       }
@@ -1601,13 +1911,17 @@
 
 
       if (order) {
-        order.status = status;
+
+        order.status =
+          status;
+
       }
 
 
       updateStats();
 
       renderOrders();
+
 
       showToast(
         `Order #${orderId} updated to ${status}.`
@@ -1617,14 +1931,17 @@
 
     catch (error) {
 
-      console.error(error);
+      console.error(
+        error
+      );
 
       showToast(
         error.message ||
         "Could not update order."
       );
 
-      button.disabled = false;
+      button.disabled =
+        false;
 
       button.textContent =
         oldText;
@@ -1659,7 +1976,9 @@
   ========================= */
 
   document
-    .getElementById("refreshBtn")
+    .getElementById(
+      "refreshBtn"
+    )
     .addEventListener(
       "click",
       async () => {
@@ -1678,15 +1997,19 @@
      LOGOUT
   ========================= */
 
-  function logout() {
+  function logout(
+    message = ""
+  ) {
 
-    localStorage.removeItem(
-      "zevoriaAdminKey"
+    sessionStorage.removeItem(
+      "zevoriaAdminToken"
     );
 
-    adminKey = "";
+    adminToken =
+      "";
 
-    allOrders = [];
+    allOrders =
+      [];
 
     dashboardView.classList.add(
       "hidden"
@@ -1696,28 +2019,32 @@
       "hidden"
     );
 
-    adminKeyInput.value = "";
+    adminKeyInput.value =
+      "";
 
-    loginError.textContent = "";
+    loginError.textContent =
+      message;
 
   }
 
 
   document
-    .getElementById("logoutBtn")
+    .getElementById(
+      "logoutBtn"
+    )
     .addEventListener(
       "click",
-      logout
+      () => logout()
     );
 
 
   /* =========================
-     AUTO LOGIN
+     CHECK EXISTING SESSION
   ========================= */
 
   async function startAdmin() {
 
-    if (!adminKey) {
+    if (!adminToken) {
       return;
     }
 
@@ -1726,22 +2053,22 @@
 
       const response =
         await fetch(
-          `${API_BASE}/api/admin/orders`,
+          `${API_BASE}/api/admin/me`,
           {
-            headers: {
-              "x-admin-key": adminKey
-            }
+            headers:
+              authHeaders()
           }
         );
 
 
       if (!response.ok) {
 
-        localStorage.removeItem(
-          "zevoriaAdminKey"
+        sessionStorage.removeItem(
+          "zevoriaAdminToken"
         );
 
-        adminKey = "";
+        adminToken =
+          "";
 
         return;
 
@@ -1756,13 +2083,16 @@
         "hidden"
       );
 
+
       await loadOrders();
 
     }
 
     catch (error) {
 
-      console.error(error);
+      console.error(
+        error
+      );
 
     }
 
@@ -1774,4 +2104,5 @@
 </script>
 
 </body>
+
 </html>
