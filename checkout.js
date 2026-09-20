@@ -1,391 +1,556 @@
 const API_BASE = "https://zevoria-backend.onrender.com";
 
-const cart = JSON.parse(localStorage.getItem("zevoriaCart") || "[]");
-const user = JSON.parse(localStorage.getItem("zevoriaUser") || "null");
+const products = [
+  {
+    name: "No. 01 Noir",
+    type: "Eau de Parfum",
+    price: 1499,
+    backendId: 1
+  },
+  {
+    name: "No. 02 Santal",
+    type: "Eau de Parfum",
+    price: 1699,
+    backendId: 2
+  },
+  {
+    name: "No. 03 Bloom",
+    type: "Eau de Parfum",
+    price: 1399,
+    backendId: 3
+  },
+  {
+    name: "No. 04 Oud",
+    type: "Attar",
+    price: 899,
+    backendId: 4
+  },
+  {
+    name: "No. 05 Azure",
+    type: "Eau de Parfum",
+    price: 1599,
+    backendId: 5
+  },
+  {
+    name: "No. 06 Velvet",
+    type: "Eau de Parfum",
+    price: 1499,
+    backendId: 6
+  }
+];
 
-const itemsContainer = document.getElementById("checkoutItems");
-const subtotalElement = document.getElementById("subtotal");
-const grandTotalElement = document.getElementById("grandTotal");
-const placeOrderBtn = document.getElementById("placeOrderBtn");
-const successModal = document.getElementById("successModal");
-const successMessage = document.getElementById("successMessage");
+let cart = JSON.parse(
+  localStorage.getItem("zevoriaCart") || "[]"
+);
 
-let products = [];
+const money = n =>
+  "₹" + Number(n).toLocaleString("en-IN");
 
 
 /* =========================
-   LOAD PRODUCTS
+   USER
 ========================= */
 
-async function loadProducts() {
-  try {
-    const response = await fetch(`${API_BASE}/api/products`);
+const user = JSON.parse(
+  localStorage.getItem("zevoriaUser") || "null"
+);
 
-    if (!response.ok) {
-      throw new Error("Unable to load products.");
-    }
 
-    products = await response.json();
+/* =========================
+   ELEMENTS
+========================= */
 
-    renderCheckout();
+const checkoutItems =
+  document.querySelector("#checkoutItems");
 
-  } catch (error) {
-    console.error(error);
+const subtotalEl =
+  document.querySelector("#checkoutSubtotal");
 
-    itemsContainer.innerHTML = `
-      <p style="font-size:13px;color:#777;">
-        Unable to load your cart. Please refresh the page.
-      </p>
-    `;
-  }
+const deliveryEl =
+  document.querySelector("#checkoutDelivery");
+
+const totalEl =
+  document.querySelector("#checkoutTotal");
+
+const emailInput =
+  document.querySelector("#checkoutEmail");
+
+
+/* =========================
+   EMAIL
+========================= */
+
+if (user && user.email) {
+
+  emailInput.value =
+    user.email;
+
 }
 
 
 /* =========================
-   RENDER CHECKOUT
+   CHECK CART
+========================= */
+
+if (!cart.length) {
+
+  checkoutItems.innerHTML = `
+    <div class="empty-checkout">
+      <h3>Your bag is empty</h3>
+
+      <p>
+        Add a fragrance before
+        continuing to checkout.
+      </p>
+
+      <a href="index.html">
+        Continue Shopping
+      </a>
+    </div>
+  `;
+
+}
+
+
+/* =========================
+   RENDER ORDER
 ========================= */
 
 function renderCheckout() {
 
   if (!cart.length) {
 
-    itemsContainer.innerHTML = `
-      <div style="padding:20px 0;text-align:center;">
-        <p style="font-size:13px;color:#777;margin-bottom:15px;">
-          Your cart is empty.
-        </p>
+    subtotalEl.textContent =
+      "₹0";
 
-        <a
-          href="index.html"
-          style="
-            display:inline-block;
-            background:#111;
-            color:#fff;
-            padding:12px 18px;
-            text-decoration:none;
-            font-size:11px;
-            font-weight:600;
-          "
-        >
-          CONTINUE SHOPPING
-        </a>
-      </div>
-    `;
+    deliveryEl.textContent =
+      "₹0";
 
-    subtotalElement.textContent = "₹0";
-    grandTotalElement.textContent = "₹0";
-
-    placeOrderBtn.disabled = true;
+    totalEl.textContent =
+      "₹0";
 
     return;
+
   }
 
 
-  let subtotal = 0;
+  checkoutItems.innerHTML =
+    cart.map(item => {
 
-  itemsContainer.innerHTML = "";
+      const product =
+        products[item.i];
+
+      if (!product) return "";
 
 
-  cart.forEach(cartItem => {
+      const quantity =
+        item.q || 1;
 
-    const product = products.find(
-      p => Number(p.id) === Number(cartItem.backendId || cartItem.id)
+
+      const itemTotal =
+        product.price *
+        quantity;
+
+
+      return `
+        <div class="checkout-item">
+
+          <div class="checkout-item-info">
+
+            <h3>
+              ${product.name}
+            </h3>
+
+            <p>
+              ${product.type}
+            </p>
+
+            <span>
+              Qty: ${quantity}
+            </span>
+
+          </div>
+
+          <strong>
+            ${money(itemTotal)}
+          </strong>
+
+        </div>
+      `;
+
+    }).join("");
+
+
+  const subtotal =
+    cart.reduce(
+      (total, item) => {
+
+        const product =
+          products[item.i];
+
+        return total +
+          product.price *
+          item.q;
+
+      },
+      0
     );
 
-    if (!product) return;
+
+  /*
+    Free delivery for now.
+  */
+
+  const delivery = 0;
+
+  const total =
+    subtotal + delivery;
 
 
-    const quantity = Number(cartItem.qty || cartItem.quantity || 1);
+  subtotalEl.textContent =
+    money(subtotal);
 
-    const price = Number(product.price);
+  deliveryEl.textContent =
+    delivery === 0
+      ? "FREE"
+      : money(delivery);
 
-    const itemTotal = price * quantity;
+  totalEl.textContent =
+    money(total);
 
-    subtotal += itemTotal;
-
-
-    const item = document.createElement("div");
-
-    item.className = "checkout-item";
-
-    item.innerHTML = `
-      <img
-        src="${product.image || ""}"
-        alt="${escapeHTML(product.name)}"
-        class="checkout-item-image"
-      >
-
-      <div class="checkout-item-info">
-
-        <div class="checkout-item-name">
-          ${escapeHTML(product.name)}
-        </div>
-
-        <div class="checkout-item-qty">
-          Qty: ${quantity}
-        </div>
-
-      </div>
-
-      <div class="checkout-item-price">
-        ₹${itemTotal.toLocaleString("en-IN")}
-      </div>
-    `;
-
-    itemsContainer.appendChild(item);
-
-  });
-
-
-  subtotalElement.textContent =
-    `₹${subtotal.toLocaleString("en-IN")}`;
-
-  grandTotalElement.textContent =
-    `₹${subtotal.toLocaleString("en-IN")}`;
 }
+
+
+renderCheckout();
 
 
 /* =========================
    PLACE ORDER
 ========================= */
 
-placeOrderBtn.addEventListener("click", async () => {
+const checkoutForm =
+  document.querySelector("#checkoutForm");
 
-  try {
+
+checkoutForm.addEventListener(
+  "submit",
+  async event => {
+
+    event.preventDefault();
+
 
     if (!cart.length) {
-      throw new Error("Your cart is empty.");
+
+      alert(
+        "Your bag is empty."
+      );
+
+      return;
+
     }
 
 
     if (!user || !user.email) {
 
-      alert("Please sign in before placing your order.");
+      alert(
+        "Please sign in to your ZEVORIA account before placing your order."
+      );
 
-      window.location.href = "index.html";
+      window.location.href =
+        "index.html";
 
       return;
+
     }
+
+
+    const submitButton =
+      checkoutForm.querySelector(
+        "button[type='submit']"
+      );
+
+
+    const originalText =
+      submitButton.textContent;
+
+
+    submitButton.disabled =
+      true;
+
+    submitButton.textContent =
+      "Placing Order...";
+
+
+    const formData =
+      new FormData(
+        checkoutForm
+      );
 
 
     const customerName =
-      document.getElementById("fullName").value.trim();
+      formData
+        .get("name")
+        ?.trim();
 
-    const customerEmail =
-      document.getElementById("email").value.trim();
 
     const phone =
-      document.getElementById("phone").value.trim();
+      formData
+        .get("phone")
+        ?.trim();
+
 
     const address =
-      document.getElementById("address").value.trim();
+      formData
+        .get("address")
+        ?.trim();
+
 
     const city =
-      document.getElementById("city").value.trim();
+      formData
+        .get("city")
+        ?.trim();
+
 
     const state =
-      document.getElementById("state").value.trim();
+      formData
+        .get("state")
+        ?.trim();
+
 
     const pincode =
-      document.getElementById("pincode").value.trim();
+      formData
+        .get("pincode")
+        ?.trim();
 
 
-    if (!customerName) {
-      throw new Error("Please enter your full name.");
-    }
-
-    if (!customerEmail) {
-      throw new Error("Please enter your email address.");
-    }
-
-    if (!phone) {
-      throw new Error("Please enter your mobile number.");
-    }
-
-    if (!address) {
-      throw new Error("Please enter your delivery address.");
-    }
-
-    if (!city) {
-      throw new Error("Please enter your city.");
-    }
-
-    if (!state) {
-      throw new Error("Please enter your state.");
-    }
-
-    if (!/^\d{6}$/.test(pincode)) {
-      throw new Error("Please enter a valid 6-digit PIN code.");
-    }
+    const fullAddress =
+      [
+        address,
+        city,
+        state,
+        pincode
+      ]
+        .filter(Boolean)
+        .join(", ");
 
 
-    /*
-      Use the logged-in account email.
-      This keeps the order connected to the customer account.
-    */
+    const items =
+      cart.map(item => ({
 
-    if (
-      user.email.toLowerCase() !==
-      customerEmail.toLowerCase()
-    ) {
+        productId:
+          products[item.i]
+            .backendId,
 
-      throw new Error(
-        "Please use the email address connected to your ZEVORIA account."
+        qty:
+          item.q
+
+      }));
+
+
+    try {
+
+      const response =
+        await fetch(
+          `${API_BASE}/api/orders`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body: JSON.stringify({
+
+              customerName,
+
+              customerEmail:
+                user.email,
+
+              phone,
+
+              address:
+                fullAddress,
+
+              items
+
+            })
+
+          }
+        );
+
+
+      const data =
+        await response
+          .json()
+          .catch(
+            () => ({})
+          );
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          data.error ||
+          "Could not place order"
+        );
+
+      }
+
+
+      /*
+        Clear cart after
+        successful order.
+      */
+
+      localStorage.removeItem(
+        "zevoriaCart"
       );
 
+      cart = [];
+
+
+      /* =========================
+         SUCCESS
+      ========================= */
+
+      showSuccess(
+        data.orderId,
+        data.total
+      );
+
+
+    } catch (error) {
+
+      alert(
+        "Order could not be placed.\n\n" +
+        error.message
+      );
+
+    } finally {
+
+      submitButton.disabled =
+        false;
+
+      submitButton.textContent =
+        originalText;
+
     }
 
-
-    placeOrderBtn.disabled = true;
-
-    placeOrderBtn.textContent = "PLACING ORDER...";
+  }
+);
 
 
-    /*
-      Combine the complete delivery address
-      into the address field used by the backend.
-    */
+/* =========================
+   SUCCESS MODAL
+========================= */
 
-    const completeAddress =
-      `${address}, ${city}, ${state} - ${pincode}`;
+function showSuccess(
+  orderId,
+  total
+) {
 
-
-    /*
-      Convert cart items into the format
-      expected by the existing backend.
-    */
-
-    const orderItems = cart.map(item => {
-
-      const backendId =
-        Number(item.backendId || item.id);
-
-      return {
-        productId: backendId,
-        qty: Number(item.qty || item.quantity || 1)
-      };
-
-    });
-
-
-    const response = await fetch(
-      `${API_BASE}/api/orders`,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-
-          customerName,
-
-          customerEmail,
-
-          phone,
-
-          address: completeAddress,
-
-          items: orderItems
-
-        })
-      }
+  const modal =
+    document.querySelector(
+      "#successModal"
     );
 
 
-    const data = await response.json();
+  if (!modal) {
 
+    alert(
+      "Order placed successfully!\n\n" +
+      "Order #" +
+      orderId +
+      "\n" +
+      "Total: " +
+      money(total)
+    );
 
-    if (!response.ok) {
+    window.location.href =
+      "index.html";
 
-      throw new Error(
-        data.error ||
-        data.message ||
-        "Unable to place order."
-      );
-
-    }
-
-
-    /*
-      Order successfully created.
-    */
-
-    localStorage.removeItem("zevoriaCart");
-
-
-    successMessage.innerHTML =
-      `Your order <strong>#${data.orderId}</strong> has been placed successfully.<br><br>
-       A confirmation email has been sent to <strong>${escapeHTML(customerEmail)}</strong>.`;
-
-
-    successModal.classList.add("show");
-
-
-  } catch (error) {
-
-    console.error(error);
-
-    alert(error.message);
-
-    placeOrderBtn.disabled = false;
-
-    placeOrderBtn.textContent = "PLACE ORDER";
+    return;
 
   }
 
-});
+
+  const orderNumber =
+    modal.querySelector(
+      "#successOrderId"
+    );
 
 
-/* =========================
-   PREFILL CUSTOMER DETAILS
-========================= */
-
-function prefillUser() {
-
-  if (!user) return;
+  const orderTotal =
+    modal.querySelector(
+      "#successTotal"
+    );
 
 
-  const emailInput =
-    document.getElementById("email");
+  if (orderNumber) {
 
-  const nameInput =
-    document.getElementById("fullName");
+    orderNumber.textContent =
+      "#" + orderId;
 
-
-  if (user.email) {
-    emailInput.value = user.email;
   }
 
 
-  if (user.name) {
-    nameInput.value = user.name;
+  if (orderTotal) {
+
+    orderTotal.textContent =
+      money(total);
+
   }
+
+
+  modal.classList.add(
+    "show"
+  );
 
 }
 
 
 /* =========================
-   SECURITY HELPER
+   CONTINUE SHOPPING
 ========================= */
 
-function escapeHTML(value) {
+const continueShopping =
+  document.querySelector(
+    "#continueShopping"
+  );
 
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+
+if (continueShopping) {
+
+  continueShopping.onclick =
+    () => {
+
+      window.location.href =
+        "index.html";
+
+    };
 
 }
 
 
 /* =========================
-   START
+   SUCCESS CLOSE
 ========================= */
 
-prefillUser();
+const successClose =
+  document.querySelector(
+    "#successClose"
+  );
 
-loadProducts();
+
+if (successClose) {
+
+  successClose.onclick =
+    () => {
+
+      window.location.href =
+        "index.html";
+
+    };
+
+}
