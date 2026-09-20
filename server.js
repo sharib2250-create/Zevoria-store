@@ -1,4 +1,5 @@
 require("dotenv").config();
+
 const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
@@ -7,11 +8,11 @@ const Database = require("better-sqlite3");
 const bcrypt = require("bcryptjs");
 const { z } = require("zod");
 
-const app=express();
+const app = express();
 
 app.set("trust proxy", 1);
 
-const db=new Database("zevoria.db");
+const db = new Database("zevoria.db");
 
 const allowedOrigins = [
   "https://zevoria-store.vercel.app",
@@ -30,6 +31,7 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
+
     return callback(new Error("CORS: origin not allowed"));
   }
 }));
@@ -42,6 +44,11 @@ app.use(rateLimit({
   standardHeaders: true,
   legacyHeaders: false
 }));
+
+
+/* =========================
+   DATABASE
+========================= */
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS products(
@@ -82,6 +89,11 @@ CREATE TABLE IF NOT EXISTS users(
 );
 `);
 
+
+/* =========================
+   PRODUCTS
+========================= */
+
 const seedProducts = [
   [1, "No. 01 Noir", "men", 1499, 25, "Amber • Oud • Vanilla"],
   [2, "No. 02 Santal", "unisex", 1699, 25, "Sandalwood • Musk • Cedar"],
@@ -99,6 +111,11 @@ for (const p of seedProducts) {
   insertProduct.run(...p);
 }
 
+
+/* =========================
+   BASIC ROUTES
+========================= */
+
 app.get("/", (req, res) => {
   res.json({
     ok: true,
@@ -107,6 +124,7 @@ app.get("/", (req, res) => {
   });
 });
 
+
 app.get("/api/health", (req, res) => {
   res.json({
     ok: true,
@@ -114,11 +132,15 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+
 app.get("/api/products", (req, res) => {
   res.json(
-    db.prepare("SELECT * FROM products ORDER BY id ASC").all()
+    db.prepare(
+      "SELECT * FROM products ORDER BY id ASC"
+    ).all()
   );
 });
+
 
 /* =========================
    SIGN UP
@@ -130,6 +152,7 @@ const signupSchema = z.object({
   phone: z.string().min(8).max(20),
   password: z.string().min(6).max(100)
 });
+
 
 app.post("/api/auth/signup", async (req, res) => {
 
@@ -184,6 +207,8 @@ app.post("/api/auth/signup", async (req, res) => {
 
   } catch (err) {
 
+    console.error(err);
+
     res.status(500).json({
       error: "Could not create account"
     });
@@ -191,6 +216,7 @@ app.post("/api/auth/signup", async (req, res) => {
   }
 
 });
+
 
 /* =========================
    SIGN IN
@@ -200,6 +226,7 @@ const loginSchema = z.object({
   email: z.string().email().max(120),
   password: z.string().min(1).max(100)
 });
+
 
 app.post("/api/auth/login", async (req, res) => {
 
@@ -251,8 +278,9 @@ app.post("/api/auth/login", async (req, res) => {
 
 });
 
+
 /* =========================
-   ORDERS
+   CREATE ORDER
 ========================= */
 
 const orderSchema = z.object({
@@ -267,6 +295,7 @@ const orderSchema = z.object({
     })
   ).min(1)
 });
+
 
 app.post("/api/orders", (req, res) => {
 
@@ -317,6 +346,7 @@ app.post("/api/orders", (req, res) => {
 
   }
 
+
   const tx = db.transaction(() => {
 
     const info = db.prepare(
@@ -328,6 +358,7 @@ app.post("/api/orders", (req, res) => {
       total,
       "pending"
     );
+
 
     for (const x of lines) {
 
@@ -341,6 +372,7 @@ app.post("/api/orders", (req, res) => {
         x.p.price
       );
 
+
       db.prepare(
         "UPDATE products SET stock=stock-? WHERE id=?"
       ).run(
@@ -351,7 +383,9 @@ app.post("/api/orders", (req, res) => {
     }
 
     return info.lastInsertRowid;
+
   });
+
 
   const orderId = tx();
 
@@ -361,6 +395,11 @@ app.post("/api/orders", (req, res) => {
   });
 
 });
+
+
+/* =========================
+   CUSTOMER ORDER DETAILS
+========================= */
 
 app.get("/api/orders/:id", (req, res) => {
 
@@ -374,31 +413,219 @@ app.get("/api/orders/:id", (req, res) => {
     });
   }
 
+
   o.items = db.prepare(
     "SELECT product_id,name,qty,price FROM order_items WHERE order_id=?"
   ).all(o.id);
+
 
   res.json(o);
 
 });
 
-app.get("/api/admin/orders", (req, res) => {
+
+/* =========================
+   ADMIN AUTH CHECK
+========================= */
+
+function requireAdmin(req, res, next) {
 
   if (
+    !process.env.ADMIN_KEY ||
     req.headers["x-admin-key"] !== process.env.ADMIN_KEY
   ) {
+
     return res.status(401).json({
       error: "Unauthorized"
     });
+
   }
 
-  res.json(
-    db.prepare("SELECT * FROM orders ORDER BY id DESC").all()
-  );
+  next();
 
+}
+
+
+/* =========================
+   ADMIN - ALL ORDERS
+========================= */
+
+app.get(
+  "/api/admin/orders",
+  requireAdmin,
+  (req, res) => {
+
+    const orders = db.prepare(`
+      SELECT
+        o.id,
+        o.customer_name,
+        o.phone,
+        o.address,
+        o.total,
+        o.status,
+        o.created_at
+      FROM orders o
+      ORDER BY o.id DESC
+    `).all();
+
+
+    for (const order of orders) {
+
+      order.items = db.prepare(`
+        SELECT
+          product_id,
+          name,
+          qty,
+          price
+        FROM order_items
+        WHERE order_id=?
+      `).all(order.id);
+
+    }
+
+
+    res.json(orders);
+
+  }
+);
+
+
+/* =========================
+   ADMIN - UPDATE STATUS
+========================= */
+
+const statusSchema = z.object({
+  status: z.enum([
+    "pending",
+    "confirmed",
+    "shipped",
+    "delivered",
+    "cancelled"
+  ])
 });
+
+
+app.patch(
+  "/api/admin/orders/:id/status",
+  requireAdmin,
+  (req, res) => {
+
+    const parsed = statusSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: "Invalid order status"
+      });
+    }
+
+
+    const orderId = Number(req.params.id);
+
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+      return res.status(400).json({
+        error: "Invalid order ID"
+      });
+    }
+
+
+    const existing = db.prepare(
+      "SELECT id FROM orders WHERE id=?"
+    ).get(orderId);
+
+    if (!existing) {
+      return res.status(404).json({
+        error: "Order not found"
+      });
+    }
+
+
+    db.prepare(
+      "UPDATE orders SET status=? WHERE id=?"
+    ).run(
+      parsed.data.status,
+      orderId
+    );
+
+
+    const updated = db.prepare(
+      "SELECT * FROM orders WHERE id=?"
+    ).get(orderId);
+
+
+    res.json({
+      message: "Order status updated",
+      order: updated
+    });
+
+  }
+);
+
+
+/* =========================
+   ADMIN - DASHBOARD STATS
+========================= */
+
+app.get(
+  "/api/admin/stats",
+  requireAdmin,
+  (req, res) => {
+
+    const totalOrders = db.prepare(
+      "SELECT COUNT(*) AS count FROM orders"
+    ).get().count;
+
+
+    const totalSales = db.prepare(
+      "SELECT COALESCE(SUM(total),0) AS total FROM orders WHERE status != 'cancelled'"
+    ).get().total;
+
+
+    const pendingOrders = db.prepare(
+      "SELECT COUNT(*) AS count FROM orders WHERE status='pending'"
+    ).get().count;
+
+
+    const confirmedOrders = db.prepare(
+      "SELECT COUNT(*) AS count FROM orders WHERE status='confirmed'"
+    ).get().count;
+
+
+    const shippedOrders = db.prepare(
+      "SELECT COUNT(*) AS count FROM orders WHERE status='shipped'"
+    ).get().count;
+
+
+    const deliveredOrders = db.prepare(
+      "SELECT COUNT(*) AS count FROM orders WHERE status='delivered'"
+    ).get().count;
+
+
+    const cancelledOrders = db.prepare(
+      "SELECT COUNT(*) AS count FROM orders WHERE status='cancelled'"
+    ).get().count;
+
+
+    res.json({
+      totalOrders,
+      totalSales,
+      pendingOrders,
+      confirmedOrders,
+      shippedOrders,
+      deliveredOrders,
+      cancelledOrders
+    });
+
+  }
+);
+
+
+/* =========================
+   START SERVER
+========================= */
 
 app.listen(
   process.env.PORT || 4000,
-  () => console.log("ZEVORIA API running")
+  () => {
+    console.log("ZEVORIA API running");
+  }
 );
