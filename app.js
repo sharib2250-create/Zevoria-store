@@ -1,123 +1,834 @@
+/* =========================================================
+   ZEVORIA — APP.JS
+   ========================================================= */
+
 const API_BASE = "https://zevoria-backend.onrender.com";
 
 
 /* =========================================================
-   ZEVORIA PRODUCTS
-========================================================= */
+   PRODUCTS
+   ========================================================= */
 
 const products = [
   {
+    id: 0,
+    backendId: 1,
     name: "No. 01 Noir",
-    cat: "men",
+    category: "men",
     type: "Eau de Parfum",
     price: 1499,
-    note: "Amber • Oud • Vanilla",
-    backendId: 1,
-    description:
-      "A deep and sophisticated fragrance built around warm amber, rich oud and smooth vanilla.",
-    styles: ["dark", "oud", "sweet", "woody"]
+    notes: "Amber • Oud • Vanilla"
   },
   {
+    id: 1,
+    backendId: 2,
     name: "No. 02 Santal",
-    cat: "unisex",
+    category: "unisex",
     type: "Eau de Parfum",
     price: 1699,
-    note: "Sandalwood • Musk • Cedar",
-    backendId: 2,
-    description:
-      "A refined woody fragrance combining creamy sandalwood, clean musk and dry cedar.",
-    styles: ["woody", "fresh"]
+    notes: "Sandalwood • Musk • Cedar"
   },
   {
+    id: 2,
+    backendId: 3,
     name: "No. 03 Bloom",
-    cat: "women",
+    category: "women",
     type: "Eau de Parfum",
     price: 1399,
-    note: "Rose • Peony • Vanilla",
-    backendId: 3,
-    description:
-      "A soft floral composition with elegant rose, delicate peony and creamy vanilla.",
-    styles: ["floral", "sweet"]
+    notes: "Rose • Peony • Vanilla"
   },
   {
+    id: 3,
+    backendId: 4,
     name: "No. 04 Oud",
-    cat: "unisex",
+    category: "unisex",
     type: "Attar",
     price: 899,
-    note: "Oud • Saffron • Amber",
-    backendId: 4,
-    description:
-      "A concentrated attar with rich oud, warm saffron and smooth amber.",
-    styles: ["oud", "dark", "woody"]
+    notes: "Oud • Saffron • Amber"
   },
   {
+    id: 4,
+    backendId: 5,
     name: "No. 05 Azure",
-    cat: "men",
+    category: "men",
     type: "Eau de Parfum",
     price: 1599,
-    note: "Bergamot • Marine • Musk",
-    backendId: 5,
-    description:
-      "A fresh modern fragrance combining bright bergamot, marine notes and clean musk.",
-    styles: ["fresh"]
+    notes: "Bergamot • Marine • Musk"
   },
   {
+    id: 5,
+    backendId: 6,
     name: "No. 06 Velvet",
-    cat: "women",
+    category: "women",
     type: "Eau de Parfum",
     price: 1499,
-    note: "Iris • Tonka • Amber",
-    backendId: 6,
-    description:
-      "A smooth elegant fragrance with powdery iris, creamy tonka and warm amber.",
-    styles: ["sweet", "floral", "dark"]
+    notes: "Iris • Tonka • Amber"
   }
 ];
 
 
 /* =========================================================
-   LOCAL STORAGE
-========================================================= */
+   LOCAL STORAGE KEYS
+   ========================================================= */
 
-let cart = JSON.parse(
-  localStorage.getItem("zevoriaCart") || "[]"
-);
+const CART_KEY = "zevoriaCart";
+const USER_KEY = "zevoriaUser";
+const WISHLIST_KEY = "zevoriaWishlist";
+const ORDERS_KEY = "zevoriaOrders";
+const REVIEWS_KEY = "zevoriaReviews";
+const SEARCH_KEY = "zevoriaRecentSearches";
+const THEME_KEY = "zevoriaTheme";
+const COUPON_KEY = "zevoriaCoupon";
+
+
+/* =========================================================
+   STATE
+   ========================================================= */
+
+let cart = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
 
 let wishlist = JSON.parse(
-  localStorage.getItem("zevoriaWishlist") || "[]"
+  localStorage.getItem(WISHLIST_KEY) || "[]"
+);
+
+let recentSearches = JSON.parse(
+  localStorage.getItem(SEARCH_KEY) || "[]"
+);
+
+let currentFilter = "all";
+
+let currentSearch = "";
+
+let currentSort = "default";
+
+let appliedCoupon = JSON.parse(
+  localStorage.getItem(COUPON_KEY) || "null"
 );
 
 
 /* =========================================================
    HELPERS
-========================================================= */
+   ========================================================= */
 
-const $ = s => document.querySelector(s);
-
-const $$ = s => document.querySelectorAll(s);
-
-const money = n =>
-  "₹" + Number(n).toLocaleString("en-IN");
+function money(value) {
+  return `₹${Number(value).toLocaleString("en-IN")}`;
+}
 
 
-function getProduct(i) {
-  return products[i];
+function saveCart() {
+  localStorage.setItem(
+    CART_KEY,
+    JSON.stringify(cart)
+  );
 }
 
 
 function saveWishlist() {
-
   localStorage.setItem(
-    "zevoriaWishlist",
+    WISHLIST_KEY,
     JSON.stringify(wishlist)
   );
+}
 
+
+function saveOrders(orders) {
+  localStorage.setItem(
+    ORDERS_KEY,
+    JSON.stringify(orders)
+  );
+}
+
+
+function getOrders() {
+  return JSON.parse(
+    localStorage.getItem(ORDERS_KEY) || "[]"
+  );
+}
+
+
+function getProduct(id) {
+  return products.find(
+    p => p.id === Number(id)
+  );
+}
+
+
+function getProductByBackendId(id) {
+  return products.find(
+    p => p.backendId === Number(id)
+  );
+}
+
+
+function escapeHTML(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 
 /* =========================================================
-   LUCIDE ICONS
-========================================================= */
+   TOAST
+   ========================================================= */
+
+let toastTimer;
+
+function toast(message) {
+
+  const el = document.getElementById("toast");
+
+  if (!el) return;
+
+  el.textContent = message;
+
+  el.classList.add("show");
+
+  clearTimeout(toastTimer);
+
+  toastTimer = setTimeout(() => {
+    el.classList.remove("show");
+  }, 2800);
+}
+
+
+/* =========================================================
+   MODAL SYSTEM
+   ========================================================= */
+
+const overlay = document.getElementById("overlay");
+
+
+function openModal(id) {
+
+  const modal = document.getElementById(id);
+
+  if (!modal) return;
+
+  modal.classList.add("show");
+
+  overlay?.classList.add("show");
+
+  document.body.style.overflow = "hidden";
+}
+
+
+function closeModal(id) {
+
+  const modal = document.getElementById(id);
+
+  if (!modal) return;
+
+  modal.classList.remove("show");
+
+  const anyModalOpen =
+    document.querySelector(".modal.show");
+
+  const drawerOpen =
+    document.getElementById("cartDrawer")
+      ?.classList.contains("open");
+
+  if (!anyModalOpen && !drawerOpen) {
+    overlay?.classList.remove("show");
+    document.body.style.overflow = "";
+  }
+}
+
+
+function closeAll() {
+
+  document
+    .querySelectorAll(".modal.show")
+    .forEach(modal => {
+      modal.classList.remove("show");
+    });
+
+  document
+    .getElementById("cartDrawer")
+    ?.classList.remove("open");
+
+  overlay?.classList.remove("show");
+
+  document.body.style.overflow = "";
+}
+
+
+document
+  .querySelectorAll("[data-close]")
+  .forEach(button => {
+
+    button.addEventListener("click", closeAll);
+
+  });
+
+
+overlay?.addEventListener("click", closeAll);
+
+
+document.addEventListener("keydown", event => {
+
+  if (event.key === "Escape") {
+    closeAll();
+  }
+
+});
+
+
+/* =========================================================
+   CART
+   ========================================================= */
+
+function addToCart(productId, quantity = 1) {
+
+  const product = getProduct(productId);
+
+  if (!product) return;
+
+  const existing = cart.find(
+    item => item.i === product.id
+  );
+
+  if (existing) {
+
+    existing.q += quantity;
+
+  } else {
+
+    cart.push({
+      i: product.id,
+      q: quantity
+    });
+
+  }
+
+  saveCart();
+
+  renderCart();
+
+  updateCounts();
+
+  toast(`${product.name} added to your bag.`);
+}
+
+
+function changeQty(productId, amount) {
+
+  const item = cart.find(
+    item => item.i === Number(productId)
+  );
+
+  if (!item) return;
+
+  item.q += amount;
+
+  if (item.q <= 0) {
+
+    cart = cart.filter(
+      x => x.i !== Number(productId)
+    );
+
+  }
+
+  saveCart();
+
+  renderCart();
+
+  updateCounts();
+}
+
+
+function removeFromCart(productId) {
+
+  cart = cart.filter(
+    item => item.i !== Number(productId)
+  );
+
+  saveCart();
+
+  renderCart();
+
+  updateCounts();
+
+  toast("Item removed from your bag.");
+}
+
+
+function cartSubtotal() {
+
+  return cart.reduce((sum, item) => {
+
+    const product = getProduct(item.i);
+
+    if (!product) return sum;
+
+    return sum + product.price * item.q;
+
+  }, 0);
+}
+
+
+function calculateDiscount(subtotal) {
+
+  if (!appliedCoupon) {
+    return 0;
+  }
+
+  if (appliedCoupon.type === "percent") {
+
+    return Math.round(
+      subtotal * appliedCoupon.value / 100
+    );
+
+  }
+
+  if (appliedCoupon.type === "fixed") {
+
+    return Math.min(
+      appliedCoupon.value,
+      subtotal
+    );
+
+  }
+
+  return 0;
+}
+
+
+function cartTotal() {
+
+  const subtotal = cartSubtotal();
+
+  return subtotal - calculateDiscount(subtotal);
+}
+
+
+/* =========================================================
+   RENDER CART
+   ========================================================= */
+
+function renderCart() {
+
+  const container =
+    document.getElementById("cartItems");
+
+  if (!container) return;
+
+  if (!cart.length) {
+
+    container.innerHTML = `
+      <div class="empty-products">
+        <h3>Your bag is empty</h3>
+        <p>Discover something you will love.</p>
+      </div>
+    `;
+
+    updateCartTotals();
+
+    return;
+  }
+
+
+  container.innerHTML = cart.map(item => {
+
+    const product = getProduct(item.i);
+
+    if (!product) return "";
+
+    return `
+      <div class="cart-item">
+
+        <div class="cart-item-image">
+          <div class="mini-bottle"></div>
+        </div>
+
+        <div class="cart-item-info">
+
+          <h4>
+            ${escapeHTML(product.name)}
+          </h4>
+
+          <p>
+            ${escapeHTML(product.type)}
+          </p>
+
+          <div class="qty">
+
+            <button
+              type="button"
+              onclick="changeQty(${product.id}, -1)"
+            >
+              −
+            </button>
+
+            <span>
+              ${item.q}
+            </span>
+
+            <button
+              type="button"
+              onclick="changeQty(${product.id}, 1)"
+            >
+              +
+            </button>
+
+          </div>
+
+          <button
+            class="remove-cart"
+            onclick="removeFromCart(${product.id})"
+          >
+            Remove
+          </button>
+
+        </div>
+
+        <div class="cart-price">
+          ${money(product.price * item.q)}
+        </div>
+
+      </div>
+    `;
+
+  }).join("");
+
+
+  updateCartTotals();
+}
+
+
+function updateCartTotals() {
+
+  const subtotal = cartSubtotal();
+
+  const discount = calculateDiscount(subtotal);
+
+  const total = subtotal - discount;
+
+
+  const subtotalEl =
+    document.getElementById("subtotal");
+
+  const totalEl =
+    document.getElementById("cartTotal");
+
+  const discountRow =
+    document.getElementById("discountRow");
+
+  const discountEl =
+    document.getElementById("discountAmount");
+
+
+  if (subtotalEl) {
+    subtotalEl.textContent = money(subtotal);
+  }
+
+  if (totalEl) {
+    totalEl.textContent = money(total);
+  }
+
+
+  if (
+    discountRow &&
+    discountEl
+  ) {
+
+    if (discount > 0) {
+
+      discountRow.style.display = "flex";
+
+      discountEl.textContent =
+        `-${money(discount)}`;
+
+    } else {
+
+      discountRow.style.display = "none";
+
+    }
+
+  }
+}
+
+
+/* =========================================================
+   CART DRAWER
+   ========================================================= */
+
+function openCart() {
+
+  renderCart();
+
+  document
+    .getElementById("cartDrawer")
+    ?.classList.add("open");
+
+  overlay?.classList.add("show");
+
+  document.body.style.overflow = "hidden";
+}
+
+
+document
+  .getElementById("cartBtn")
+  ?.addEventListener("click", openCart);
+
+
+/* =========================================================
+   COUNTS
+   ========================================================= */
+
+function updateCounts() {
+
+  const cartCount =
+    cart.reduce(
+      (sum, item) => sum + item.q,
+      0
+    );
+
+  const wishlistCount =
+    wishlist.length;
+
+
+  const cartEl =
+    document.getElementById("cartCount");
+
+  const wishEl =
+    document.getElementById("wishlistCount");
+
+
+  if (cartEl) {
+    cartEl.textContent = cartCount;
+  }
+
+  if (wishEl) {
+    wishEl.textContent = wishlistCount;
+  }
+}
+
+
+/* =========================================================
+   PRODUCT FILTER + SEARCH + SORT
+   ========================================================= */
+
+function getVisibleProducts() {
+
+  let list = [...products];
+
+
+  if (currentFilter !== "all") {
+
+    list = list.filter(
+      product =>
+        product.category === currentFilter
+    );
+
+  }
+
+
+  if (currentSearch.trim()) {
+
+    const query =
+      currentSearch
+        .toLowerCase()
+        .trim();
+
+    list = list.filter(product => {
+
+      const searchable = [
+        product.name,
+        product.category,
+        product.type,
+        product.notes
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchable.includes(query);
+
+    });
+
+  }
+
+
+  if (currentSort === "low") {
+
+    list.sort(
+      (a, b) => a.price - b.price
+    );
+
+  }
+
+  if (currentSort === "high") {
+
+    list.sort(
+      (a, b) => b.price - a.price
+    );
+
+  }
+
+  if (currentSort === "name") {
+
+    list.sort(
+      (a, b) =>
+        a.name.localeCompare(b.name)
+    );
+
+  }
+
+
+  return list;
+}
+
+
+/* =========================================================
+   PRODUCT CARD
+   ========================================================= */
+
+function productCard(product) {
+
+  const wished =
+    wishlist.includes(product.id);
+
+
+  return `
+    <article
+      class="product-card"
+      data-product="${product.id}"
+    >
+
+      <div class="product-image">
+
+        <div class="product-bottle">
+          <div class="product-label"></div>
+        </div>
+
+
+        <div class="product-actions">
+
+          <button
+            class="product-icon ${wished ? "wish-active" : ""}"
+            onclick="toggleWishlist(${product.id})"
+            aria-label="Wishlist"
+            title="Wishlist"
+          >
+
+            <i
+              data-lucide="heart"
+              ${wished ? 'fill="currentColor"' : ""}
+            ></i>
+
+          </button>
+
+
+          <button
+            class="product-icon"
+            onclick="quickView(${product.id})"
+            aria-label="Quick view"
+            title="Quick view"
+          >
+
+            <i data-lucide="eye"></i>
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <div class="product-info">
+
+        <span class="product-category">
+          ${escapeHTML(product.category)}
+        </span>
+
+        <h3>
+          ${escapeHTML(product.name)}
+        </h3>
+
+        <p class="product-note">
+          ${escapeHTML(product.notes)}
+        </p>
+
+
+        <div class="product-bottom">
+
+          <span class="product-price">
+            ${money(product.price)}
+          </span>
+
+
+          <div class="product-buttons">
+
+            <button
+              class="quick-btn"
+              onclick="quickView(${product.id})"
+            >
+              Quick view
+            </button>
+
+            <button
+              class="add-btn"
+              onclick="addToCart(${product.id})"
+            >
+              Add
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </article>
+  `;
+}
+
+
+/* =========================================================
+   RENDER PRODUCTS
+   ========================================================= */
+
+function renderProducts() {
+
+  const container =
+    document.getElementById("products");
+
+  if (!container) return;
+
+
+  const list =
+    getVisibleProducts();
+
+
+  if (!list.length) {
+
+    container.innerHTML = `
+      <div class="empty-products">
+
+        <h3>
+          No fragrance found
+        </h3>
+
+        <p>
+          Try another search or category.
+        </p>
+
+      </div>
+    `;
+
+    return;
+  }
+
+
+  container.innerHTML =
+    list.map(productCard).join("");
+
+
+  refreshIcons();
+}
+
 
 function refreshIcons() {
 
@@ -129,372 +840,178 @@ function refreshIcons() {
 
 
 /* =========================================================
-   PRODUCTS
-========================================================= */
+   FILTER BUTTONS
+   ========================================================= */
 
-function renderProducts(list = products) {
+document
+  .querySelectorAll(".filter")
+  .forEach(button => {
 
-  const el = $("#products");
+    button.addEventListener(
+      "click",
+      () => {
 
-  if (!el) return;
+        document
+          .querySelectorAll(".filter")
+          .forEach(btn =>
+            btn.classList.remove("active")
+          );
+
+        button.classList.add("active");
+
+        currentFilter =
+          button.dataset.filter;
+
+        renderProducts();
+
+      }
+    );
+
+  });
+
+
+/* =========================================================
+   SHOP SEARCH
+   ========================================================= */
+
+const shopSearch =
+  document.getElementById("shopSearch");
+
+
+shopSearch?.addEventListener(
+  "input",
+  event => {
+
+    currentSearch =
+      event.target.value;
+
+    renderProducts();
+
+  }
+);
+
+
+/* =========================================================
+   SORT
+   ========================================================= */
+
+document
+  .getElementById("sortBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      if (currentSort === "default") {
+
+        currentSort = "low";
+
+        toast("Sorted by lowest price.");
+
+      } else if (currentSort === "low") {
+
+        currentSort = "high";
+
+        toast("Sorted by highest price.");
+
+      } else if (currentSort === "high") {
+
+        currentSort = "name";
+
+        toast("Sorted alphabetically.");
+
+      } else {
+
+        currentSort = "default";
+
+        toast("Default sorting restored.");
+
+      }
+
+      renderProducts();
+
+    }
+  );
+
+
+/* =========================================================
+   ADVANCED SEARCH MODAL
+   ========================================================= */
+
+document
+  .getElementById("searchBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      openModal("searchModal");
+
+      setTimeout(() => {
+
+        document
+          .getElementById("searchInput")
+          ?.focus();
+
+      }, 100);
+
+      renderSearchResults("");
+
+    }
+  );
+
+
+const searchInput =
+  document.getElementById("searchInput");
+
+
+searchInput?.addEventListener(
+  "input",
+  event => {
+
+    const query =
+      event.target.value;
+
+    renderSearchResults(query);
+
+  }
+);
+
+
+function renderSearchResults(query) {
+
+  const container =
+    document.getElementById("searchResults");
+
+  if (!container) return;
+
+
+  const q =
+    query.trim().toLowerCase();
+
+
+  let list =
+    products.filter(product => {
+
+      if (!q) return true;
+
+      const searchable = [
+        product.name,
+        product.category,
+        product.type,
+        product.notes
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return searchable.includes(q);
+
+    });
+
 
   if (!list.length) {
 
-    el.innerHTML = `
-      <div class="empty-products">
-        <p class="muted">
-          No fragrances found.
-        </p>
-      </div>
-    `;
-
-    return;
-  }
-
-
-  el.innerHTML = list.map(p => {
-
-    const index = products.indexOf(p);
-
-    const liked =
-      wishlist.includes(index);
-
-
-    return `
-      <article class="product">
-
-        <div
-          class="product-img"
-          onclick="quickView(${index})"
-        >
-
-          <button
-            class="heart ${liked ? "active" : ""}"
-            onclick="event.stopPropagation(); toggleWishlist(${index})"
-            aria-label="Wishlist"
-          >
-            <i
-              data-lucide="heart"
-              ${liked ? 'fill="currentColor"' : ""}
-            ></i>
-          </button>
-
-          <div class="mini-bottle">
-            <div class="mini-cap"></div>
-          </div>
-
-          <button
-            class="quick-view-btn"
-            onclick="event.stopPropagation(); quickView(${index})"
-          >
-            <i data-lucide="eye"></i>
-            Quick view
-          </button>
-
-        </div>
-
-        <div class="product-info">
-
-          <div class="meta">
-            ${p.type} · ${p.cat}
-          </div>
-
-          <h3>${p.name}</h3>
-
-          <div class="meta">
-            ${p.note}
-          </div>
-
-          <div class="price">
-            ${money(p.price)}
-          </div>
-
-          <button
-            class="add"
-            onclick="add(${index})"
-          >
-            Add to bag
-          </button>
-
-        </div>
-
-      </article>
-    `;
-
-  }).join("");
-
-
-  refreshIcons();
-}
-
-
-/* =========================================================
-   CART
-========================================================= */
-
-function add(i) {
-
-  const p = products[i];
-
-  const existing = cart.find(
-    x => x.i === i
-  );
-
-
-  if (existing) {
-
-    existing.q++;
-
-  } else {
-
-    cart.push({
-      i,
-      q: 1
-    });
-
-  }
-
-
-  save();
-
-  toast(
-    p.name + " added to bag"
-  );
-
-  openCart();
-}
-
-
-function save() {
-
-  localStorage.setItem(
-    "zevoriaCart",
-    JSON.stringify(cart)
-  );
-
-  renderCart();
-
-  $("#cartCount").textContent =
-    cart.reduce(
-      (total, item) => total + item.q,
-      0
-    );
-
-}
-
-
-function renderCart() {
-
-  const el = $("#cartItems");
-
-  if (!el) return;
-
-
-  if (!cart.length) {
-
-    el.innerHTML = `
-      <div class="empty-cart">
-        <p class="muted">
-          Your bag is empty.
-        </p>
-
-        <p class="muted">
-          Explore the collection and add a fragrance.
-        </p>
-      </div>
-    `;
-
-    $("#subtotal").textContent = "₹0";
-
-    return;
-  }
-
-
-  el.innerHTML = cart.map(item => {
-
-    const p = products[item.i];
-
-    return `
-      <div class="cart-row">
-
-        <div class="cart-thumb"></div>
-
-        <div style="flex:1">
-
-          <h4>${p.name}</h4>
-
-          <small>${money(p.price)}</small>
-
-          <div class="qty">
-
-            <button
-              onclick="change(${item.i},-1)"
-              aria-label="Decrease"
-            >
-              −
-            </button>
-
-            <span>${item.q}</span>
-
-            <button
-              onclick="change(${item.i},1)"
-              aria-label="Increase"
-            >
-              +
-            </button>
-
-            <button
-              class="cart-remove"
-              onclick="removeItem(${item.i})"
-            >
-              Remove
-            </button>
-
-          </div>
-
-        </div>
-
-      </div>
-    `;
-
-  }).join("");
-
-
-  const subtotal =
-    cart.reduce(
-      (total, item) =>
-        total +
-        products[item.i].price * item.q,
-      0
-    );
-
-
-  $("#subtotal").textContent =
-    money(subtotal);
-}
-
-
-function change(i, amount) {
-
-  const item = cart.find(
-    x => x.i === i
-  );
-
-  if (!item) return;
-
-
-  item.q += amount;
-
-
-  if (item.q <= 0) {
-
-    cart =
-      cart.filter(
-        x => x.i !== i
-      );
-
-  }
-
-
-  save();
-}
-
-
-function removeItem(i) {
-
-  cart =
-    cart.filter(
-      x => x.i !== i
-    );
-
-  save();
-
-  toast("Item removed from bag");
-}
-
-
-/* =========================================================
-   WISHLIST
-========================================================= */
-
-function toggleWishlist(i) {
-
-  const p = products[i];
-
-  if (wishlist.includes(i)) {
-
-    wishlist =
-      wishlist.filter(
-        x => x !== i
-      );
-
-    toast(
-      p.name + " removed from wishlist"
-    );
-
-  } else {
-
-    wishlist.push(i);
-
-    toast(
-      p.name + " added to wishlist"
-    );
-
-  }
-
-
-  saveWishlist();
-
-  renderProducts(
-    getCurrentProductList()
-  );
-
-}
-
-
-function getCurrentProductList() {
-
-  const active =
-    document.querySelector(
-      ".filter.active"
-    );
-
-  if (!active || active.dataset.filter === "all") {
-    return products;
-  }
-
-  return products.filter(
-    p =>
-      p.cat === active.dataset.filter
-  );
-}
-
-
-function openWishlist() {
-
-  renderWishlist();
-
-  modal("#wishlistModal");
-}
-
-
-function renderWishlist() {
-
-  const el =
-    $("#wishlistItems");
-
-  if (!el) return;
-
-
-  if (!wishlist.length) {
-
-    el.innerHTML = `
+    container.innerHTML = `
       <p class="muted">
-        Your wishlist is empty.
-      </p>
-
-      <p class="muted">
-        Tap the heart on a fragrance to save it here.
+        No fragrances match your search.
       </p>
     `;
 
@@ -502,948 +1019,1701 @@ function renderWishlist() {
   }
 
 
-  el.innerHTML =
-    wishlist.map(i => {
+  container.innerHTML =
+    list.map(product => `
 
-      const p = products[i];
+      <div
+        class="search-result"
+        onclick="quickView(${product.id})"
+      >
 
-      return `
-        <div class="wishlist-card">
+        <div class="search-result-bottle"></div>
 
-          <div class="wishlist-card-thumb"></div>
+        <div class="search-result-info">
 
-          <div class="wishlist-card-info">
+          <strong>
+            ${escapeHTML(product.name)}
+          </strong>
 
-            <strong>${p.name}</strong>
-
-            <div class="meta">
-              ${p.note}
-            </div>
-
-            <div class="price">
-              ${money(p.price)}
-            </div>
-
-          </div>
-
-          <div class="wishlist-actions">
-
-            <button onclick="add(${i})">
-              Add
-            </button>
-
-            <button onclick="toggleWishlist(${i})">
-              Remove
-            </button>
-
-          </div>
+          <small>
+            ${escapeHTML(product.type)}
+            •
+            ${escapeHTML(product.notes)}
+          </small>
 
         </div>
-      `;
 
-    }).join("");
+        <strong>
+          ${money(product.price)}
+        </strong>
+
+      </div>
+
+    `).join("");
+
+
+  if (q) {
+
+    recentSearches =
+      recentSearches.filter(
+        x => x !== q
+      );
+
+    recentSearches.unshift(q);
+
+    recentSearches =
+      recentSearches.slice(0, 8);
+
+    localStorage.setItem(
+      SEARCH_KEY,
+      JSON.stringify(recentSearches)
+    );
+
+  }
 
 }
 
 
 /* =========================================================
    QUICK VIEW
-========================================================= */
+   ========================================================= */
 
-function quickView(i) {
+function quickView(productId) {
 
-  const p = products[i];
+  const product =
+    getProduct(productId);
 
-  $("#quickViewContent").innerHTML = `
+  if (!product) return;
 
-    <div class="quick-view">
 
-      <div class="quick-view-image">
+  const wished =
+    wishlist.includes(product.id);
 
-        <div class="quick-view-bottle"></div>
+
+  const container =
+    document.getElementById(
+      "quickViewContent"
+    );
+
+  if (!container) return;
+
+
+  container.innerHTML = `
+
+    <div class="quick-view-image">
+
+      <div class="product-bottle">
+        <div class="product-label"></div>
+      </div>
+
+    </div>
+
+
+    <div class="quick-view-info">
+
+      <span class="category">
+        ${escapeHTML(product.type)}
+      </span>
+
+      <h2>
+        ${escapeHTML(product.name)}
+      </h2>
+
+      <div class="price">
+        ${money(product.price)}
+      </div>
+
+
+      <p class="description">
+        A carefully composed ZEVORIA fragrance
+        designed to become part of your everyday signature.
+      </p>
+
+
+      <div class="notes">
+
+        ${product.notes
+          .split("•")
+          .map(note =>
+            `<span class="note">
+              ${escapeHTML(note.trim())}
+            </span>`
+          )
+          .join("")}
 
       </div>
 
-      <div class="quick-view-info">
 
-        <div class="meta">
-          ${p.type} · ${p.cat}
-        </div>
-
-        <h3>
-          ${p.name}
-        </h3>
-
-        <div class="meta">
-          ${p.note}
-        </div>
-
-        <p class="quick-view-note">
-          ${p.description}
-        </p>
-
-        <div class="quick-view-price">
-          ${money(p.price)}
-        </div>
+      <div class="quick-view-buttons">
 
         <button
-          class="btn btn-dark full"
-          onclick="add(${i}); closeAll();"
+          class="btn btn-dark"
+          onclick="addToCart(${product.id}); closeModal('quickViewModal')"
         >
           Add to bag
           <i data-lucide="shopping-bag"></i>
         </button>
 
+
+        <button
+          class="btn"
+          onclick="toggleWishlist(${product.id})"
+        >
+          <i
+            data-lucide="heart"
+            ${wished ? 'fill="currentColor"' : ""}
+          ></i>
+
+          ${wished ? "Saved" : "Wishlist"}
+
+        </button>
+
       </div>
 
     </div>
+
   `;
 
-  modal("#quickViewModal");
+
+  openModal("quickViewModal");
 
   refreshIcons();
 }
 
 
 /* =========================================================
-   UI
-========================================================= */
+   WISHLIST
+   ========================================================= */
 
-function toast(message) {
+function toggleWishlist(productId) {
 
-  const element =
-    $("#toast");
+  productId = Number(productId);
 
-  element.textContent =
-    message;
 
-  element.classList.add("show");
+  if (wishlist.includes(productId)) {
 
-
-  setTimeout(
-    () =>
-      element.classList.remove("show"),
-    1800
-  );
-}
-
-
-function openCart() {
-
-  $("#overlay").classList.add("show");
-
-  $("#cartDrawer").classList.add("open");
-
-}
-
-
-function closeAll() {
-
-  $("#overlay").classList.remove("show");
-
-  $("#cartDrawer").classList.remove("open");
-
-  $$(".modal").forEach(
-    element =>
-      element.classList.remove("show")
-  );
-
-}
-
-
-function modal(id) {
-
-  $("#overlay").classList.add("show");
-
-  $(id).classList.add("show");
-
-}
-
-
-$("#cartBtn").onclick =
-  openCart;
-
-
-$("#searchBtn").onclick =
-  () => modal("#searchModal");
-
-
-$("#accountBtn").onclick =
-  () => {
-
-    updateAccountUI();
-
-    modal("#accountModal");
-
-  };
-
-
-$("#overlay").onclick =
-  closeAll;
-
-
-$$("[data-close]").forEach(
-  element =>
-    element.onclick = closeAll
-);
-
-
-$("#menuBtn").onclick =
-  () =>
-    $("#nav").classList.toggle("open");
-
-
-/* =========================================================
-   FILTERS
-========================================================= */
-
-$$(".filter").forEach(button => {
-
-  button.onclick = () => {
-
-    $$(".filter").forEach(
-      item =>
-        item.classList.remove("active")
-    );
-
-
-    button.classList.add("active");
-
-
-    const filter =
-      button.dataset.filter;
-
-
-    renderProducts(
-      filter === "all"
-        ? products
-        : products.filter(
-            p =>
-              p.cat === filter
-          )
-    );
-
-  };
-
-});
-
-
-/* =========================================================
-   ATTARS
-========================================================= */
-
-$("#attarBtn").onclick = () => {
-
-  $$(".filter").forEach(
-    button =>
-      button.classList.remove("active")
-  );
-
-
-  const allButton =
-    document.querySelector(
-      '[data-filter="all"]'
-    );
-
-
-  if (allButton) {
-    allButton.classList.add("active");
-  }
-
-
-  renderProducts(
-    products.filter(
-      p =>
-        p.type === "Attar"
-    )
-  );
-
-
-  $("#shop").scrollIntoView({
-    behavior:"smooth"
-  });
-
-};
-
-
-/* =========================================================
-   SEARCH
-========================================================= */
-
-$("#searchInput").oninput =
-  event => {
-
-    const query =
-      event.target.value
-        .trim()
-        .toLowerCase();
-
-
-    if (!query) {
-
-      $("#searchResults").innerHTML = `
-        <p class="muted">
-          Search by perfume name, note or fragrance type.
-        </p>
-      `;
-
-      return;
-    }
-
-
-    const results =
-      products.filter(
-        p =>
-          (
-            p.name +
-            " " +
-            p.note +
-            " " +
-            p.type +
-            " " +
-            p.cat +
-            " " +
-            p.description
-          )
-            .toLowerCase()
-            .includes(query)
+    wishlist =
+      wishlist.filter(
+        id => id !== productId
       );
 
-
-    if (!results.length) {
-
-      $("#searchResults").innerHTML =
-        "<p class='muted'>No fragrance found.</p>";
-
-      return;
-    }
-
-
-    $("#searchResults").innerHTML =
-      results.map(p => {
-
-        const index =
-          products.indexOf(p);
-
-        return `
-          <div
-            class="search-result"
-            onclick="quickView(${index})"
-          >
-
-            <div>
-              <strong>${p.name}</strong>
-
-              <br>
-
-              <small>
-                ${p.note} · ${p.type}
-              </small>
-            </div>
-
-            <strong>
-              ${money(p.price)}
-            </strong>
-
-          </div>
-        `;
-
-      }).join("");
-
-  };
-
-
-/* =========================================================
-   NEWSLETTER
-========================================================= */
-
-$("#newsletter").onsubmit =
-  event => {
-
-    event.preventDefault();
-
-    const email =
-      event.target.querySelector(
-        "input"
-      ).value.trim();
-
-
-    if (!email) return;
-
-
-    /*
-      Saved locally for now.
-      Later this can be connected
-      to the backend newsletter table.
-    */
-
-    const subscribers =
-      JSON.parse(
-        localStorage.getItem(
-          "zevoriaNewsletter"
-        ) || "[]"
-      );
-
-
-    if (!subscribers.includes(email)) {
-      subscribers.push(email);
-    }
-
-
-    localStorage.setItem(
-      "zevoriaNewsletter",
-      JSON.stringify(subscribers)
-    );
-
-
-    toast(
-      "Thanks — you're on the list."
-    );
-
-
-    event.target.reset();
-
-  };
-
-
-/* =========================================================
-   ACCOUNT
-========================================================= */
-
-function updateAccountUI() {
-
-  const user =
-    JSON.parse(
-      localStorage.getItem(
-        "zevoriaUser"
-      ) || "null"
-    );
-
-
-  const loggedOut =
-    $("#loggedOutAccount");
-
-  const loggedIn =
-    $("#loggedInAccount");
-
-  const title =
-    $("#accountTitle");
-
-
-  if (user) {
-
-    loggedOut.style.display =
-      "none";
-
-    loggedIn.style.display =
-      "block";
-
-    title.textContent =
-      "Welcome back, " +
-      user.name;
-
-
-    $("#accountName").textContent =
-      user.name || "";
-
-
-    $("#accountEmail").textContent =
-      user.email || "";
-
-
-    $("#accountPhone").textContent =
-      user.phone || "";
-
+    toast("Removed from wishlist.");
 
   } else {
 
-    loggedOut.style.display =
-      "block";
+    wishlist.push(productId);
 
-    loggedIn.style.display =
-      "none";
-
-    title.textContent =
-      "Welcome to ZEVORIA";
+    toast("Saved to your wishlist.");
 
   }
+
+
+  saveWishlist();
+
+  updateCounts();
+
+  renderProducts();
+
+  renderWishlist();
 
 }
 
 
-/* =========================================================
-   SIGNUP / LOGIN SWITCH
-========================================================= */
-
-$("#showSignupBtn").onclick =
-  () => {
-
-    $("#loginForm").style.display =
-      "none";
-
-    $("#showSignupBtn").style.display =
-      "none";
-
-    $("#signupForm").style.display =
-      "block";
-
-  };
-
-
-$("#showLoginBtn").onclick =
-  () => {
-
-    $("#signupForm").style.display =
-      "none";
-
-    $("#loginForm").style.display =
-      "block";
-
-    $("#showSignupBtn").style.display =
-      "block";
-
-  };
-
-
-/* =========================================================
-   SIGNUP
-========================================================= */
-
-$("#signupForm").onsubmit =
-  async event => {
-
-    event.preventDefault();
-
-
-    const button =
-      $("#signupBtn");
-
-    const oldText =
-      button.textContent;
-
-
-    button.disabled = true;
-
-    button.textContent =
-      "Creating account...";
-
-
-    const name =
-      $("#signupName")
-        .value
-        .trim();
-
-
-    const email =
-      $("#signupEmail")
-        .value
-        .trim();
-
-
-    const phone =
-      $("#signupPhone")
-        .value
-        .trim();
-
-
-    const password =
-      $("#signupPassword")
-        .value;
-
-
-    try {
-
-      const response =
-        await fetch(
-          `${API_BASE}/api/auth/signup`,
-          {
-            method:"POST",
-
-            headers:{
-              "Content-Type":
-                "application/json"
-            },
-
-            body:JSON.stringify({
-              name,
-              email,
-              phone,
-              password
-            })
-          }
-        );
-
-
-      const data =
-        await response
-          .json()
-          .catch(
-            () => ({})
-          );
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          data.error ||
-          "Could not create account"
-        );
-
-      }
-
-
-      localStorage.setItem(
-        "zevoriaUser",
-        JSON.stringify(
-          data.user
-        )
-      );
-
-
-      toast(
-        "Account created successfully"
-      );
-
-
-      event.target.reset();
-
-      updateAccountUI();
-
-
-    } catch (error) {
-
-      toast(error.message);
-
-      alert(
-        "Account could not be created.\n\n" +
-        error.message
-      );
-
-
-    } finally {
-
-      button.disabled =
-        false;
-
-      button.textContent =
-        oldText;
-
-    }
-
-  };
-
-
-/* =========================================================
-   LOGIN
-========================================================= */
-
-$("#loginForm").onsubmit =
-  async event => {
-
-    event.preventDefault();
-
-
-    const button =
-      $("#loginBtn");
-
-    const oldText =
-      button.textContent;
-
-
-    button.disabled = true;
-
-    button.textContent =
-      "Signing in...";
-
-
-    const email =
-      $("#loginEmail")
-        .value
-        .trim();
-
-
-    const password =
-      $("#loginPassword")
-        .value;
-
-
-    try {
-
-      const response =
-        await fetch(
-          `${API_BASE}/api/auth/login`,
-          {
-            method:"POST",
-
-            headers:{
-              "Content-Type":
-                "application/json"
-            },
-
-            body:JSON.stringify({
-              email,
-              password
-            })
-          }
-        );
-
-
-      const data =
-        await response
-          .json()
-          .catch(
-            () => ({})
-          );
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          data.error ||
-          "Invalid email or password"
-        );
-
-      }
-
-
-      localStorage.setItem(
-        "zevoriaUser",
-        JSON.stringify(
-          data.user
-        )
-      );
-
-
-      toast(
-        "Signed in successfully"
-      );
-
-
-      event.target.reset();
-
-      updateAccountUI();
-
-
-    } catch (error) {
-
-      toast(error.message);
-
-      alert(
-        "Sign in failed.\n\n" +
-        error.message
-      );
-
-
-    } finally {
-
-      button.disabled =
-        false;
-
-      button.textContent =
-        oldText;
-
-    }
-
-  };
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-$("#logoutBtn").onclick =
-  () => {
-
-    localStorage.removeItem(
-      "zevoriaUser"
+function renderWishlist() {
+
+  const container =
+    document.getElementById(
+      "wishlistItems"
     );
 
-    updateAccountUI();
-
-    toast(
-      "You have been signed out"
-    );
-
-  };
+  if (!container) return;
 
 
-/* =========================================================
-   ACCOUNT WISHLIST
-========================================================= */
+  if (!wishlist.length) {
 
-$("#wishlistAccountBtn").onclick =
-  () => {
+    container.innerHTML = `
+      <div class="empty-products">
 
-    closeAll();
+        <h3>
+          Your wishlist is empty
+        </h3>
 
-    openWishlist();
+        <p>
+          Save fragrances here for later.
+        </p>
 
-  };
-
-
-/* =========================================================
-   SCENT FINDER
-========================================================= */
-
-function openScentFinder() {
-
-  $("#scentStep").style.display =
-    "block";
-
-  $("#scentResults").style.display =
-    "none";
-
-  modal("#scentModal");
-
-}
-
-
-$("#scentFinderBtn").onclick =
-  openScentFinder;
-
-
-$("#storyScentBtn").onclick =
-  openScentFinder;
-
-
-$$(".scent-options button").forEach(
-  button => {
-
-    button.onclick = () => {
-
-      const style =
-        button.dataset.value;
-
-      showScentResults(style);
-
-    };
-
-  }
-);
-
-
-function showScentResults(style) {
-
-  const matches =
-    products
-      .filter(
-        product =>
-          product.styles.includes(style)
-      )
-      .slice(0,3);
-
-
-  $("#scentStep").style.display =
-    "none";
-
-  $("#scentResults").style.display =
-    "block";
-
-
-  if (!matches.length) {
-
-    $("#scentRecommendations").innerHTML = `
-      <p class="muted">
-        We couldn't find a direct match.
-        Explore the complete collection.
-      </p>
+      </div>
     `;
 
     return;
   }
 
 
-  $("#scentRecommendations").innerHTML =
-    matches.map(product => {
+  container.innerHTML =
+    wishlist.map(id => {
 
-      const index =
-        products.indexOf(product);
+      const product =
+        getProduct(id);
+
+      if (!product) return "";
 
       return `
-        <div class="scent-result-card">
 
-          <h4>${product.name}</h4>
+        <div class="wishlist-card">
 
-          <div class="meta">
-            ${product.type} · ${product.cat}
+          <div class="wishlist-card-image">
+
+            <div class="product-bottle">
+              <div class="product-label"></div>
+            </div>
+
           </div>
 
-          <p>
-            ${product.note}
-          </p>
+          <h4>
+            ${escapeHTML(product.name)}
+          </h4>
 
-          <strong>
+          <div class="wishlist-card-price">
             ${money(product.price)}
-          </strong>
+          </div>
 
-          <div class="scent-result-actions">
+
+          <div class="wishlist-card-actions">
 
             <button
-              onclick="quickView(${index})"
+              onclick="addToCart(${product.id})"
             >
-              Quick view
+              Add to bag
             </button>
 
             <button
-              onclick="add(${index})"
+              onclick="toggleWishlist(${product.id})"
             >
-              Add to bag
+              Remove
             </button>
 
           </div>
 
         </div>
+
       `;
 
     }).join("");
+}
+
+
+document
+  .getElementById("wishlistBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      renderWishlist();
+
+      openModal("wishlistModal");
+
+    }
+  );
+
+
+document
+  .getElementById("viewWishlistBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      closeModal("accountModal");
+
+      renderWishlist();
+
+      openModal("wishlistModal");
+
+    }
+  );
+
+
+/* =========================================================
+   SCENT FINDER
+   ========================================================= */
+
+const scentMap = {
+
+  fresh: [4, 1],
+
+  woody: [1, 3],
+
+  sweet: [2, 5, 0],
+
+  dark: [0, 3],
+
+  floral: [2, 5],
+
+  oud: [3, 0]
+
+};
+
+
+function openScentFinder() {
+
+  openModal("scentFinderModal");
+
+  const result =
+    document.getElementById(
+      "scentResult"
+    );
+
+  if (result) {
+    result.style.display = "none";
+  }
 
 }
 
 
-$("#restartScentBtn").onclick =
-  () => {
+document
+  .getElementById("scentFinderBtn")
+  ?.addEventListener(
+    "click",
+    openScentFinder
+  );
 
-    $("#scentResults").style.display =
-      "none";
 
-    $("#scentStep").style.display =
-      "block";
+document
+  .getElementById("openScentFinder")
+  ?.addEventListener(
+    "click",
+    openScentFinder
+  );
 
+
+document
+  .querySelectorAll(".scent-option")
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        const type =
+          button.dataset.scent;
+
+        showScentResult(type);
+
+      }
+    );
+
+  });
+
+
+function showScentResult(type) {
+
+  const result =
+    document.getElementById(
+      "scentResult"
+    );
+
+  if (!result) return;
+
+
+  const ids =
+    scentMap[type] || [0];
+
+
+  const recommended =
+    ids
+      .map(id => getProduct(id))
+      .filter(Boolean);
+
+
+  const main =
+    recommended[0];
+
+
+  result.style.display = "block";
+
+
+  result.innerHTML = `
+
+    <span class="eyebrow">
+      YOUR ZEVORIA MATCH
+    </span>
+
+    <h4>
+      ${escapeHTML(main.name)}
+    </h4>
+
+    <p>
+      ${escapeHTML(main.notes)}
+    </p>
+
+    <button
+      class="btn btn-dark"
+      onclick="quickView(${main.id})"
+    >
+      Explore ${escapeHTML(main.name)}
+      <i data-lucide="arrow-right"></i>
+    </button>
+
+  `;
+
+
+  refreshIcons();
+
+}
+
+
+/* =========================================================
+   COUPONS
+   ========================================================= */
+
+/*
+  These coupons currently work for the cart display.
+
+  IMPORTANT:
+  The current Render backend calculates the order total
+  itself and does not yet receive coupon information.
+
+  Therefore the coupon shown here is a frontend preview.
+  We will connect the discount to the server-side order
+  calculation when checkout/backend is upgraded.
+*/
+
+const coupons = {
+
+  ZEVORIA10: {
+    type: "percent",
+    value: 10
+  },
+
+  WELCOME15: {
+    type: "percent",
+    value: 15
+  },
+
+  NOIR100: {
+    type: "fixed",
+    value: 100
+  }
+
+};
+
+
+document
+  .getElementById("applyCouponBtn")
+  ?.addEventListener(
+    "click",
+    applyCoupon
+  );
+
+
+function applyCoupon() {
+
+  const input =
+    document.getElementById(
+      "couponInput"
+    );
+
+  const message =
+    document.getElementById(
+      "couponMessage"
+    );
+
+
+  if (!input || !message) return;
+
+
+  const code =
+    input.value
+      .trim()
+      .toUpperCase();
+
+
+  if (!code) {
+
+    message.textContent =
+      "Enter a coupon code.";
+
+    message.className = "error";
+
+    return;
+
+  }
+
+
+  const coupon =
+    coupons[code];
+
+
+  if (!coupon) {
+
+    message.textContent =
+      "Invalid coupon code.";
+
+    message.className = "error";
+
+    appliedCoupon = null;
+
+    localStorage.removeItem(
+      COUPON_KEY
+    );
+
+    updateCartTotals();
+
+    return;
+
+  }
+
+
+  appliedCoupon = {
+    code,
+    type: coupon.type,
+    value: coupon.value
   };
+
+
+  localStorage.setItem(
+    COUPON_KEY,
+    JSON.stringify(appliedCoupon)
+  );
+
+
+  message.textContent =
+    `${code} applied successfully.`;
+
+  message.className = "success";
+
+
+  updateCartTotals();
+
+  toast("Coupon applied.");
+}
+
+
+/* =========================================================
+   ACCOUNT
+   ========================================================= */
+
+function getUser() {
+
+  return JSON.parse(
+    localStorage.getItem(USER_KEY) || "null"
+  );
+
+}
+
+
+function updateAccountUI() {
+
+  const user =
+    getUser();
+
+
+  const loggedOut =
+    document.getElementById(
+      "loggedOutAccount"
+    );
+
+  const loggedIn =
+    document.getElementById(
+      "loggedInAccount"
+    );
+
+
+  if (!loggedOut || !loggedIn) return;
+
+
+  if (user) {
+
+    loggedOut.style.display = "none";
+
+    loggedIn.style.display = "block";
+
+
+    const name =
+      document.getElementById(
+        "accountName"
+      );
+
+    const email =
+      document.getElementById(
+        "accountEmail"
+      );
+
+    const phone =
+      document.getElementById(
+        "accountPhone"
+      );
+
+
+    if (name) name.textContent = user.name || "";
+
+    if (email) email.textContent = user.email || "";
+
+    if (phone) phone.textContent = user.phone || "";
+
+  } else {
+
+    loggedOut.style.display = "block";
+
+    loggedIn.style.display = "none";
+
+  }
+
+}
+
+
+document
+  .getElementById("accountBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      updateAccountUI();
+
+      openModal("accountModal");
+
+    }
+  );
+
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+
+document
+  .getElementById("loginForm")
+  ?.addEventListener(
+    "submit",
+    async event => {
+
+      event.preventDefault();
+
+
+      const email =
+        document
+          .getElementById("loginEmail")
+          .value
+          .trim();
+
+      const password =
+        document
+          .getElementById("loginPassword")
+          .value;
+
+
+      try {
+
+        const response =
+          await fetch(
+            `${API_BASE}/api/auth/login`,
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body: JSON.stringify({
+                email,
+                password
+              })
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.message ||
+            data.error ||
+            "Login failed."
+          );
+
+        }
+
+
+        localStorage.setItem(
+          USER_KEY,
+          JSON.stringify(data.user)
+        );
+
+
+        updateAccountUI();
+
+        toast("Welcome back to ZEVORIA.");
+
+      } catch (error) {
+
+        toast(
+          error.message ||
+          "Unable to sign in."
+        );
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   SIGNUP
+   ========================================================= */
+
+document
+  .getElementById("signupForm")
+  ?.addEventListener(
+    "submit",
+    async event => {
+
+      event.preventDefault();
+
+
+      const name =
+        document
+          .getElementById("signupName")
+          .value
+          .trim();
+
+      const email =
+        document
+          .getElementById("signupEmail")
+          .value
+          .trim();
+
+      const phone =
+        document
+          .getElementById("signupPhone")
+          .value
+          .trim();
+
+      const password =
+        document
+          .getElementById("signupPassword")
+          .value;
+
+
+      try {
+
+        const response =
+          await fetch(
+            `${API_BASE}/api/auth/signup`,
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body: JSON.stringify({
+                name,
+                email,
+                phone,
+                password
+              })
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.message ||
+            data.error ||
+            "Account creation failed."
+          );
+
+        }
+
+
+        localStorage.setItem(
+          USER_KEY,
+          JSON.stringify(data.user)
+        );
+
+
+        updateAccountUI();
+
+        toast(
+          "Your ZEVORIA account has been created."
+        );
+
+
+      } catch (error) {
+
+        toast(
+          error.message ||
+          "Unable to create account."
+        );
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   LOGIN / SIGNUP SWITCH
+   ========================================================= */
+
+document
+  .getElementById("showSignupBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      document
+        .getElementById("loginForm")
+        .style.display = "none";
+
+      document
+        .getElementById("showSignupBtn")
+        .style.display = "none";
+
+      document
+        .getElementById("signupForm")
+        .style.display = "block";
+
+    }
+  );
+
+
+document
+  .getElementById("showLoginBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      document
+        .getElementById("signupForm")
+        .style.display = "none";
+
+      document
+        .getElementById("loginForm")
+        .style.display = "block";
+
+      document
+        .getElementById("showSignupBtn")
+        .style.display = "block";
+
+    }
+  );
+
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+document
+  .getElementById("logoutBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      localStorage.removeItem(
+        USER_KEY
+      );
+
+      updateAccountUI();
+
+      toast("You have been signed out.");
+
+    }
+  );
+
+
+/* =========================================================
+   MOBILE MENU
+   ========================================================= */
+
+document
+  .getElementById("menuBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      document
+        .getElementById("nav")
+        ?.classList.toggle("open");
+
+    }
+  );
+
+
+document
+  .querySelectorAll(".nav a")
+  .forEach(link => {
+
+    link.addEventListener(
+      "click",
+      () => {
+
+        document
+          .getElementById("nav")
+          ?.classList.remove("open");
+
+      }
+    );
+
+  });
+
+
+/* =========================================================
+   ATTAR BUTTON
+   ========================================================= */
+
+document
+  .getElementById("attarBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      currentFilter = "unisex";
+
+      currentSearch = "";
+
+      if (shopSearch) {
+        shopSearch.value = "";
+      }
+
+
+      document
+        .querySelectorAll(".filter")
+        .forEach(btn =>
+          btn.classList.remove("active")
+        );
+
+
+      document
+        .querySelector(
+          '.filter[data-filter="unisex"]'
+        )
+        ?.classList.add("active");
+
+
+      document
+        .getElementById("shop")
+        ?.scrollIntoView({
+          behavior: "smooth"
+        });
+
+
+      renderProducts();
+
+    }
+  );
+
+
+/* =========================================================
+   NEWSLETTER
+   ========================================================= */
+
+document
+  .getElementById("newsletter")
+  ?.addEventListener(
+    "submit",
+    event => {
+
+      event.preventDefault();
+
+      const input =
+        event.currentTarget.querySelector(
+          "input"
+        );
+
+      if (!input) return;
+
+
+      const email =
+        input.value.trim();
+
+
+      localStorage.setItem(
+        "zevoriaNewsletter",
+        email
+      );
+
+
+      input.value = "";
+
+      toast(
+        "You're on the ZEVORIA list."
+      );
+
+    }
+  );
 
 
 /* =========================================================
    CHECKOUT
-========================================================= */
+   ========================================================= */
 
-$("#checkoutBtn").onclick =
-  () => {
+document
+  .getElementById("checkoutBtn")
+  ?.addEventListener(
+    "click",
+    () => {
 
-    if (!cart.length) {
+      if (!cart.length) {
 
-      toast(
-        "Your bag is empty"
+        toast(
+          "Your bag is empty."
+        );
+
+        return;
+
+      }
+
+
+      /*
+        Checkout remains on the dedicated
+        checkout.html page.
+      */
+
+      window.location.href =
+        "checkout.html";
+
+    }
+  );
+
+
+/* =========================================================
+   SAVE ORDER LOCALLY
+   ========================================================= */
+
+function saveLocalOrder(orderData) {
+
+  const orders =
+    getOrders();
+
+
+  const exists =
+    orders.some(
+      order =>
+        String(order.orderId) ===
+        String(orderData.orderId)
+    );
+
+
+  if (!exists) {
+
+    orders.unshift({
+      orderId: orderData.orderId,
+      total: orderData.total,
+      createdAt:
+        orderData.createdAt ||
+        new Date().toISOString()
+    });
+
+
+    saveOrders(orders);
+
+  }
+
+}
+
+
+/* =========================================================
+   ORDER HISTORY
+   ========================================================= */
+
+document
+  .getElementById("viewOrdersBtn")
+  ?.addEventListener(
+    "click",
+    () => {
+
+      closeModal("accountModal");
+
+      renderOrderHistory();
+
+      openModal("ordersModal");
+
+    }
+  );
+
+
+async function renderOrderHistory() {
+
+  const container =
+    document.getElementById(
+      "ordersList"
+    );
+
+  if (!container) return;
+
+
+  const orders =
+    getOrders();
+
+
+  if (!orders.length) {
+
+    container.innerHTML = `
+      <div class="empty-products">
+
+        <h3>
+          No orders yet
+        </h3>
+
+        <p>
+          Your completed orders will appear here.
+        </p>
+
+      </div>
+    `;
+
+    return;
+  }
+
+
+  container.innerHTML =
+    orders.map(order => `
+
+      <div class="order-card">
+
+        <div class="order-card-head">
+
+          <div>
+
+            <div class="order-number">
+              Order #${escapeHTML(order.orderId)}
+            </div>
+
+            <div class="order-date">
+              ${formatDate(order.createdAt)}
+            </div>
+
+          </div>
+
+          <span class="order-status">
+            Saved order
+          </span>
+
+        </div>
+
+
+        <div class="order-total">
+          ${money(order.total)}
+        </div>
+
+
+        <div class="order-card-actions">
+
+          <button
+            onclick="trackOrder('${escapeHTML(order.orderId)}')"
+          >
+            Track order
+          </button>
+
+          <button
+            onclick="reorder('${escapeHTML(order.orderId)}')"
+          >
+            Reorder
+          </button>
+
+        </div>
+
+      </div>
+
+    `).join("");
+
+}
+
+
+function formatDate(date) {
+
+  if (!date) return "";
+
+  return new Date(date).toLocaleString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    }
+  );
+
+}
+
+
+/* =========================================================
+   TRACK ORDER
+   ========================================================= */
+
+async function trackOrder(orderId) {
+
+  openModal("trackingModal");
+
+
+  const container =
+    document.getElementById(
+      "trackingContent"
+    );
+
+  if (!container) return;
+
+
+  container.innerHTML = `
+    <p class="muted">
+      Loading order information...
+    </p>
+  `;
+
+
+  try {
+
+    const response =
+      await fetch(
+        `${API_BASE}/api/orders/${encodeURIComponent(orderId)}`
       );
 
-      return;
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        data.error ||
+        "Order not found."
+      );
 
     }
 
 
-    window.location.href =
-      "checkout.html";
+    renderTracking(data);
 
+
+  } catch (error) {
+
+    container.innerHTML = `
+
+      <div class="empty-products">
+
+        <h3>
+          Order not available
+        </h3>
+
+        <p>
+          ${escapeHTML(error.message)}
+        </p>
+
+      </div>
+
+    `;
+
+  }
+
+}
+
+
+function renderTracking(order) {
+
+  const container =
+    document.getElementById(
+      "trackingContent"
+    );
+
+  if (!container) return;
+
+
+  const statuses = [
+    "pending",
+    "confirmed",
+    "shipped",
+    "delivered"
+  ];
+
+
+  let currentIndex =
+    statuses.indexOf(
+      String(order.order.status)
+        .toLowerCase()
+    );
+
+
+  if (currentIndex < 0) {
+    currentIndex = 0;
+  }
+
+
+  const labels = {
+    pending: "Order received",
+    confirmed: "Order confirmed",
+    shipped: "Shipped",
+    delivered: "Delivered"
   };
 
 
+  const descriptions = {
+    pending:
+      "Your order has been received and is waiting for confirmation.",
+
+    confirmed:
+      "Your order has been confirmed and is being prepared.",
+
+    shipped:
+      "Your order has been handed over for delivery.",
+
+    delivered:
+      "Your order has been delivered."
+  };
+
+
+  container.innerHTML = `
+
+    <span class="eyebrow">
+      ORDER TRACKING
+    </span>
+
+    <h3 class="tracking-order-number">
+      #${escapeHTML(order.order.id)}
+    </h3>
+
+    <p class="tracking-total">
+      Total: ${money(order.order.total)}
+    </p>
+
+
+    <div class="timeline">
+
+      ${statuses.map(
+        (status, index) => `
+
+          <div
+            class="timeline-step ${
+              index <= currentIndex
+                ? "active"
+                : ""
+            }"
+          >
+
+            <div class="timeline-dot">
+
+              ${
+                index <= currentIndex
+                  ? `<i data-lucide="check"></i>`
+                  : ""
+              }
+
+            </div>
+
+
+            <h4>
+              ${labels[status]}
+            </h4>
+
+            <p>
+              ${descriptions[status]}
+            </p>
+
+          </div>
+
+        `
+      ).join("")}
+
+    </div>
+
+
+    ${
+      order.order.status === "cancelled"
+        ? `
+          <div class="scent-result">
+
+            <h4>
+              Order cancelled
+            </h4>
+
+            <p>
+              This order has been cancelled.
+            </p>
+
+          </div>
+        `
+        : ""
+    }
+
+  `;
+
+
+  refreshIcons();
+
+}
+
+
 /* =========================================================
-   START APP
-========================================================= */
+   REORDER
+   ========================================================= */
 
-renderProducts();
+async function reorder(orderId) {
 
-save();
+  try {
 
-updateAccountUI();
+    const response =
+      await fetch(
+        `${API_BASE}/api/orders/${encodeURIComponent(orderId)}`
+      );
 
-refreshIcons();
+
+    const data =
+      await response.json();
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.message ||
+        data.error ||
+        "Unable to load order."
+      );
+
+    }
+
+
+    const items =
+      data.items || [];
+
+
+    let added = 0;
+
+
+    items.forEach(item => {
+
+      const product =
+        getProductByBackendId(
+          item.product_id ||
+          item.productId
+        );
+
+
+      if (!product) return;
+
+
+      addToCart(
+        product.id,
+        Number(item.qty || 1)
+      );
+
+
+      added++;
+
+    });
+
+
+    if (added) {
+
+      toast(
+        "Previous order added to your bag."
+      );
+
+      closeAll();
+
+      setTimeout(
+        openCart,
+        250
+      );
+
+    } else {
+
+      toast(
+        "Some products from this order are no longer available."
+      );
+
+    }
+
+
+  } catch (error) {
+
+    toast(
+      error.message ||
+      "Unable to reorder."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   ORDER TRACKING FROM LOCAL HISTORY
+   ========================================================= */
+
+function rememberOrderFromCheckout(
+  orderId,
+  total
+) {
+
+  saveLocalOrder({
+    orderId,
+    total,
+    createdAt:
+      new Date().toISOString()
+  });
+
+}
+
+
+/*
+  checkout.js can call this function after
+  a successful order.
+*/
+window.rememberOrderFromCheckout =
+  rememberOrderFromCheckout;
+
+
+/* =========================================================
+   REVIEWS / RATINGS — LOCAL CUSTOMER REVIEWS
+   ========================================================= */
+
+function getReviews() {
+
+  return JSON.parse(
+    localStorage.getItem(
+      REVIEWS_KEY
+    ) || "[]"
+  );
+
+}
+
+
+function saveReview(review) {
+
+  const reviews =
+    getReviews();
+
+  reviews.push(review);
+
+  localStorage.setItem(
+    REVIEWS_KEY,
+    JSON.stringify(reviews)
+  );
+
+}
+
+
+function getProductReviews(productId) {
+
+  return getReviews().filter(
+    review =>
+      Number(review.productId) ===
+      Number(productId)
+  );
+
+}
+
+
+/* =========================================================
+   THEME SUPPORT
+   ========================================================= */
+
+function loadTheme() {
+
+  const theme =
+    localStorage.getItem(
+      THEME_KEY
+    );
+
+
+  if (theme === "dark") {
+
+    document.body.classList.add("dark");
+
+  }
+
+}
+
+
+function toggleTheme() {
+
+  const dark =
+    document.body.classList.toggle(
+      "dark"
+    );
+
+
+  localStorage.setItem(
+    THEME_KEY,
+    dark ? "dark" : "light"
+  );
+
+}
+
+
+window.toggleZevoriaTheme =
+  toggleTheme;
+
+
+/* =========================================================
+   AUTO SAVE CURRENT CART
+   ========================================================= */
+
+window.addEventListener(
+  "beforeunload",
+  saveCart
+);
+
+
+/* =========================================================
+   INITIALIZE
+   ========================================================= */
+
+function initialize() {
+
+  loadTheme();
+
+  renderProducts();
+
+  renderCart();
+
+  renderWishlist();
+
+  updateCounts();
+
+  updateAccountUI();
+
+  refreshIcons();
+
+}
+
+
+initialize();
+
+
+/* =========================================================
+   GLOBAL FUNCTIONS
+   ========================================================= */
+
+window.addToCart = addToCart;
+window.changeQty = changeQty;
+window.removeFromCart = removeFromCart;
+
+window.quickView = quickView;
+
+window.toggleWishlist =
+  toggleWishlist;
+
+window.trackOrder =
+  trackOrder;
+
+window.reorder =
+  reorder;
+
+window.openScentFinder =
+  openScentFinder;
+
+window.closeModal =
+  closeModal;
+
+window.renderOrderHistory =
+  renderOrderHistory;
