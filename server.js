@@ -7,8 +7,11 @@ const Database = require("better-sqlite3");
 const bcrypt = require("bcryptjs");
 const { z } = require("zod");
 
-const app = express();
-const db = new Database("zevoria.db");
+const app=express();
+
+app.set("trust proxy", 1);
+
+const db=new Database("zevoria.db");
 
 const allowedOrigins = [
   "https://zevoria-store.vercel.app",
