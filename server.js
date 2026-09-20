@@ -6,6 +6,7 @@ const cors = require("cors");
 const rateLimit = require("express-rate-limit");
 const Database = require("better-sqlite3");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const { z } = require("zod");
 const { Resend } = require("resend");
 
@@ -13,11 +14,36 @@ const app = express();
 
 app.set("trust proxy", 1);
 
+const PORT = process.env.PORT || 4000;
 const db = new Database("zevoria.db");
 
-/* =========================
+/* =========================================================
+   SECURITY CONFIG
+========================================================= */
+
+const SESSION_DAYS = 7;
+const ORDER_ACCESS_DAYS = 30;
+
+const SESSION_SECRET =
+  process.env.SESSION_SECRET ||
+  crypto.randomBytes(48).toString("hex");
+
+if (!process.env.SESSION_SECRET) {
+  console.warn(
+    "WARNING: SESSION_SECRET is not configured. " +
+    "Set SESSION_SECRET in Render Environment Variables."
+  );
+}
+
+if (!process.env.ADMIN_KEY) {
+  console.warn(
+    "WARNING: ADMIN_KEY is not configured."
+  );
+}
+
+/* =========================================================
    RESEND EMAIL
-========================= */
+========================================================= */
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
@@ -26,10 +52,9 @@ const resend = process.env.RESEND_API_KEY
 const EMAIL_FROM =
   process.env.EMAIL_FROM || "onboarding@resend.dev";
 
-
-/* =========================
+/* =========================================================
    CORS
-========================= */
+========================================================= */
 
 const allowedOrigins = [
   "https://zevoria-store.vercel.app",
@@ -50,23 +75,69 @@ app.use(cors({
       return callback(null, true);
     }
 
-    return callback(new Error("CORS: origin not allowed"));
+    return callback(
+      new Error("CORS: origin not allowed")
+    );
   }
 }));
 
-app.use(express.json({ limit: "100kb" }));
-
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false
+app.use(express.json({
+  limit: "100kb"
 }));
 
+/* =========================================================
+   GLOBAL RATE LIMIT
+========================================================= */
 
-/* =========================
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false
+  })
+);
+
+/* =========================================================
+   STRICT RATE LIMITERS
+========================================================= */
+
+const authRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error:
+      "Too many authentication attempts. Please try again later."
+  }
+});
+
+const adminLoginRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error:
+      "Too many admin login attempts. Please try again later."
+  }
+});
+
+const orderRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error:
+      "Too many order requests. Please try again later."
+  }
+});
+
+/* =========================================================
    DATABASE
-========================= */
+========================================================= */
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS products(
@@ -80,6 +151,7 @@ CREATE TABLE IF NOT EXISTS products(
 
 CREATE TABLE IF NOT EXISTS orders(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
   customer_name TEXT NOT NULL,
   customer_email TEXT,
   phone TEXT NOT NULL,
@@ -108,30 +180,35 @@ CREATE TABLE IF NOT EXISTS users(
 );
 `);
 
+/* =========================================================
+   DATABASE MIGRATIONS
+========================================================= */
 
-/* =========================
-   DATABASE MIGRATION
-   Adds email to old orders
-========================= */
+/* Add customer_email to old databases */
 
 try {
-  const columns = db.prepare(
-    "PRAGMA table_info(orders)"
-  ).all();
+
+  const columns = db
+    .prepare("PRAGMA table_info(orders)")
+    .all();
 
   const hasEmailColumn = columns.some(
     column => column.name === "customer_email"
   );
 
   if (!hasEmailColumn) {
+
     db.exec(
       "ALTER TABLE orders ADD COLUMN customer_email TEXT"
     );
 
-    console.log("Added customer_email column to orders");
+    console.log(
+      "Added customer_email column to orders"
+    );
   }
 
 } catch (err) {
+
   console.error(
     "Order email migration error:",
     err
@@ -139,9 +216,40 @@ try {
 }
 
 
-/* =========================
+/* Add user_id to old databases */
+
+try {
+
+  const columns = db
+    .prepare("PRAGMA table_info(orders)")
+    .all();
+
+  const hasUserIdColumn = columns.some(
+    column => column.name === "user_id"
+  );
+
+  if (!hasUserIdColumn) {
+
+    db.exec(
+      "ALTER TABLE orders ADD COLUMN user_id INTEGER"
+    );
+
+    console.log(
+      "Added user_id column to orders"
+    );
+  }
+
+} catch (err) {
+
+  console.error(
+    "Order user migration error:",
+    err
+  );
+}
+
+/* =========================================================
    PRODUCTS
-========================= */
+========================================================= */
 
 const seedProducts = [
   [1, "No. 01 Noir", "men", 1499, 25, "Amber • Oud • Vanilla"],
@@ -153,24 +261,409 @@ const seedProducts = [
 ];
 
 const insertProduct = db.prepare(
-  "INSERT OR IGNORE INTO products(id,name,category,price,stock,note) VALUES (?,?,?,?,?,?)"
+  `INSERT OR IGNORE INTO products
+   (id,name,category,price,stock,note)
+   VALUES (?,?,?,?,?,?)`
 );
 
-for (const p of seedProducts) {
-  insertProduct.run(...p);
+for (const product of seedProducts) {
+  insertProduct.run(...product);
+}
+
+/* =========================================================
+   TOKEN SECURITY
+========================================================= */
+
+/*
+  Token format:
+
+  base64url(payload).base64url(signature)
+
+  The signature is created using HMAC-SHA256.
+*/
+
+function base64UrlEncode(value) {
+
+  return Buffer
+    .from(value)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
 }
 
 
-/* =========================
+function base64UrlDecode(value) {
+
+  const padded =
+    value
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+
+  return Buffer
+    .from(
+      padded + "=".repeat(
+        (4 - padded.length % 4) % 4
+      ),
+      "base64"
+    )
+    .toString("utf8");
+}
+
+
+function createToken(payload) {
+
+  const data = base64UrlEncode(
+    JSON.stringify(payload)
+  );
+
+  const signature = crypto
+    .createHmac(
+      "sha256",
+      SESSION_SECRET
+    )
+    .update(data)
+    .digest("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+
+  return `${data}.${signature}`;
+}
+
+
+function verifyToken(token) {
+
+  if (!token || typeof token !== "string") {
+    return null;
+  }
+
+  const parts = token.split(".");
+
+  if (parts.length !== 2) {
+    return null;
+  }
+
+  const [data, signature] = parts;
+
+  const expectedSignature =
+    crypto
+      .createHmac(
+        "sha256",
+        SESSION_SECRET
+      )
+      .update(data)
+      .digest("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+
+  try {
+
+    const a =
+      Buffer.from(signature);
+
+    const b =
+      Buffer.from(expectedSignature);
+
+    if (
+      a.length !== b.length ||
+      !crypto.timingSafeEqual(a, b)
+    ) {
+      return null;
+    }
+
+  } catch {
+
+    return null;
+  }
+
+  try {
+
+    const payload =
+      JSON.parse(
+        base64UrlDecode(data)
+      );
+
+    if (
+      !payload.exp ||
+      Date.now() > payload.exp
+    ) {
+      return null;
+    }
+
+    return payload;
+
+  } catch {
+
+    return null;
+  }
+}
+
+
+function createUserToken(user) {
+
+  return createToken({
+
+    type: "user",
+
+    userId: user.id,
+
+    exp:
+      Date.now() +
+      SESSION_DAYS *
+      24 *
+      60 *
+      60 *
+      1000
+
+  });
+
+}
+
+
+function createAdminToken() {
+
+  return createToken({
+
+    type: "admin",
+
+    exp:
+      Date.now() +
+      SESSION_DAYS *
+      24 *
+      60 *
+      60 *
+      1000
+
+  });
+
+}
+
+
+function createOrderAccessToken(orderId) {
+
+  return createToken({
+
+    type: "order",
+
+    orderId,
+
+    exp:
+      Date.now() +
+      ORDER_ACCESS_DAYS *
+      24 *
+      60 *
+      60 *
+      1000
+
+  });
+
+}
+
+
+/* =========================================================
+   AUTHORIZATION HELPERS
+========================================================= */
+
+function getBearerToken(req) {
+
+  const header =
+    req.headers.authorization;
+
+  if (
+    !header ||
+    !header.startsWith("Bearer ")
+  ) {
+    return null;
+  }
+
+  return header.substring(7).trim();
+}
+
+
+function requireUser(req, res, next) {
+
+  const token =
+    getBearerToken(req);
+
+  const payload =
+    verifyToken(token);
+
+  if (
+    !payload ||
+    payload.type !== "user" ||
+    !payload.userId
+  ) {
+
+    return res.status(401).json({
+      error:
+        "Authentication required."
+    });
+
+  }
+
+  const user =
+    db.prepare(
+      `SELECT
+        id,
+        name,
+        email,
+        phone,
+        created_at
+       FROM users
+       WHERE id=?`
+    ).get(payload.userId);
+
+  if (!user) {
+
+    return res.status(401).json({
+      error:
+        "Account no longer exists."
+    });
+
+  }
+
+  req.user = user;
+
+  next();
+
+}
+
+
+function requireAdmin(req, res, next) {
+
+  const token =
+    getBearerToken(req);
+
+  const payload =
+    verifyToken(token);
+
+  if (
+    payload &&
+    payload.type === "admin"
+  ) {
+
+    req.admin = true;
+
+    return next();
+  }
+
+  return res.status(401).json({
+    error:
+      "Admin authentication required."
+  });
+
+}
+
+
+/*
+  Allows the order owner to access the order.
+
+  It also allows a guest customer to use the
+  private order-access token returned after checkout.
+*/
+
+function requireOrderAccess(req, res, next) {
+
+  const orderId =
+    Number(req.params.id);
+
+  if (
+    !Number.isInteger(orderId) ||
+    orderId <= 0
+  ) {
+
+    return res.status(400).json({
+      error: "Invalid order ID."
+    });
+
+  }
+
+  const order =
+    db.prepare(
+      "SELECT * FROM orders WHERE id=?"
+    ).get(orderId);
+
+  if (!order) {
+
+    return res.status(404).json({
+      error: "Order not found."
+    });
+
+  }
+
+  /* ADMIN */
+
+  const bearer =
+    getBearerToken(req);
+
+  const payload =
+    verifyToken(bearer);
+
+  if (
+    payload &&
+    payload.type === "admin"
+  ) {
+
+    req.order = order;
+
+    return next();
+  }
+
+
+  /* LOGGED-IN CUSTOMER */
+
+  if (
+    payload &&
+    payload.type === "user" &&
+    payload.userId &&
+    order.user_id === payload.userId
+  ) {
+
+    req.order = order;
+
+    return next();
+  }
+
+
+  /* GUEST ORDER ACCESS TOKEN */
+
+  if (
+    payload &&
+    payload.type === "order" &&
+    Number(payload.orderId) === orderId
+  ) {
+
+    req.order = order;
+
+    return next();
+  }
+
+
+  return res.status(403).json({
+    error:
+      "You do not have access to this order."
+  });
+
+}
+
+/* =========================================================
    BASIC ROUTES
-========================= */
+========================================================= */
 
 app.get("/", (req, res) => {
 
   res.json({
+
     ok: true,
-    service: "ZEVORIA API",
-    message: "Backend is running"
+
+    service:
+      "ZEVORIA API",
+
+    message:
+      "Backend is running"
+
   });
 
 });
@@ -179,8 +672,12 @@ app.get("/", (req, res) => {
 app.get("/api/health", (req, res) => {
 
   res.json({
+
     ok: true,
-    service: "ZEVORIA API"
+
+    service:
+      "ZEVORIA API"
+
   });
 
 });
@@ -190,174 +687,356 @@ app.get("/api/products", (req, res) => {
 
   res.json(
     db.prepare(
-      "SELECT * FROM products ORDER BY id ASC"
+      `SELECT
+        id,
+        name,
+        category,
+        price,
+        stock,
+        note
+       FROM products
+       ORDER BY id ASC`
     ).all()
   );
 
 });
 
-
-/* =========================
+/* =========================================================
    SIGN UP
-========================= */
+========================================================= */
 
 const signupSchema = z.object({
-  name: z.string().min(2).max(80),
-  email: z.string().email().max(120),
-  phone: z.string().min(8).max(20),
-  password: z.string().min(6).max(100)
+
+  name:
+    z.string()
+      .trim()
+      .min(2)
+      .max(80),
+
+  email:
+    z.string()
+      .email()
+      .max(120),
+
+  phone:
+    z.string()
+      .trim()
+      .min(8)
+      .max(20),
+
+  password:
+    z.string()
+      .min(6)
+      .max(100)
+
 });
 
 
-app.post("/api/auth/signup", async (req, res) => {
+app.post(
+  "/api/auth/signup",
+  authRateLimit,
+  async (req, res) => {
 
-  const parsed = signupSchema.safeParse(req.body);
+    const parsed =
+      signupSchema.safeParse(req.body);
 
-  if (!parsed.success) {
+    if (!parsed.success) {
 
-    return res.status(400).json({
-      error:
-        "Please enter valid details and a password of at least 6 characters."
-    });
-
-  }
-
-  const {
-    name,
-    email,
-    phone,
-    password
-  } = parsed.data;
-
-  const normalizedEmail =
-    email.toLowerCase().trim();
-
-  try {
-
-    const existing = db.prepare(
-      "SELECT id FROM users WHERE email=?"
-    ).get(normalizedEmail);
-
-    if (existing) {
-
-      return res.status(409).json({
+      return res.status(400).json({
         error:
-          "An account with this email already exists."
+          "Please enter valid details and a password of at least 6 characters."
       });
 
     }
 
-    const passwordHash =
-      await bcrypt.hash(password, 12);
+    const {
+      name,
+      email,
+      phone,
+      password
+    } = parsed.data;
 
-    const info = db.prepare(
-      `INSERT INTO users
-      (name,email,phone,password_hash,created_at)
-      VALUES(?,?,?,?,datetime('now'))`
-    ).run(
-      name.trim(),
-      normalizedEmail,
-      phone.trim(),
-      passwordHash
-    );
+    const normalizedEmail =
+      email.toLowerCase().trim();
 
-    const user = db.prepare(
-      `SELECT id,name,email,phone,created_at
-       FROM users
-       WHERE id=?`
-    ).get(info.lastInsertRowid);
+    try {
 
-    res.status(201).json({
-      message: "Account created successfully",
-      user
-    });
+      const existing =
+        db.prepare(
+          "SELECT id FROM users WHERE email=?"
+        ).get(normalizedEmail);
 
-  } catch (err) {
+      if (existing) {
 
-    console.error(err);
+        return res.status(409).json({
+          error:
+            "An account with this email already exists."
+        });
 
-    res.status(500).json({
-      error: "Could not create account"
-    });
+      }
+
+      const passwordHash =
+        await bcrypt.hash(
+          password,
+          12
+        );
+
+      const info =
+        db.prepare(
+          `INSERT INTO users
+          (name,email,phone,password_hash,created_at)
+          VALUES(?,?,?,?,datetime('now'))`
+        ).run(
+          name.trim(),
+          normalizedEmail,
+          phone.trim(),
+          passwordHash
+        );
+
+      const user =
+        db.prepare(
+          `SELECT
+            id,
+            name,
+            email,
+            phone,
+            created_at
+           FROM users
+           WHERE id=?`
+        ).get(
+          info.lastInsertRowid
+        );
+
+      const token =
+        createUserToken(user);
+
+      res.status(201).json({
+
+        message:
+          "Account created successfully",
+
+        token,
+
+        user
+
+      });
+
+    } catch (err) {
+
+      console.error(
+        "Signup error:",
+        err
+      );
+
+      res.status(500).json({
+        error:
+          "Could not create account"
+      });
+
+    }
 
   }
+);
 
-});
-
-
-/* =========================
-   SIGN IN
-========================= */
+/* =========================================================
+   LOGIN
+========================================================= */
 
 const loginSchema = z.object({
-  email: z.string().email().max(120),
-  password: z.string().min(1).max(100)
+
+  email:
+    z.string()
+      .email()
+      .max(120),
+
+  password:
+    z.string()
+      .min(1)
+      .max(100)
+
 });
 
 
-app.post("/api/auth/login", async (req, res) => {
+app.post(
+  "/api/auth/login",
+  authRateLimit,
+  async (req, res) => {
 
-  const parsed = loginSchema.safeParse(req.body);
+    const parsed =
+      loginSchema.safeParse(req.body);
 
-  if (!parsed.success) {
+    if (!parsed.success) {
 
-    return res.status(400).json({
-      error:
-        "Please enter a valid email and password."
-    });
+      return res.status(400).json({
+        error:
+          "Please enter a valid email and password."
+      });
 
-  }
-
-  const {
-    email,
-    password
-  } = parsed.data;
-
-  const user = db.prepare(
-    "SELECT * FROM users WHERE email=?"
-  ).get(
-    email.toLowerCase().trim()
-  );
-
-  if (!user) {
-
-    return res.status(401).json({
-      error: "Invalid email or password."
-    });
-
-  }
-
-  const valid = await bcrypt.compare(
-    password,
-    user.password_hash
-  );
-
-  if (!valid) {
-
-    return res.status(401).json({
-      error: "Invalid email or password."
-    });
-
-  }
-
-  res.json({
-    message: "Login successful",
-
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      created_at: user.created_at
     }
-  });
 
-});
+    const {
+      email,
+      password
+    } = parsed.data;
 
+    const normalizedEmail =
+      email.toLowerCase().trim();
 
-/* =========================
-   ORDER EMAIL FUNCTION
-========================= */
+    const user =
+      db.prepare(
+        "SELECT * FROM users WHERE email=?"
+      ).get(normalizedEmail);
+
+    if (!user) {
+
+      return res.status(401).json({
+        error:
+          "Invalid email or password."
+      });
+
+    }
+
+    const valid =
+      await bcrypt.compare(
+        password,
+        user.password_hash
+      );
+
+    if (!valid) {
+
+      return res.status(401).json({
+        error:
+          "Invalid email or password."
+      });
+
+    }
+
+    const safeUser = {
+
+      id: user.id,
+
+      name: user.name,
+
+      email: user.email,
+
+      phone: user.phone,
+
+      created_at:
+        user.created_at
+
+    };
+
+    const token =
+      createUserToken(
+        safeUser
+      );
+
+    res.json({
+
+      message:
+        "Login successful",
+
+      token,
+
+      user:
+        safeUser
+
+    });
+
+  }
+);
+
+/* =========================================================
+   CURRENT CUSTOMER
+========================================================= */
+
+app.get(
+  "/api/auth/me",
+  requireUser,
+  (req, res) => {
+
+    res.json({
+      user: req.user
+    });
+
+  }
+);
+
+/* =========================================================
+   CUSTOMER LOGOUT
+========================================================= */
+
+app.post(
+  "/api/auth/logout",
+  requireUser,
+  (req, res) => {
+
+    /*
+      Tokens are stateless.
+
+      The frontend removes its token.
+      Expiration also automatically invalidates
+      the token after the session period.
+    */
+
+    res.json({
+      message:
+        "Logged out successfully"
+    });
+
+  }
+);
+
+/* =========================================================
+   CUSTOMER ORDER HISTORY
+========================================================= */
+
+app.get(
+  "/api/account/orders",
+  requireUser,
+  (req, res) => {
+
+    const orders =
+      db.prepare(
+        `SELECT
+          id,
+          customer_name,
+          customer_email,
+          phone,
+          address,
+          total,
+          status,
+          created_at
+         FROM orders
+         WHERE user_id=?
+         ORDER BY id DESC`
+      ).all(req.user.id);
+
+    for (const order of orders) {
+
+      order.items =
+        db.prepare(
+          `SELECT
+            product_id,
+            name,
+            qty,
+            price
+           FROM order_items
+           WHERE order_id=?`
+        ).all(order.id);
+
+    }
+
+    res.json({
+      orders
+    });
+
+  }
+);
+
+/* =========================================================
+   ORDER EMAIL
+========================================================= */
 
 async function sendOrderConfirmationEmail({
   email,
@@ -374,7 +1053,7 @@ async function sendOrderConfirmationEmail({
       "Resend is not configured. Email skipped."
     );
 
-    return;
+    return false;
 
   }
 
@@ -384,48 +1063,48 @@ async function sendOrderConfirmationEmail({
       "No customer email supplied. Email skipped."
     );
 
-    return;
+    return false;
 
   }
 
-  const itemRows = items.map(item => {
+  const itemRows =
+    items.map(item => {
 
-    const itemTotal =
-      item.price * item.qty;
+      const itemTotal =
+        item.price * item.qty;
 
-    return `
-      <tr>
-        <td style="
-          padding:14px 10px;
-          border-bottom:1px solid #292929;
-          color:#ffffff;
-          font-size:14px;
-        ">
-          ${item.name}
-        </td>
+      return `
+        <tr>
+          <td style="
+            padding:14px 10px;
+            border-bottom:1px solid #292929;
+            color:#ffffff;
+            font-size:14px;
+          ">
+            ${escapeHtml(item.name)}
+          </td>
 
-        <td style="
-          padding:14px 10px;
-          border-bottom:1px solid #292929;
-          color:#cccccc;
-          text-align:center;
-        ">
-          ${item.qty}
-        </td>
+          <td style="
+            padding:14px 10px;
+            border-bottom:1px solid #292929;
+            color:#cccccc;
+            text-align:center;
+          ">
+            ${item.qty}
+          </td>
 
-        <td style="
-          padding:14px 10px;
-          border-bottom:1px solid #292929;
-          color:#d4af37;
-          text-align:right;
-        ">
-          ₹${itemTotal.toLocaleString("en-IN")}
-        </td>
-      </tr>
-    `;
+          <td style="
+            padding:14px 10px;
+            border-bottom:1px solid #292929;
+            color:#d4af37;
+            text-align:right;
+          ">
+            ₹${itemTotal.toLocaleString("en-IN")}
+          </td>
+        </tr>
+      `;
 
-  }).join("");
-
+    }).join("");
 
   const html = `
 
@@ -458,8 +1137,6 @@ async function sendOrderConfirmationEmail({
       background:#111111;
     ">
 
-      <!-- HEADER -->
-
       <div style="
         padding:35px 25px;
         text-align:center;
@@ -485,9 +1162,6 @@ async function sendOrderConfirmationEmail({
         </div>
 
       </div>
-
-
-      <!-- SUCCESS -->
 
       <div style="
         padding:40px 25px 20px;
@@ -526,9 +1200,6 @@ async function sendOrderConfirmationEmail({
 
       </div>
 
-
-      <!-- ORDER NUMBER -->
-
       <div style="
         margin:20px 25px;
         padding:20px;
@@ -557,9 +1228,6 @@ async function sendOrderConfirmationEmail({
 
       </div>
 
-
-      <!-- CUSTOMER -->
-
       <div style="
         padding:10px 25px 25px;
       ">
@@ -568,7 +1236,7 @@ async function sendOrderConfirmationEmail({
           color:#ffffff;
           font-size:16px;
         ">
-          Hello ${customerName},
+          Hello ${escapeHtml(customerName)},
         </p>
 
         <p style="
@@ -578,13 +1246,10 @@ async function sendOrderConfirmationEmail({
         ">
           Your order has been successfully received.
           We are preparing your fragrance collection
-          for the next stage of delivery.
+          for delivery.
         </p>
 
       </div>
-
-
-      <!-- PRODUCTS -->
 
       <div style="
         padding:0 25px;
@@ -612,7 +1277,6 @@ async function sendOrderConfirmationEmail({
                 text-align:left;
                 color:#888888;
                 font-size:11px;
-                letter-spacing:1px;
               ">
                 PRODUCT
               </th>
@@ -622,7 +1286,6 @@ async function sendOrderConfirmationEmail({
                 text-align:center;
                 color:#888888;
                 font-size:11px;
-                letter-spacing:1px;
               ">
                 QTY
               </th>
@@ -632,7 +1295,6 @@ async function sendOrderConfirmationEmail({
                 text-align:right;
                 color:#888888;
                 font-size:11px;
-                letter-spacing:1px;
               ">
                 TOTAL
               </th>
@@ -650,9 +1312,6 @@ async function sendOrderConfirmationEmail({
         </table>
 
       </div>
-
-
-      <!-- TOTAL -->
 
       <div style="
         margin:25px;
@@ -686,9 +1345,6 @@ async function sendOrderConfirmationEmail({
 
       </div>
 
-
-      <!-- DELIVERY -->
-
       <div style="
         padding:0 25px 30px;
       ">
@@ -708,13 +1364,10 @@ async function sendOrderConfirmationEmail({
           line-height:1.6;
           font-size:14px;
         ">
-          ${address}
+          ${escapeHtml(address)}
         </div>
 
       </div>
-
-
-      <!-- FOOTER -->
 
       <div style="
         padding:30px 25px;
@@ -735,16 +1388,8 @@ async function sendOrderConfirmationEmail({
         <p style="
           color:#777777;
           font-size:12px;
-          margin:12px 0;
         ">
           Crafted for those who leave an impression.
-        </p>
-
-        <p style="
-          color:#555555;
-          font-size:11px;
-        ">
-          This is an automated order confirmation email.
         </p>
 
       </div>
@@ -757,26 +1402,29 @@ async function sendOrderConfirmationEmail({
 
   `;
 
-
   try {
 
-    const result = await resend.emails.send({
+    const result =
+      await resend.emails.send({
 
-      from: EMAIL_FROM,
+        from:
+          EMAIL_FROM,
 
-      to: [email],
+        to: [email],
 
-      subject:
-        `ZEVORIA Order Confirmed — #${orderId}`,
+        subject:
+          `ZEVORIA Order Confirmed — #${orderId}`,
 
-      html
+        html
 
-    });
+      });
 
     console.log(
       "Order confirmation email sent:",
       result
     );
+
+    return true;
 
   } catch (err) {
 
@@ -785,269 +1433,543 @@ async function sendOrderConfirmationEmail({
       err
     );
 
+    return false;
+
   }
 
 }
 
+/* =========================================================
+   HTML ESCAPE
+========================================================= */
 
-/* =========================
+function escapeHtml(value) {
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+}
+
+/* =========================================================
    CREATE ORDER
-========================= */
+========================================================= */
 
 const orderSchema = z.object({
 
   customerName:
-    z.string().min(2).max(80),
+    z.string()
+      .trim()
+      .min(2)
+      .max(80),
 
   customerEmail:
-    z.string().email().max(120).optional(),
+    z.string()
+      .email()
+      .max(120)
+      .optional()
+      .or(z.literal("")),
 
   phone:
-    z.string().min(8).max(20),
+    z.string()
+      .trim()
+      .min(8)
+      .max(20),
 
   address:
-    z.string().min(5).max(300),
+    z.string()
+      .trim()
+      .min(5)
+      .max(300),
 
   items:
     z.array(
       z.object({
+
         productId:
-          z.number().int().positive(),
+          z.number()
+            .int()
+            .positive(),
 
         qty:
-          z.number().int().min(1).max(20)
+          z.number()
+            .int()
+            .min(1)
+            .max(20)
+
       })
-    ).min(1)
+    )
+    .min(1)
+    .max(20)
 
 });
 
 
-app.post("/api/orders", async (req, res) => {
+app.post(
+  "/api/orders",
+  orderRateLimit,
+  async (req, res) => {
 
-  const parsed =
-    orderSchema.safeParse(req.body);
+    const parsed =
+      orderSchema.safeParse(req.body);
 
-  if (!parsed.success) {
-
-    return res.status(400).json({
-      error: "Invalid order details"
-    });
-
-  }
-
-  const {
-    customerName,
-    customerEmail,
-    phone,
-    address,
-    items
-  } = parsed.data;
-
-
-  const get = db.prepare(
-    "SELECT * FROM products WHERE id=?"
-  );
-
-
-  let total = 0;
-
-  let lines = [];
-
-
-  for (const item of items) {
-
-    const p = get.get(
-      item.productId
-    );
-
-
-    if (!p) {
+    if (!parsed.success) {
 
       return res.status(400).json({
-        error: "Product not found"
-      });
-
-    }
-
-
-    if (p.stock < item.qty) {
-
-      return res.status(409).json({
         error:
-          `Insufficient stock for ${p.name}`
+          "Invalid order details."
       });
 
     }
 
+    const {
+      customerName,
+      customerEmail,
+      phone,
+      address,
+      items
+    } = parsed.data;
 
-    total +=
-      p.price * item.qty;
+    /*
+      If the customer is logged in,
+      attach the order to their account.
+    */
 
+    let userId = null;
 
-    lines.push({
-      ...item,
-      p
-    });
+    const token =
+      getBearerToken(req);
 
-  }
+    const payload =
+      verifyToken(token);
 
+    if (
+      payload &&
+      payload.type === "user"
+    ) {
 
-  const tx =
-    db.transaction(() => {
+      userId =
+        Number(payload.userId);
 
-      const info =
-        db.prepare(
-          `INSERT INTO orders
-          (customer_name,customer_email,phone,address,total,status,created_at)
-          VALUES(?,?,?,?,?,?,datetime('now'))`
-        ).run(
-          customerName,
-          customerEmail || null,
-          phone,
-          address,
-          total,
-          "pending"
+    }
+
+    const getProduct =
+      db.prepare(
+        "SELECT * FROM products WHERE id=?"
+      );
+
+    let total = 0;
+
+    const lines = [];
+
+    /*
+      Server-side price calculation.
+      Browser price is completely ignored.
+    */
+
+    for (const item of items) {
+
+      const product =
+        getProduct.get(
+          item.productId
         );
 
+      if (!product) {
 
-      for (const x of lines) {
-
-        db.prepare(
-          `INSERT INTO order_items
-          (order_id,product_id,name,qty,price)
-          VALUES(?,?,?,?,?)`
-        ).run(
-          info.lastInsertRowid,
-          x.p.id,
-          x.p.name,
-          x.qty,
-          x.p.price
-        );
-
-
-        db.prepare(
-          "UPDATE products SET stock=stock-? WHERE id=?"
-        ).run(
-          x.qty,
-          x.p.id
-        );
+        return res.status(400).json({
+          error:
+            "Product not found."
+        });
 
       }
 
+      if (
+        product.stock <
+        item.qty
+      ) {
 
-      return info.lastInsertRowid;
+        return res.status(409).json({
+          error:
+            `Insufficient stock for ${product.name}`
+        });
 
-    });
+      }
 
+      total +=
+        product.price *
+        item.qty;
 
-  const orderId = tx();
+      lines.push({
 
+        productId:
+          item.productId,
 
-  /* =========================
-     SEND CONFIRMATION EMAIL
-  ========================= */
+        qty:
+          item.qty,
 
-  if (customerEmail) {
+        product
 
-    await sendOrderConfirmationEmail({
+      });
 
-      email: customerEmail,
+    }
 
-      customerName,
+    /*
+      Prevent duplicate product IDs
+      from being used to manipulate stock.
+    */
+
+    const productIds =
+      lines.map(x => x.productId);
+
+    if (
+      new Set(productIds).size !==
+      productIds.length
+    ) {
+
+      return res.status(400).json({
+        error:
+          "Duplicate products are not allowed in an order."
+      });
+
+    }
+
+    let orderId;
+
+    try {
+
+      const transaction =
+        db.transaction(() => {
+
+          const info =
+            db.prepare(
+              `INSERT INTO orders
+              (
+                user_id,
+                customer_name,
+                customer_email,
+                phone,
+                address,
+                total,
+                status,
+                created_at
+              )
+              VALUES(?,?,?,?,?,?,?,datetime('now'))`
+            ).run(
+
+              userId,
+
+              customerName,
+
+              customerEmail || null,
+
+              phone,
+
+              address,
+
+              total,
+
+              "pending"
+
+            );
+
+          const newOrderId =
+            info.lastInsertRowid;
+
+          for (const line of lines) {
+
+            db.prepare(
+              `INSERT INTO order_items
+              (
+                order_id,
+                product_id,
+                name,
+                qty,
+                price
+              )
+              VALUES(?,?,?,?,?)`
+            ).run(
+
+              newOrderId,
+
+              line.product.id,
+
+              line.product.name,
+
+              line.qty,
+
+              line.product.price
+
+            );
+
+            const stockUpdate =
+              db.prepare(
+                `UPDATE products
+                 SET stock=stock-?
+                 WHERE id=?
+                 AND stock>=?`
+              ).run(
+                line.qty,
+                line.product.id,
+                line.qty
+              );
+
+            if (
+              stockUpdate.changes !== 1
+            ) {
+
+              throw new Error(
+                `Stock changed for ${line.product.name}.`
+              );
+
+            }
+
+          }
+
+          return newOrderId;
+
+        });
+
+      orderId =
+        transaction();
+
+    } catch (err) {
+
+      console.error(
+        "Order transaction error:",
+        err
+      );
+
+      return res.status(409).json({
+        error:
+          "The order could not be completed. Please try again."
+      });
+
+    }
+
+    /*
+      Private token for guest order tracking.
+    */
+
+    const orderAccessToken =
+      createOrderAccessToken(
+        orderId
+      );
+
+    let emailSent = false;
+
+    if (customerEmail) {
+
+      emailSent =
+        await sendOrderConfirmationEmail({
+
+          email:
+            customerEmail,
+
+          customerName,
+
+          orderId,
+
+          items:
+            lines.map(x => ({
+
+              name:
+                x.product.name,
+
+              qty:
+                x.qty,
+
+              price:
+                x.product.price
+
+            })),
+
+          total,
+
+          address
+
+        });
+
+    }
+
+    res.status(201).json({
 
       orderId,
 
-      items: lines.map(x => ({
-        name: x.p.name,
-        qty: x.qty,
-        price: x.p.price
-      })),
-
       total,
 
-      address
+      emailSent,
+
+      orderAccessToken,
+
+      status:
+        "pending"
 
     });
 
   }
+);
 
+/* =========================================================
+   SECURE ORDER DETAILS
+========================================================= */
 
-  res.status(201).json({
+app.get(
+  "/api/orders/:id",
+  requireOrderAccess,
+  (req, res) => {
 
-    orderId,
+    const order =
+      req.order;
 
-    total,
+    const items =
+      db.prepare(
+        `SELECT
+          product_id,
+          name,
+          qty,
+          price
+         FROM order_items
+         WHERE order_id=?`
+      ).all(order.id);
 
-    emailSent:
-      Boolean(customerEmail && resend)
+    res.json({
 
-  });
+      order,
 
-});
+      items
 
-
-/* =========================
-   CUSTOMER ORDER DETAILS
-========================= */
-
-app.get("/api/orders/:id", (req, res) => {
-
-  const o = db.prepare(
-    "SELECT * FROM orders WHERE id=?"
-  ).get(req.params.id);
-
-
-  if (!o) {
-
-    return res.status(404).json({
-      error: "Order not found"
     });
 
   }
+);
 
+/* =========================================================
+   ADMIN LOGIN
+========================================================= */
 
-  o.items = db.prepare(
-    `SELECT
-      product_id,
-      name,
-      qty,
-      price
-     FROM order_items
-     WHERE order_id=?`
-  ).all(o.id);
+app.post(
+  "/api/admin/login",
+  adminLoginRateLimit,
+  (req, res) => {
 
+    const schema =
+      z.object({
 
-  res.json(o);
+        key:
+          z.string()
+            .min(1)
+            .max(200)
 
-});
+      });
 
+    const parsed =
+      schema.safeParse(req.body);
 
-/* =========================
-   ADMIN AUTH CHECK
-========================= */
+    if (!parsed.success) {
 
-function requireAdmin(req, res, next) {
+      return res.status(400).json({
+        error:
+          "Admin key is required."
+      });
 
-  if (
-    !process.env.ADMIN_KEY ||
-    req.headers["x-admin-key"] !==
-      process.env.ADMIN_KEY
-  ) {
+    }
 
-    return res.status(401).json({
-      error: "Unauthorized"
+    if (
+      !process.env.ADMIN_KEY
+    ) {
+
+      return res.status(500).json({
+        error:
+          "Admin authentication is not configured."
+      });
+
+    }
+
+    const suppliedKey =
+      parsed.data.key;
+
+    const expectedKey =
+      process.env.ADMIN_KEY;
+
+    const suppliedBuffer =
+      Buffer.from(suppliedKey);
+
+    const expectedBuffer =
+      Buffer.from(expectedKey);
+
+    let valid = false;
+
+    if (
+      suppliedBuffer.length ===
+      expectedBuffer.length
+    ) {
+
+      valid =
+        crypto.timingSafeEqual(
+          suppliedBuffer,
+          expectedBuffer
+        );
+
+    }
+
+    if (!valid) {
+
+      return res.status(401).json({
+        error:
+          "Invalid admin credentials."
+      });
+
+    }
+
+    const token =
+      createAdminToken();
+
+    res.json({
+
+      message:
+        "Admin login successful",
+
+      token,
+
+      expiresIn:
+        SESSION_DAYS *
+        24 *
+        60 *
+        60
+
     });
 
   }
+);
 
-  next();
+/* =========================================================
+   ADMIN - CHECK ACCESS
+========================================================= */
 
-}
+app.get(
+  "/api/admin/me",
+  requireAdmin,
+  (req, res) => {
 
+    res.json({
 
-/* =========================
+      authenticated:
+        true,
+
+      role:
+        "admin"
+
+    });
+
+  }
+);
+
+/* =========================================================
    ADMIN - ALL ORDERS
-========================= */
+========================================================= */
 
 app.get(
   "/api/admin/orders",
@@ -1055,9 +1977,10 @@ app.get(
   (req, res) => {
 
     const orders =
-      db.prepare(`
-        SELECT
+      db.prepare(
+        `SELECT
           o.id,
+          o.user_id,
           o.customer_name,
           o.customer_email,
           o.phone,
@@ -1065,46 +1988,44 @@ app.get(
           o.total,
           o.status,
           o.created_at
-        FROM orders o
-        ORDER BY o.id DESC
-      `).all();
-
+         FROM orders o
+         ORDER BY o.id DESC`
+      ).all();
 
     for (const order of orders) {
 
       order.items =
-        db.prepare(`
-          SELECT
+        db.prepare(
+          `SELECT
             product_id,
             name,
             qty,
             price
-          FROM order_items
-          WHERE order_id=?
-        `).all(order.id);
+           FROM order_items
+           WHERE order_id=?`
+        ).all(order.id);
 
     }
-
 
     res.json(orders);
 
   }
 );
 
-
-/* =========================
-   ADMIN - UPDATE STATUS
-========================= */
+/* =========================================================
+   ADMIN - UPDATE ORDER STATUS
+========================================================= */
 
 const statusSchema = z.object({
 
-  status: z.enum([
-    "pending",
-    "confirmed",
-    "shipped",
-    "delivered",
-    "cancelled"
-  ])
+  status:
+    z.enum([
+      "pending",
+      "confirmed",
+      "shipped",
+      "delivered",
+      "cancelled"
+    ])
 
 });
 
@@ -1117,19 +2038,17 @@ app.patch(
     const parsed =
       statusSchema.safeParse(req.body);
 
-
     if (!parsed.success) {
 
       return res.status(400).json({
-        error: "Invalid order status"
+        error:
+          "Invalid order status."
       });
 
     }
 
-
     const orderId =
       Number(req.params.id);
-
 
     if (
       !Number.isInteger(orderId) ||
@@ -1137,57 +2056,191 @@ app.patch(
     ) {
 
       return res.status(400).json({
-        error: "Invalid order ID"
+        error:
+          "Invalid order ID."
       });
 
     }
-
 
     const existing =
       db.prepare(
         "SELECT id FROM orders WHERE id=?"
       ).get(orderId);
 
-
     if (!existing) {
 
       return res.status(404).json({
-        error: "Order not found"
+        error:
+          "Order not found."
       });
 
     }
 
-
     db.prepare(
-      "UPDATE orders SET status=? WHERE id=?"
+      `UPDATE orders
+       SET status=?
+       WHERE id=?`
     ).run(
       parsed.data.status,
       orderId
     );
-
 
     const updated =
       db.prepare(
         "SELECT * FROM orders WHERE id=?"
       ).get(orderId);
 
-
     res.json({
 
       message:
         "Order status updated",
 
-      order: updated
+      order:
+        updated
 
     });
 
   }
 );
 
+/* =========================================================
+   ADMIN - PRODUCTS
+========================================================= */
 
-/* =========================
+app.get(
+  "/api/admin/products",
+  requireAdmin,
+  (req, res) => {
+
+    const products =
+      db.prepare(
+        `SELECT *
+         FROM products
+         ORDER BY id ASC`
+      ).all();
+
+    res.json({
+      products
+    });
+
+  }
+);
+
+/* =========================================================
+   ADMIN - UPDATE STOCK
+========================================================= */
+
+const stockSchema = z.object({
+
+  stock:
+    z.number()
+      .int()
+      .min(0)
+      .max(100000)
+
+});
+
+
+app.patch(
+  "/api/admin/products/:id/stock",
+  requireAdmin,
+  (req, res) => {
+
+    const parsed =
+      stockSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+
+      return res.status(400).json({
+        error:
+          "Invalid stock value."
+      });
+
+    }
+
+    const productId =
+      Number(req.params.id);
+
+    if (
+      !Number.isInteger(productId) ||
+      productId <= 0
+    ) {
+
+      return res.status(400).json({
+        error:
+          "Invalid product ID."
+      });
+
+    }
+
+    const product =
+      db.prepare(
+        "SELECT id,name FROM products WHERE id=?"
+      ).get(productId);
+
+    if (!product) {
+
+      return res.status(404).json({
+        error:
+          "Product not found."
+      });
+
+    }
+
+    db.prepare(
+      `UPDATE products
+       SET stock=?
+       WHERE id=?`
+    ).run(
+      parsed.data.stock,
+      productId
+    );
+
+    const updated =
+      db.prepare(
+        "SELECT * FROM products WHERE id=?"
+      ).get(productId);
+
+    res.json({
+
+      message:
+        "Stock updated",
+
+      product:
+        updated
+
+    });
+
+  }
+);
+
+/* =========================================================
+   ADMIN - LOW STOCK
+========================================================= */
+
+app.get(
+  "/api/admin/low-stock",
+  requireAdmin,
+  (req, res) => {
+
+    const products =
+      db.prepare(
+        `SELECT *
+         FROM products
+         WHERE stock <= 5
+         ORDER BY stock ASC`
+      ).all();
+
+    res.json({
+      products
+    });
+
+  }
+);
+
+/* =========================================================
    ADMIN - DASHBOARD STATS
-========================= */
+========================================================= */
 
 app.get(
   "/api/admin/stats",
@@ -1196,17 +2249,17 @@ app.get(
 
     const totalOrders =
       db.prepare(
-        "SELECT COUNT(*) AS count FROM orders"
+        `SELECT COUNT(*) AS count
+         FROM orders`
       ).get().count;
-
 
     const totalSales =
       db.prepare(
-        `SELECT COALESCE(SUM(total),0) AS total
+        `SELECT
+          COALESCE(SUM(total),0) AS total
          FROM orders
          WHERE status != 'cancelled'`
       ).get().total;
-
 
     const pendingOrders =
       db.prepare(
@@ -1215,14 +2268,12 @@ app.get(
          WHERE status='pending'`
       ).get().count;
 
-
     const confirmedOrders =
       db.prepare(
         `SELECT COUNT(*) AS count
          FROM orders
          WHERE status='confirmed'`
       ).get().count;
-
 
     const shippedOrders =
       db.prepare(
@@ -1231,7 +2282,6 @@ app.get(
          WHERE status='shipped'`
       ).get().count;
 
-
     const deliveredOrders =
       db.prepare(
         `SELECT COUNT(*) AS count
@@ -1239,14 +2289,12 @@ app.get(
          WHERE status='delivered'`
       ).get().count;
 
-
     const cancelledOrders =
       db.prepare(
         `SELECT COUNT(*) AS count
          FROM orders
          WHERE status='cancelled'`
       ).get().count;
-
 
     res.json({
 
@@ -1269,197 +2317,110 @@ app.get(
   }
 );
 
+/* =========================================================
+   DEMO OTP DISABLED
+========================================================= */
 
-/* =========================
-   DEMO OTP SYSTEM
-========================= */
+/*
+  IMPORTANT:
 
-const otpStore = new Map();
+  The old OTP system returned the OTP directly
+  to the browser. That is NOT secure.
 
-
-function generateOTP() {
-
-  return String(
-    Math.floor(
-      100000 +
-      Math.random() * 900000
-    )
-  );
-
-}
-
-
-const otpSendSchema = z.object({
-
-  phone:
-    z.string().min(8).max(20)
-
-});
-
+  It is intentionally disabled until a real
+  SMS/OTP provider is connected.
+*/
 
 app.post(
   "/api/auth/send-otp",
   (req, res) => {
 
-    const parsed =
-      otpSendSchema.safeParse(req.body);
+    res.status(410).json({
 
-
-    if (!parsed.success) {
-
-      return res.status(400).json({
-        error:
-          "Please enter a valid mobile number."
-      });
-
-    }
-
-
-    const phone =
-      parsed.data.phone.trim();
-
-
-    const otp =
-      generateOTP();
-
-
-    otpStore.set(
-      phone,
-      {
-        otp,
-        expiresAt:
-          Date.now() + 5 * 60 * 1000
-      }
-    );
-
-
-    console.log(
-      `Demo OTP for ${phone}: ${otp}`
-    );
-
-
-    res.json({
-
-      message:
-        "OTP generated successfully",
-
-      demoOtp:
-        otp
+      error:
+        "OTP login is temporarily disabled. Please use email and password login."
 
     });
 
   }
 );
-
-
-const otpVerifySchema = z.object({
-
-  phone:
-    z.string().min(8).max(20),
-
-  otp:
-    z.string().length(6)
-
-});
 
 
 app.post(
   "/api/auth/verify-otp",
   (req, res) => {
 
-    const parsed =
-      otpVerifySchema.safeParse(req.body);
+    res.status(410).json({
 
-
-    if (!parsed.success) {
-
-      return res.status(400).json({
-        error:
-          "Invalid OTP details."
-      });
-
-    }
-
-
-    const {
-      phone,
-      otp
-    } = parsed.data;
-
-
-    const saved =
-      otpStore.get(phone);
-
-
-    if (!saved) {
-
-      return res.status(400).json({
-        error:
-          "OTP not found. Please request a new OTP."
-      });
-
-    }
-
-
-    if (
-      Date.now() >
-      saved.expiresAt
-    ) {
-
-      otpStore.delete(phone);
-
-      return res.status(400).json({
-        error:
-          "OTP expired. Please request a new OTP."
-      });
-
-    }
-
-
-    if (saved.otp !== otp) {
-
-      return res.status(400).json({
-        error:
-          "Incorrect OTP."
-      });
-
-    }
-
-
-    otpStore.set(
-      phone,
-      {
-        verified: true,
-        expiresAt:
-          Date.now() + 10 * 60 * 1000
-      }
-    );
-
-
-    res.json({
-
-      message:
-        "Mobile number verified successfully",
-
-      verified:
-        true
+      error:
+        "OTP login is temporarily disabled. Please use email and password login."
 
     });
 
   }
 );
 
+/* =========================================================
+   404 HANDLER
+========================================================= */
 
-/* =========================
+app.use(
+  (req, res) => {
+
+    res.status(404).json({
+
+      error:
+        "Endpoint not found."
+
+    });
+
+  }
+);
+
+/* =========================================================
+   ERROR HANDLER
+========================================================= */
+
+app.use(
+  (err, req, res, next) => {
+
+    console.error(
+      "Server error:",
+      err
+    );
+
+    if (
+      err.message ===
+      "CORS: origin not allowed"
+    ) {
+
+      return res.status(403).json({
+        error:
+          "Origin not allowed."
+      });
+
+    }
+
+    res.status(500).json({
+
+      error:
+        "Internal server error."
+
+    });
+
+  }
+);
+
+/* =========================================================
    START SERVER
-========================= */
+========================================================= */
 
 app.listen(
-  process.env.PORT || 4000,
+  PORT,
   () => {
 
     console.log(
-      "ZEVORIA API running"
+      `ZEVORIA API running on port ${PORT}`
     );
 
   }
