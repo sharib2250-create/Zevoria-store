@@ -17,7 +17,8 @@ app.set("trust proxy", 1);
 const PORT = process.env.PORT || 10000;
 
 const FRONTEND_ORIGIN =
-  process.env.FRONTEND_ORIGIN || "https://zevoria-store.vercel.app";
+  process.env.FRONTEND_ORIGIN ||
+  "https://zevoria-store.vercel.app";
 
 const ADMIN_KEY = process.env.ADMIN_KEY;
 
@@ -28,46 +29,57 @@ const resend = process.env.RESEND_API_KEY
 const EMAIL_FROM =
   process.env.EMAIL_FROM || "onboarding@resend.dev";
 
+
 /* =========================================================
    SECURITY
 ========================================================= */
 
 app.use(
   helmet({
-    crossOriginResourcePolicy: false,
+    crossOriginResourcePolicy: false
   })
 );
 
 app.use(
   cors({
     origin: FRONTEND_ORIGIN,
-    credentials: true,
+    credentials: true
   })
 );
 
-app.use(express.json({ limit: "100kb" }));
+app.use(
+  express.json({
+    limit: "100kb"
+  })
+);
+
 
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
+
   message: {
-    error: "Too many requests. Please try again later.",
-  },
+    error: "Too many requests. Please try again later."
+  }
 });
+
 
 const adminLoginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
+
   message: {
-    error: "Too many admin login attempts. Please try again later.",
-  },
+    error: "Too many admin login attempts. Please try again later."
+  }
 });
 
+
 app.use(generalLimiter);
+
 
 /* =========================================================
    DATABASE
@@ -76,6 +88,7 @@ app.use(generalLimiter);
 const db = new Database("zevoria.db");
 
 db.pragma("journal_mode = WAL");
+
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS products (
@@ -95,6 +108,7 @@ CREATE TABLE IF NOT EXISTS orders (
   address TEXT NOT NULL,
   total REAL NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending',
+  access_token_hash TEXT,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -125,6 +139,7 @@ CREATE TABLE IF NOT EXISTS admin_sessions (
 );
 `);
 
+
 /* =========================================================
    DATABASE MIGRATIONS
 ========================================================= */
@@ -134,12 +149,22 @@ const orderColumns = db
   .all()
   .map((x) => x.name);
 
+
 if (!orderColumns.includes("customer_email")) {
   db.exec(`
     ALTER TABLE orders
     ADD COLUMN customer_email TEXT
   `);
 }
+
+
+if (!orderColumns.includes("access_token_hash")) {
+  db.exec(`
+    ALTER TABLE orders
+    ADD COLUMN access_token_hash TEXT
+  `);
+}
+
 
 /* =========================================================
    PRODUCTS
@@ -152,63 +177,81 @@ const products = [
     category: "men",
     price: 1499,
     stock: 25,
-    note: "Amber • Oud • Vanilla",
+    note: "Amber • Oud • Vanilla"
   },
+
   {
     id: 2,
     name: "No. 02 Santal",
     category: "unisex",
     price: 1699,
     stock: 25,
-    note: "Sandalwood • Musk • Cedar",
+    note: "Sandalwood • Musk • Cedar"
   },
+
   {
     id: 3,
     name: "No. 03 Bloom",
     category: "women",
     price: 1399,
     stock: 25,
-    note: "Rose • Peony • Vanilla",
+    note: "Rose • Peony • Vanilla"
   },
+
   {
     id: 4,
     name: "No. 04 Oud",
     category: "unisex",
     price: 899,
     stock: 25,
-    note: "Oud • Saffron • Amber",
+    note: "Oud • Saffron • Amber"
   },
+
   {
     id: 5,
     name: "No. 05 Azure",
     category: "men",
     price: 1599,
     stock: 25,
-    note: "Bergamot • Marine • Musk",
+    note: "Bergamot • Marine • Musk"
   },
+
   {
     id: 6,
     name: "No. 06 Velvet",
     category: "women",
     price: 1499,
     stock: 25,
-    note: "Iris • Tonka • Amber",
-  },
+    note: "Iris • Tonka • Amber"
+  }
 ];
+
 
 const insertProduct = db.prepare(`
   INSERT INTO products
-  (id, name, category, price, stock, note)
+  (
+    id,
+    name,
+    category,
+    price,
+    stock,
+    note
+  )
   VALUES (?, ?, ?, ?, ?, ?)
 `);
+
 
 const existingProductCount = db
   .prepare("SELECT COUNT(*) AS count FROM products")
   .get().count;
 
+
 if (existingProductCount === 0) {
+
   const seedProducts = db.transaction(() => {
+
     for (const product of products) {
+
       insertProduct.run(
         product.id,
         product.name,
@@ -217,56 +260,92 @@ if (existingProductCount === 0) {
         product.stock,
         product.note
       );
+
     }
+
   });
 
   seedProducts();
 }
+
 
 /* =========================================================
    HELPERS
 ========================================================= */
 
 function escapeHtml(value = "") {
+
   return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+
 }
+
 
 function createRandomToken() {
+
   return crypto.randomBytes(32).toString("hex");
+
 }
 
+
 function hashToken(token) {
+
   return crypto
     .createHash("sha256")
     .update(token)
     .digest("hex");
+
 }
 
+
 function getCookie(req, name) {
-  const cookieHeader = req.headers.cookie;
 
-  if (!cookieHeader) return null;
+  const cookieHeader =
+    req.headers.cookie;
 
-  const cookies = cookieHeader.split(";");
+  if (!cookieHeader) {
+    return null;
+  }
+
+  const cookies =
+    cookieHeader.split(";");
 
   for (const cookie of cookies) {
-    const [key, ...valueParts] = cookie.trim().split("=");
+
+    const [
+      key,
+      ...valueParts
+    ] = cookie.trim().split("=");
 
     if (key === name) {
-      return decodeURIComponent(valueParts.join("="));
+
+      return decodeURIComponent(
+        valueParts.join("=")
+      );
+
     }
+
   }
 
   return null;
 }
 
-function setAdminCookie(res, token) {
-  const maxAge = 8 * 60 * 60;
+
+/* =========================================================
+   ADMIN COOKIE
+========================================================= */
+
+function setAdminCookie(
+  res,
+  token
+) {
+
+  const maxAge =
+    8 * 60 * 60;
 
   res.setHeader(
     "Set-Cookie",
@@ -276,12 +355,15 @@ function setAdminCookie(res, token) {
       "Secure",
       "SameSite=None",
       "Path=/",
-      `Max-Age=${maxAge}`,
+      `Max-Age=${maxAge}`
     ].join("; ")
   );
+
 }
 
+
 function clearAdminCookie(res) {
+
   res.setHeader(
     "Set-Cookie",
     [
@@ -290,223 +372,402 @@ function clearAdminCookie(res) {
       "Secure",
       "SameSite=None",
       "Path=/",
-      "Max-Age=0",
+      "Max-Age=0"
     ].join("; ")
   );
+
 }
 
+
 /* =========================================================
-   ADMIN AUTHENTICATION
+   ADMIN AUTH
 ========================================================= */
 
-function requireAdmin(req, res, next) {
-  const sessionToken = getCookie(
-    req,
-    "zevoria_admin_session"
-  );
+function requireAdmin(
+  req,
+  res,
+  next
+) {
+
+  const sessionToken =
+    getCookie(
+      req,
+      "zevoria_admin_session"
+    );
+
 
   if (!sessionToken) {
+
     return res.status(401).json({
-      error: "Admin login required",
+      error: "Admin login required"
     });
+
   }
 
-  const tokenHash = hashToken(sessionToken);
 
-  const session = db
-    .prepare(`
-      SELECT *
-      FROM admin_sessions
-      WHERE token_hash = ?
-      AND expires_at > ?
-    `)
-    .get(tokenHash, Date.now());
+  const tokenHash =
+    hashToken(sessionToken);
+
+
+  const session =
+    db
+      .prepare(`
+        SELECT *
+        FROM admin_sessions
+        WHERE token_hash = ?
+        AND expires_at > ?
+      `)
+      .get(
+        tokenHash,
+        Date.now()
+      );
+
 
   if (!session) {
+
     clearAdminCookie(res);
 
     return res.status(401).json({
-      error: "Admin session expired",
+      error: "Admin session expired"
     });
+
   }
 
-  req.adminSession = session;
+
+  req.adminSession =
+    session;
 
   next();
+
 }
+
 
 /* =========================================================
    CSRF PROTECTION
 ========================================================= */
 
-function requireAdminCsrf(req, res, next) {
-  const csrfHeader = req.headers["x-csrf-token"];
+function requireAdminCsrf(
+  req,
+  res,
+  next
+) {
+
+  const csrfHeader =
+    req.headers["x-csrf-token"];
+
 
   if (!csrfHeader) {
+
     return res.status(403).json({
-      error: "CSRF token required",
+      error: "CSRF token required"
     });
+
   }
 
-  if (csrfHeader !== req.adminSession.csrf_token) {
+
+  if (
+    csrfHeader !==
+    req.adminSession.csrf_token
+  ) {
+
     return res.status(403).json({
-      error: "Invalid CSRF token",
+      error: "Invalid CSRF token"
     });
+
   }
+
 
   next();
+
 }
+
 
 /* =========================================================
    BASIC ROUTES
 ========================================================= */
 
 app.get("/", (req, res) => {
+
   res.json({
     name: "ZEVORIA API",
-    status: "running",
+    status: "running"
   });
+
 });
 
+
 app.get("/api/health", (req, res) => {
+
   res.json({
-    ok: true,
+    ok: true
   });
+
 });
+
 
 /* =========================================================
    PRODUCTS
 ========================================================= */
 
-app.get("/api/products", (req, res) => {
-  const rows = db
-    .prepare(`
-      SELECT
-        id,
-        name,
-        category,
-        price,
-        stock,
-        note
-      FROM products
-      ORDER BY id ASC
-    `)
-    .all();
+app.get(
+  "/api/products",
+  (req, res) => {
 
-  res.json(rows);
-});
+    const rows =
+      db
+        .prepare(`
+          SELECT
+            id,
+            name,
+            category,
+            price,
+            stock,
+            note
+          FROM products
+          ORDER BY id ASC
+        `)
+        .all();
+
+    res.json(rows);
+
+  }
+);
+
 
 /* =========================================================
-   USER SIGNUP
+   SIGNUP
 ========================================================= */
 
-const signupSchema = z.object({
-  name: z.string().min(2).max(100),
-  email: z.string().email().max(150),
-  phone: z.string().min(7).max(30).optional(),
-  password: z.string().min(6).max(100),
-});
+const signupSchema =
+  z.object({
 
-app.post("/api/auth/signup", async (req, res) => {
-  try {
-    const data = signupSchema.parse(req.body);
+    name:
+      z.string()
+        .min(2)
+        .max(100),
 
-    const email = data.email.trim().toLowerCase();
+    email:
+      z.string()
+        .email()
+        .max(150),
 
-    const existing = db
-      .prepare("SELECT id FROM users WHERE email = ?")
-      .get(email);
+    phone:
+      z.string()
+        .min(7)
+        .max(30)
+        .optional(),
 
-    if (existing) {
-      return res.status(409).json({
-        error: "Email already registered",
+    password:
+      z.string()
+        .min(6)
+        .max(100)
+
+  });
+
+
+app.post(
+  "/api/auth/signup",
+  async (req, res) => {
+
+    try {
+
+      const data =
+        signupSchema.parse(
+          req.body
+        );
+
+
+      const email =
+        data.email
+          .trim()
+          .toLowerCase();
+
+
+      const existing =
+        db
+          .prepare(`
+            SELECT id
+            FROM users
+            WHERE email = ?
+          `)
+          .get(email);
+
+
+      if (existing) {
+
+        return res.status(409).json({
+          error:
+            "Email already registered"
+        });
+
+      }
+
+
+      const passwordHash =
+        await bcrypt.hash(
+          data.password,
+          12
+        );
+
+
+      const result =
+        db
+          .prepare(`
+            INSERT INTO users
+            (
+              name,
+              email,
+              phone,
+              password_hash
+            )
+            VALUES (?, ?, ?, ?)
+          `)
+          .run(
+            data.name.trim(),
+            email,
+            data.phone || null,
+            passwordHash
+          );
+
+
+      res.status(201).json({
+
+        user: {
+
+          id:
+            result.lastInsertRowid,
+
+          name:
+            data.name.trim(),
+
+          email,
+
+          phone:
+            data.phone || ""
+
+        }
+
       });
+
+
+    } catch (error) {
+
+      res.status(400).json({
+        error:
+          "Invalid signup details"
+      });
+
     }
 
-    const passwordHash = await bcrypt.hash(data.password, 12);
-
-    const result = db
-      .prepare(`
-        INSERT INTO users
-        (name, email, phone, password_hash)
-        VALUES (?, ?, ?, ?)
-      `)
-      .run(
-        data.name.trim(),
-        email,
-        data.phone || null,
-        passwordHash
-      );
-
-    res.status(201).json({
-      user: {
-        id: result.lastInsertRowid,
-        name: data.name.trim(),
-        email,
-        phone: data.phone || "",
-      },
-    });
-  } catch (error) {
-    res.status(400).json({
-      error: "Invalid signup details",
-    });
   }
-});
+);
+
 
 /* =========================================================
-   USER LOGIN
+   LOGIN
 ========================================================= */
 
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
+const loginSchema =
+  z.object({
 
-app.post("/api/auth/login", async (req, res) => {
-  try {
-    const data = loginSchema.parse(req.body);
+    email:
+      z.string()
+        .email(),
 
-    const email = data.email.trim().toLowerCase();
+    password:
+      z.string()
+        .min(6)
 
-    const user = db
-      .prepare(`
-        SELECT *
-        FROM users
-        WHERE email = ?
-      `)
-      .get(email);
+  });
 
-    if (!user) {
-      return res.status(401).json({
-        error: "Invalid email or password",
+
+app.post(
+  "/api/auth/login",
+  async (req, res) => {
+
+    try {
+
+      const data =
+        loginSchema.parse(
+          req.body
+        );
+
+
+      const email =
+        data.email
+          .trim()
+          .toLowerCase();
+
+
+      const user =
+        db
+          .prepare(`
+            SELECT *
+            FROM users
+            WHERE email = ?
+          `)
+          .get(email);
+
+
+      if (!user) {
+
+        return res.status(401).json({
+          error:
+            "Invalid email or password"
+        });
+
+      }
+
+
+      const validPassword =
+        await bcrypt.compare(
+          data.password,
+          user.password_hash
+        );
+
+
+      if (!validPassword) {
+
+        return res.status(401).json({
+          error:
+            "Invalid email or password"
+        });
+
+      }
+
+
+      res.json({
+
+        user: {
+
+          id: user.id,
+
+          name:
+            user.name,
+
+          email:
+            user.email,
+
+          phone:
+            user.phone || ""
+
+        }
+
       });
+
+
+    } catch (error) {
+
+      res.status(400).json({
+        error:
+          "Invalid login details"
+      });
+
     }
 
-    const validPassword = await bcrypt.compare(
-      data.password,
-      user.password_hash
-    );
-
-    if (!validPassword) {
-      return res.status(401).json({
-        error: "Invalid email or password",
-      });
-    }
-
-    res.json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone || "",
-      },
-    });
-  } catch (error) {
-    res.status(400).json({
-      error: "Invalid login details",
-    });
   }
-});
+);
+
 
 /* =========================================================
    SECURE ADMIN LOGIN
@@ -516,82 +777,141 @@ app.post(
   "/api/admin/login",
   adminLoginLimiter,
   (req, res) => {
+
     try {
+
       if (!ADMIN_KEY) {
+
         return res.status(500).json({
-          error: "ADMIN_KEY is not configured on server",
+          error:
+            "ADMIN_KEY is not configured on server"
         });
+
       }
+
 
       const submittedKey =
         typeof req.body?.adminKey === "string"
           ? req.body.adminKey
           : "";
 
+
       if (!submittedKey) {
+
         return res.status(400).json({
-          error: "Admin key is required",
+          error:
+            "Admin key is required"
         });
+
       }
 
-      const submittedHash = crypto
-        .createHash("sha256")
-        .update(submittedKey)
-        .digest();
 
-      const actualHash = crypto
-        .createHash("sha256")
-        .update(ADMIN_KEY)
-        .digest();
+      const submittedHash =
+        crypto
+          .createHash("sha256")
+          .update(submittedKey)
+          .digest();
+
+
+      const actualHash =
+        crypto
+          .createHash("sha256")
+          .update(ADMIN_KEY)
+          .digest();
+
 
       const valid =
-        submittedHash.length === actualHash.length &&
+        submittedHash.length ===
+          actualHash.length &&
         crypto.timingSafeEqual(
           submittedHash,
           actualHash
         );
 
+
       if (!valid) {
+
         return res.status(401).json({
-          error: "Invalid admin key",
+          error:
+            "Invalid admin key"
         });
+
       }
 
-      const sessionToken = createRandomToken();
-      const tokenHash = hashToken(sessionToken);
 
-      const csrfToken = createRandomToken();
+      const sessionToken =
+        createRandomToken();
+
+
+      const tokenHash =
+        hashToken(
+          sessionToken
+        );
+
+
+      const csrfToken =
+        createRandomToken();
+
 
       const expiresAt =
-        Date.now() + 8 * 60 * 60 * 1000;
+        Date.now() +
+        8 * 60 * 60 * 1000;
 
-      db.prepare(`
-        INSERT INTO admin_sessions
-        (token_hash, csrf_token, expires_at, created_at)
-        VALUES (?, ?, ?, ?)
-      `).run(
-        tokenHash,
-        csrfToken,
-        expiresAt,
-        Date.now()
+
+      db
+        .prepare(`
+          INSERT INTO admin_sessions
+          (
+            token_hash,
+            csrf_token,
+            expires_at,
+            created_at
+          )
+          VALUES (?, ?, ?, ?)
+        `)
+        .run(
+          tokenHash,
+          csrfToken,
+          expiresAt,
+          Date.now()
+        );
+
+
+      setAdminCookie(
+        res,
+        sessionToken
       );
 
-      setAdminCookie(res, sessionToken);
 
       res.json({
+
         success: true,
+
         csrfToken,
-        expiresAt,
+
+        expiresAt
+
       });
+
+
     } catch (error) {
-      console.error("Admin login error:", error);
+
+      console.error(
+        "Admin login error:",
+        error
+      );
+
 
       res.status(500).json({
-        error: "Admin login failed",
+        error:
+          "Admin login failed"
       });
+
     }
+
   }
 );
+
 
 /* =========================================================
    ADMIN SESSION CHECK
@@ -601,13 +921,24 @@ app.get(
   "/api/admin/me",
   requireAdmin,
   (req, res) => {
+
     res.json({
+
       authenticated: true,
-      expiresAt: req.adminSession.expires_at,
-      csrfToken: req.adminSession.csrf_token,
+
+      expiresAt:
+        req.adminSession
+          .expires_at,
+
+      csrfToken:
+        req.adminSession
+          .csrf_token
+
     });
+
   }
 );
+
 
 /* =========================================================
    ADMIN LOGOUT
@@ -618,18 +949,27 @@ app.post(
   requireAdmin,
   requireAdminCsrf,
   (req, res) => {
-    db.prepare(`
-      DELETE FROM admin_sessions
-      WHERE id = ?
-    `).run(req.adminSession.id);
+
+    db
+      .prepare(`
+        DELETE FROM admin_sessions
+        WHERE id = ?
+      `)
+      .run(
+        req.adminSession.id
+      );
+
 
     clearAdminCookie(res);
 
+
     res.json({
-      success: true,
+      success: true
     });
+
   }
 );
+
 
 /* =========================================================
    ADMIN ORDERS
@@ -639,45 +979,62 @@ app.get(
   "/api/admin/orders",
   requireAdmin,
   (req, res) => {
-    const orders = db
-      .prepare(`
+
+    const orders =
+      db
+        .prepare(`
+          SELECT
+            id,
+            customer_name,
+            customer_email,
+            phone,
+            address,
+            total,
+            status,
+            created_at
+          FROM orders
+          ORDER BY id DESC
+        `)
+        .all();
+
+
+    const itemQuery =
+      db.prepare(`
         SELECT
           id,
-          customer_name,
-          customer_email,
-          phone,
-          address,
-          total,
-          status,
-          created_at
-        FROM orders
-        ORDER BY id DESC
-      `)
-      .all();
+          order_id,
+          product_id,
+          name,
+          qty,
+          price
+        FROM order_items
+        WHERE order_id = ?
+      `);
 
-    const itemQuery = db.prepare(`
-      SELECT
-        id,
-        order_id,
-        product_id,
-        name,
-        qty,
-        price
-      FROM order_items
-      WHERE order_id = ?
-    `);
 
-    const result = orders.map((order) => ({
-      ...order,
-      items: itemQuery.all(order.id),
-    }));
+    const result =
+      orders.map(
+        (order) => ({
+
+          ...order,
+
+          items:
+            itemQuery.all(
+              order.id
+            )
+
+        })
+      );
+
 
     res.json(result);
+
   }
 );
 
+
 /* =========================================================
-   ADMIN ORDER STATUS
+   ADMIN STATUS UPDATE
 ========================================================= */
 
 const allowedStatuses = [
@@ -685,56 +1042,95 @@ const allowedStatuses = [
   "confirmed",
   "shipped",
   "delivered",
-  "cancelled",
+  "cancelled"
 ];
+
 
 app.patch(
   "/api/admin/orders/:id/status",
   requireAdmin,
   requireAdminCsrf,
   (req, res) => {
-    const id = Number(req.params.id);
+
+    const id =
+      Number(req.params.id);
+
 
     const status =
       typeof req.body?.status === "string"
         ? req.body.status
         : "";
 
+
     if (!Number.isInteger(id)) {
+
       return res.status(400).json({
-        error: "Invalid order ID",
+        error:
+          "Invalid order ID"
       });
+
     }
 
-    if (!allowedStatuses.includes(status)) {
+
+    if (
+      !allowedStatuses.includes(
+        status
+      )
+    ) {
+
       return res.status(400).json({
-        error: "Invalid order status",
+        error:
+          "Invalid order status"
       });
+
     }
 
-    const order = db
-      .prepare("SELECT id FROM orders WHERE id = ?")
-      .get(id);
+
+    const order =
+      db
+        .prepare(`
+          SELECT id
+          FROM orders
+          WHERE id = ?
+        `)
+        .get(id);
+
 
     if (!order) {
+
       return res.status(404).json({
-        error: "Order not found",
+        error:
+          "Order not found"
       });
+
     }
 
-    db.prepare(`
-      UPDATE orders
-      SET status = ?
-      WHERE id = ?
-    `).run(status, id);
+
+    db
+      .prepare(`
+        UPDATE orders
+        SET status = ?
+        WHERE id = ?
+      `)
+      .run(
+        status,
+        id
+      );
+
 
     res.json({
+
       success: true,
+
       orderId: id,
-      status,
+
+      status
+
     });
+
   }
 );
+
 
 /* =========================================================
    ADMIN STATS
@@ -744,401 +1140,890 @@ app.get(
   "/api/admin/stats",
   requireAdmin,
   (req, res) => {
-    const totalOrders = db
-      .prepare(`
-        SELECT COUNT(*) AS count
-        FROM orders
-      `)
-      .get().count;
 
-    const totalSales = db
-      .prepare(`
-        SELECT COALESCE(SUM(total), 0) AS total
-        FROM orders
-        WHERE status != 'cancelled'
-      `)
-      .get().total;
+    const totalOrders =
+      db
+        .prepare(`
+          SELECT COUNT(*) AS count
+          FROM orders
+        `)
+        .get().count;
 
-    const pending = db
-      .prepare(`
-        SELECT COUNT(*) AS count
-        FROM orders
-        WHERE status = 'pending'
-      `)
-      .get().count;
 
-    const confirmed = db
-      .prepare(`
-        SELECT COUNT(*) AS count
-        FROM orders
-        WHERE status = 'confirmed'
-      `)
-      .get().count;
+    const totalSales =
+      db
+        .prepare(`
+          SELECT
+            COALESCE(
+              SUM(total),
+              0
+            ) AS total
+          FROM orders
+          WHERE status != 'cancelled'
+        `)
+        .get().total;
 
-    const shipped = db
-      .prepare(`
-        SELECT COUNT(*) AS count
-        FROM orders
-        WHERE status = 'shipped'
-      `)
-      .get().count;
 
-    const delivered = db
-      .prepare(`
-        SELECT COUNT(*) AS count
-        FROM orders
-        WHERE status = 'delivered'
-      `)
-      .get().count;
+    const pending =
+      db
+        .prepare(`
+          SELECT COUNT(*) AS count
+          FROM orders
+          WHERE status = 'pending'
+        `)
+        .get().count;
+
+
+    const confirmed =
+      db
+        .prepare(`
+          SELECT COUNT(*) AS count
+          FROM orders
+          WHERE status = 'confirmed'
+        `)
+        .get().count;
+
+
+    const shipped =
+      db
+        .prepare(`
+          SELECT COUNT(*) AS count
+          FROM orders
+          WHERE status = 'shipped'
+        `)
+        .get().count;
+
+
+    const delivered =
+      db
+        .prepare(`
+          SELECT COUNT(*) AS count
+          FROM orders
+          WHERE status = 'delivered'
+        `)
+        .get().count;
+
 
     res.json({
+
       totalOrders,
+
       totalSales,
+
       pending,
+
       confirmed,
+
       shipped,
-      delivered,
+
+      delivered
+
     });
+
   }
 );
+
 
 /* =========================================================
    ORDER CONFIRMATION EMAIL
 ========================================================= */
 
 async function sendOrderConfirmationEmail({
+
   orderId,
+
   customerName,
+
   customerEmail,
+
   address,
+
   items,
-  total,
+
+  total
+
 }) {
-  if (!resend || !customerEmail) {
+
+  if (
+    !resend ||
+    !customerEmail
+  ) {
+
     return false;
+
   }
 
+
   try {
-    const itemRows = items
-      .map(
-        (item) => `
-          <tr>
-            <td style="padding:10px;border-bottom:1px solid #ddd;">
-              ${escapeHtml(item.name)}
-            </td>
-            <td style="padding:10px;border-bottom:1px solid #ddd;">
-              ${item.qty}
-            </td>
-            <td style="padding:10px;border-bottom:1px solid #ddd;">
-              ₹${Number(item.price).toLocaleString("en-IN")}
-            </td>
-          </tr>
-        `
-      )
-      .join("");
+
+    const itemRows =
+      items
+        .map(
+          (item) => `
+
+            <tr>
+
+              <td
+                style="
+                  padding:10px;
+                  border-bottom:1px solid #ddd;
+                "
+              >
+                ${escapeHtml(
+                  item.name
+                )}
+              </td>
+
+              <td
+                style="
+                  padding:10px;
+                  border-bottom:1px solid #ddd;
+                "
+              >
+                ${item.qty}
+              </td>
+
+              <td
+                style="
+                  padding:10px;
+                  border-bottom:1px solid #ddd;
+                "
+              >
+                ₹${Number(
+                  item.price
+                ).toLocaleString(
+                  "en-IN"
+                )}
+              </td>
+
+            </tr>
+
+          `
+        )
+        .join("");
+
 
     await resend.emails.send({
-      from: EMAIL_FROM,
-      to: customerEmail,
-      subject: `ZEVORIA Order Confirmed — #${orderId}`,
+
+      from:
+        EMAIL_FROM,
+
+      to:
+        customerEmail,
+
+      subject:
+        `ZEVORIA Order Confirmed — #${orderId}`,
+
       html: `
+
         <!DOCTYPE html>
+
         <html>
-        <body style="font-family:Arial,sans-serif;background:#f6f2ea;padding:30px;">
-          <div style="max-width:650px;margin:auto;background:#fff;padding:30px;border-radius:12px;">
-            
-            <h1 style="letter-spacing:4px;">
+
+        <body
+          style="
+            font-family:Arial,sans-serif;
+            background:#f6f2ea;
+            padding:30px;
+          "
+        >
+
+          <div
+            style="
+              max-width:650px;
+              margin:auto;
+              background:#fff;
+              padding:30px;
+              border-radius:12px;
+            "
+          >
+
+            <h1
+              style="
+                letter-spacing:4px;
+              "
+            >
               ZEVORIA
             </h1>
 
-            <h2>Order Confirmed</h2>
+
+            <h2>
+              Order Confirmed
+            </h2>
+
 
             <p>
-              Hello ${escapeHtml(customerName)},
+              Hello
+              ${escapeHtml(
+                customerName
+              )},
             </p>
+
 
             <p>
               Thank you for shopping with ZEVORIA.
               Your order has been successfully placed.
             </p>
 
+
             <p>
-              <strong>Order #${orderId}</strong>
+              <strong>
+                Order #${orderId}
+              </strong>
             </p>
 
-            <table style="width:100%;border-collapse:collapse;">
+
+            <table
+              style="
+                width:100%;
+                border-collapse:collapse;
+              "
+            >
+
               <thead>
+
                 <tr>
-                  <th style="text-align:left;padding:10px;">Product</th>
-                  <th style="text-align:left;padding:10px;">Qty</th>
-                  <th style="text-align:left;padding:10px;">Price</th>
+
+                  <th
+                    style="
+                      text-align:left;
+                      padding:10px;
+                    "
+                  >
+                    Product
+                  </th>
+
+                  <th
+                    style="
+                      text-align:left;
+                      padding:10px;
+                    "
+                  >
+                    Qty
+                  </th>
+
+                  <th
+                    style="
+                      text-align:left;
+                      padding:10px;
+                    "
+                  >
+                    Price
+                  </th>
+
                 </tr>
+
               </thead>
 
+
               <tbody>
+
                 ${itemRows}
+
               </tbody>
+
             </table>
 
+
             <h2>
-              Total: ₹${Number(total).toLocaleString("en-IN")}
+              Total:
+              ₹${Number(
+                total
+              ).toLocaleString(
+                "en-IN"
+              )}
             </h2>
 
-            <h3>Delivery Address</h3>
+
+            <h3>
+              Delivery Address
+            </h3>
+
 
             <p>
-              ${escapeHtml(address)}
+              ${escapeHtml(
+                address
+              )}
             </p>
 
+
             <p>
-              Payment Method: <strong>Cash on Delivery</strong>
+              Payment Method:
+              <strong>
+                Cash on Delivery
+              </strong>
             </p>
+
 
             <hr>
+
 
             <p>
               Thank you for choosing ZEVORIA.
             </p>
 
           </div>
+
         </body>
+
         </html>
-      `,
+
+      `
+
     });
 
+
     return true;
+
+
   } catch (error) {
-    console.error("Email sending failed:", error);
+
+    console.error(
+      "Email sending failed:",
+      error
+    );
+
     return false;
+
   }
+
 }
+
 
 /* =========================================================
    CREATE ORDER
 ========================================================= */
 
-const orderSchema = z.object({
-  customerName: z.string().min(2).max(100),
-  customerEmail: z.string().email().max(150).optional().or(z.literal("")),
-  phone: z.string().min(7).max(30),
-  address: z.string().min(5).max(500),
-  items: z.array(
-    z.object({
-      productId: z.number().int().positive(),
-      qty: z.number().int().positive().max(20),
-    })
-  ).min(1),
-});
+const orderSchema =
+  z.object({
 
-app.post("/api/orders", (req, res) => {
-  try {
-    const data = orderSchema.parse(req.body);
+    customerName:
+      z.string()
+        .min(2)
+        .max(100),
 
-    const productQuery = db.prepare(`
-      SELECT *
-      FROM products
-      WHERE id = ?
-    `);
+    customerEmail:
+      z.string()
+        .email()
+        .max(150)
+        .optional()
+        .or(z.literal("")),
 
-    const checkedItems = [];
+    phone:
+      z.string()
+        .min(7)
+        .max(30),
 
-    for (const item of data.items) {
-      const product = productQuery.get(item.productId);
+    address:
+      z.string()
+        .min(5)
+        .max(500),
 
-      if (!product) {
-        return res.status(400).json({
-          error: `Product ${item.productId} not found`,
-        });
-      }
+    items:
+      z.array(
 
-      if (product.stock < item.qty) {
-        return res.status(400).json({
-          error: `${product.name} does not have enough stock`,
-        });
-      }
+        z.object({
 
-      checkedItems.push({
-        productId: product.id,
-        name: product.name,
-        qty: item.qty,
-        price: product.price,
-      });
-    }
+          productId:
+            z.number()
+              .int()
+              .positive(),
 
-    const total = checkedItems.reduce(
-      (sum, item) =>
-        sum + item.price * item.qty,
-      0
-    );
+          qty:
+            z.number()
+              .int()
+              .positive()
+              .max(20)
 
-    const createOrder = db.transaction(() => {
-      const orderResult = db
-        .prepare(`
-          INSERT INTO orders
-          (
-            customer_name,
-            customer_email,
-            phone,
-            address,
-            total,
-            status
-          )
-          VALUES (?, ?, ?, ?, ?, 'pending')
-        `)
-        .run(
-          data.customerName.trim(),
-          data.customerEmail
-            ? data.customerEmail.trim().toLowerCase()
-            : null,
-          data.phone.trim(),
-          data.address.trim(),
-          total
+        })
+
+      ).min(1)
+
+  });
+
+
+app.post(
+  "/api/orders",
+  (req, res) => {
+
+    try {
+
+      const data =
+        orderSchema.parse(
+          req.body
         );
 
-      const orderId = Number(
-        orderResult.lastInsertRowid
+
+      const productQuery =
+        db.prepare(`
+          SELECT *
+          FROM products
+          WHERE id = ?
+        `);
+
+
+      const checkedItems = [];
+
+
+      for (
+        const item of data.items
+      ) {
+
+        const product =
+          productQuery.get(
+            item.productId
+          );
+
+
+        if (!product) {
+
+          return res.status(400).json({
+
+            error:
+              `Product ${item.productId} not found`
+
+          });
+
+        }
+
+
+        if (
+          product.stock <
+          item.qty
+        ) {
+
+          return res.status(400).json({
+
+            error:
+              `${product.name} does not have enough stock`
+
+          });
+
+        }
+
+
+        checkedItems.push({
+
+          productId:
+            product.id,
+
+          name:
+            product.name,
+
+          qty:
+            item.qty,
+
+          price:
+            product.price
+
+        });
+
+      }
+
+
+      const total =
+        checkedItems.reduce(
+
+          (sum, item) =>
+            sum +
+            item.price *
+            item.qty,
+
+          0
+
+        );
+
+
+      /* PRIVATE ORDER TOKEN */
+
+      const orderAccessToken =
+        createRandomToken();
+
+
+      const orderAccessTokenHash =
+        hashToken(
+          orderAccessToken
+        );
+
+
+      const createOrder =
+        db.transaction(() => {
+
+          const orderResult =
+            db
+              .prepare(`
+                INSERT INTO orders
+                (
+                  customer_name,
+                  customer_email,
+                  phone,
+                  address,
+                  total,
+                  status,
+                  access_token_hash
+                )
+                VALUES (?, ?, ?, ?, ?, 'pending', ?)
+              `)
+              .run(
+
+                data.customerName.trim(),
+
+                data.customerEmail
+                  ? data.customerEmail
+                      .trim()
+                      .toLowerCase()
+                  : null,
+
+                data.phone.trim(),
+
+                data.address.trim(),
+
+                total,
+
+                orderAccessTokenHash
+
+              );
+
+
+          const orderId =
+            Number(
+              orderResult.lastInsertRowid
+            );
+
+
+          const insertItem =
+            db.prepare(`
+              INSERT INTO order_items
+              (
+                order_id,
+                product_id,
+                name,
+                qty,
+                price
+              )
+              VALUES (?, ?, ?, ?, ?)
+            `);
+
+
+          const decreaseStock =
+            db.prepare(`
+              UPDATE products
+              SET stock = stock - ?
+              WHERE id = ?
+            `);
+
+
+          for (
+            const item of checkedItems
+          ) {
+
+            insertItem.run(
+
+              orderId,
+
+              item.productId,
+
+              item.name,
+
+              item.qty,
+
+              item.price
+
+            );
+
+
+            decreaseStock.run(
+
+              item.qty,
+
+              item.productId
+
+            );
+
+          }
+
+
+          return orderId;
+
+        });
+
+
+      const orderId =
+        createOrder();
+
+
+      /* EMAIL */
+
+      sendOrderConfirmationEmail({
+
+        orderId,
+
+        customerName:
+          data.customerName,
+
+        customerEmail:
+          data.customerEmail,
+
+        address:
+          data.address,
+
+        items:
+          checkedItems,
+
+        total
+
+      }).then(
+        (emailSent) => {
+
+          console.log(
+            `Order #${orderId} email sent:`,
+            emailSent
+          );
+
+        }
       );
 
-      const insertItem = db.prepare(`
-        INSERT INTO order_items
-        (
-          order_id,
-          product_id,
-          name,
-          qty,
-          price
-        )
-        VALUES (?, ?, ?, ?, ?)
-      `);
 
-      const decreaseStock = db.prepare(`
-        UPDATE products
-        SET stock = stock - ?
-        WHERE id = ?
-      `);
+      /* IMPORTANT:
+         The order token is returned ONCE.
+         It is required for customer tracking.
+      */
 
-      for (const item of checkedItems) {
-        insertItem.run(
-          orderId,
-          item.productId,
-          item.name,
-          item.qty,
-          item.price
-        );
+      res.status(201).json({
 
-        decreaseStock.run(
-          item.qty,
-          item.productId
-        );
+        orderId,
+
+        total,
+
+        paymentMethod:
+          "COD",
+
+        orderToken:
+          orderAccessToken
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "Order error:",
+        error
+      );
+
+
+      if (
+        error instanceof
+        z.ZodError
+      ) {
+
+        return res.status(400).json({
+
+          error:
+            "Invalid order details"
+
+        });
+
       }
 
-      return orderId;
-    });
 
-    const orderId = createOrder();
+      res.status(500).json({
 
-    sendOrderConfirmationEmail({
-      orderId,
-      customerName: data.customerName,
-      customerEmail: data.customerEmail,
-      address: data.address,
-      items: checkedItems,
-      total,
-    }).then((emailSent) => {
-      console.log(
-        `Order #${orderId} email sent:`,
-        emailSent
-      );
-    });
+        error:
+          "Could not create order"
 
-    res.status(201).json({
-      orderId,
-      total,
-      paymentMethod: "COD",
-    });
-  } catch (error) {
-    console.error("Order error:", error);
-
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: "Invalid order details",
       });
+
     }
 
-    res.status(500).json({
-      error: "Could not create order",
-    });
   }
-});
+);
+
 
 /* =========================================================
-   ORDER LOOKUP
-   NOTE:
-   This endpoint is kept for your existing website.
-   We will secure customer order access in the next step.
+   SECURE CUSTOMER ORDER LOOKUP
 ========================================================= */
 
-app.get("/api/orders/:id", (req, res) => {
-  const id = Number(req.params.id);
+app.get(
+  "/api/orders/:id",
+  (req, res) => {
 
-  if (!Number.isInteger(id)) {
-    return res.status(400).json({
-      error: "Invalid order ID",
-    });
+    try {
+
+      const id =
+        Number(
+          req.params.id
+        );
+
+
+      if (
+        !Number.isInteger(id)
+      ) {
+
+        return res.status(400).json({
+
+          error:
+            "Invalid order ID"
+
+        });
+
+      }
+
+
+      const orderToken =
+        typeof req.headers[
+          "x-order-token"
+        ] === "string"
+
+          ? req.headers[
+              "x-order-token"
+            ]
+
+          : "";
+
+
+      if (!orderToken) {
+
+        return res.status(401).json({
+
+          error:
+            "Order access token required"
+
+        });
+
+      }
+
+
+      const tokenHash =
+        hashToken(
+          orderToken
+        );
+
+
+      const order =
+        db
+          .prepare(`
+            SELECT
+              id,
+              customer_name,
+              customer_email,
+              phone,
+              address,
+              total,
+              status,
+              created_at
+            FROM orders
+            WHERE id = ?
+            AND access_token_hash = ?
+          `)
+          .get(
+            id,
+            tokenHash
+          );
+
+
+      if (!order) {
+
+        return res.status(404).json({
+
+          error:
+            "Order not found or access denied"
+
+        });
+
+      }
+
+
+      const items =
+        db
+          .prepare(`
+            SELECT
+              id,
+              order_id,
+              product_id,
+              name,
+              qty,
+              price
+            FROM order_items
+            WHERE order_id = ?
+          `)
+          .all(id);
+
+
+      res.json({
+
+        ...order,
+
+        items
+
+      });
+
+
+    } catch (error) {
+
+      console.error(
+        "Order lookup error:",
+        error
+      );
+
+
+      res.status(500).json({
+
+        error:
+          "Could not load order"
+
+      });
+
+    }
+
   }
+);
 
-  const order = db
-    .prepare(`
-      SELECT *
-      FROM orders
-      WHERE id = ?
-    `)
-    .get(id);
-
-  if (!order) {
-    return res.status(404).json({
-      error: "Order not found",
-    });
-  }
-
-  const items = db
-    .prepare(`
-      SELECT *
-      FROM order_items
-      WHERE order_id = ?
-    `)
-    .all(id);
-
-  res.json({
-    ...order,
-    items,
-  });
-});
 
 /* =========================================================
    CLEAN EXPIRED ADMIN SESSIONS
 ========================================================= */
 
-setInterval(() => {
-  try {
-    db.prepare(`
-      DELETE FROM admin_sessions
-      WHERE expires_at <= ?
-    `).run(Date.now());
-  } catch (error) {
-    console.error(
-      "Session cleanup error:",
-      error
-    );
-  }
-}, 60 * 60 * 1000);
+setInterval(
+  () => {
+
+    try {
+
+      db
+        .prepare(`
+          DELETE FROM admin_sessions
+          WHERE expires_at <= ?
+        `)
+        .run(
+          Date.now()
+        );
+
+    } catch (error) {
+
+      console.error(
+        "Session cleanup error:",
+        error
+      );
+
+    }
+
+  },
+
+  60 * 60 * 1000
+);
+
 
 /* =========================================================
    START SERVER
 ========================================================= */
 
-app.listen(PORT, () => {
-  console.log(
-    `ZEVORIA backend running on port ${PORT}`
-  );
-});
+app.listen(
+  PORT,
+  () => {
+
+    console.log(
+      `ZEVORIA backend running on port ${PORT}`
+    );
+
+  }
+);
