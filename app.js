@@ -51,7 +51,9 @@ const products = [
   }
 ];
 
-let cart = JSON.parse(localStorage.getItem("zevoriaCart") || "[]");
+let cart = JSON.parse(
+  localStorage.getItem("zevoriaCart") || "[]"
+);
 
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
@@ -121,20 +123,29 @@ function renderProducts(list = products) {
 function add(i) {
 
   const p = products[i];
-  const x = cart.find(x => x.i === i);
+
+  const x = cart.find(
+    x => x.i === i
+  );
 
   if (x) {
+
     x.q++;
+
   } else {
+
     cart.push({
       i,
       q: 1
     });
+
   }
 
   save();
 
-  toast(p.name + " added to bag");
+  toast(
+    p.name + " added to bag"
+  );
 
   openCart();
 }
@@ -150,7 +161,10 @@ function save() {
   renderCart();
 
   $("#cartCount").textContent =
-    cart.reduce((a, x) => a + x.q, 0);
+    cart.reduce(
+      (a, x) => a + x.q,
+      0
+    );
 }
 
 
@@ -160,13 +174,20 @@ function renderCart() {
 
   if (!cart.length) {
 
-    el.innerHTML =
-      "<p class='muted'>Your bag is empty. Explore the collection and add a fragrance.</p>";
+    el.innerHTML = `
+      <p class="muted">
+        Your bag is empty.
+        Explore the collection and
+        add a fragrance.
+      </p>
+    `;
 
-    $("#subtotal").textContent = "₹0";
+    $("#subtotal").textContent =
+      "₹0";
 
     return;
   }
+
 
   el.innerHTML = cart.map(x => {
 
@@ -179,24 +200,38 @@ function renderCart() {
 
         <div style="flex:1">
 
-          <h4>${p.name}</h4>
+          <h4>
+            ${p.name}
+          </h4>
 
-          <small>${money(p.price)}</small>
+          <small>
+            ${money(p.price)}
+          </small>
 
           <div class="qty">
 
-            <button onclick="change(${x.i},-1)">
+            <button
+              onclick="change(${x.i},-1)"
+            >
               −
             </button>
 
             ${x.q}
 
-            <button onclick="change(${x.i},1)">
+            <button
+              onclick="change(${x.i},1)"
+            >
               +
             </button>
 
             <button
-              style="margin-left:auto;border:0;background:none;color:#9a3d32;cursor:pointer"
+              style="
+                margin-left:auto;
+                border:0;
+                background:none;
+                color:#9a3d32;
+                cursor:pointer
+              "
               onclick="removeItem(${x.i})"
             >
               Remove
@@ -211,10 +246,14 @@ function renderCart() {
 
   }).join("");
 
+
   $("#subtotal").textContent =
     money(
       cart.reduce(
-        (a, x) => a + products[x.i].price * x.q,
+        (a, x) =>
+          a +
+          products[x.i].price *
+          x.q,
         0
       )
     );
@@ -223,14 +262,21 @@ function renderCart() {
 
 function change(i, d) {
 
-  const x = cart.find(x => x.i === i);
+  const x = cart.find(
+    x => x.i === i
+  );
 
   if (!x) return;
 
   x.q += d;
 
   if (x.q <= 0) {
-    cart = cart.filter(x => x.i !== i);
+
+    cart =
+      cart.filter(
+        x => x.i !== i
+      );
+
   }
 
   save();
@@ -239,7 +285,10 @@ function change(i, d) {
 
 function removeItem(i) {
 
-  cart = cart.filter(x => x.i !== i);
+  cart =
+    cart.filter(
+      x => x.i !== i
+    );
 
   save();
 }
@@ -248,7 +297,9 @@ function removeItem(i) {
 function wish(b) {
 
   b.textContent =
-    b.textContent === "♡" ? "♥" : "♡";
+    b.textContent === "♡"
+      ? "♥"
+      : "♡";
 
   toast(
     b.textContent === "♥"
@@ -279,17 +330,25 @@ function toast(t) {
 
 function openCart() {
 
-  $("#overlay").classList.add("show");
+  $("#overlay").classList.add(
+    "show"
+  );
 
-  $("#cartDrawer").classList.add("open");
+  $("#cartDrawer").classList.add(
+    "open"
+  );
 }
 
 
 function closeAll() {
 
-  $("#overlay").classList.remove("show");
+  $("#overlay").classList.remove(
+    "show"
+  );
 
-  $("#cartDrawer").classList.remove("open");
+  $("#cartDrawer").classList.remove(
+    "open"
+  );
 
   $$(".modal").forEach(
     x => x.classList.remove("show")
@@ -299,37 +358,49 @@ function closeAll() {
 
 function modal(id) {
 
-  $("#overlay").classList.add("show");
+  $("#overlay").classList.add(
+    "show"
+  );
 
-  $(id).classList.add("show");
+  $(id).classList.add(
+    "show"
+  );
 }
 
 
-/* =========================
-   NAVIGATION
-========================= */
+$("#cartBtn").onclick =
+  openCart;
 
-$("#cartBtn").onclick = openCart;
 
 $("#searchBtn").onclick =
   () => modal("#searchModal");
 
-$("#accountBtn").onclick = () => {
 
-  updateAccountUI();
+$("#accountBtn").onclick =
+  () => {
 
-  modal("#accountModal");
+    updateAccountUI();
 
-};
+    modal("#accountModal");
 
-$("#overlay").onclick = closeAll;
+  };
+
+
+$("#overlay").onclick =
+  closeAll;
+
 
 $$("[data-close]").forEach(
-  x => x.onclick = closeAll
+  x => x.onclick =
+    closeAll
 );
 
+
 $("#menuBtn").onclick =
-  () => $("#nav").classList.toggle("open");
+  () =>
+    $("#nav").classList.toggle(
+      "open"
+    );
 
 
 /* =========================
@@ -341,16 +412,24 @@ $$(".filter").forEach(b => {
   b.onclick = () => {
 
     $$(".filter").forEach(
-      x => x.classList.remove("active")
+      x =>
+        x.classList.remove(
+          "active"
+        )
     );
 
-    b.classList.add("active");
+    b.classList.add(
+      "active"
+    );
+
 
     renderProducts(
       b.dataset.filter === "all"
         ? products
         : products.filter(
-            p => p.cat === b.dataset.filter
+            p =>
+              p.cat ===
+              b.dataset.filter
           )
     );
 
@@ -382,92 +461,111 @@ $("#attarBtn").onclick = () => {
    SEARCH
 ========================= */
 
-$("#searchInput").oninput = e => {
+$("#searchInput").oninput =
+  e => {
 
-  const q =
-    e.target.value.toLowerCase();
+    const q =
+      e.target.value.toLowerCase();
 
-  $("#searchResults").innerHTML =
 
-    products
-      .filter(p =>
-        (
-          p.name +
-          " " +
-          p.note +
-          " " +
-          p.type
+    $("#searchResults").innerHTML =
+      products
+
+        .filter(
+          p =>
+            (
+              p.name +
+              " " +
+              p.note +
+              " " +
+              p.type
+            )
+              .toLowerCase()
+              .includes(q)
         )
-        .toLowerCase()
-        .includes(q)
-      )
-      .map(p => `
-        <div class="search-result">
 
-          <strong>${p.name}</strong>
+        .map(
+          p => `
+            <div class="search-result">
 
-          <br>
+              <strong>
+                ${p.name}
+              </strong>
 
-          <small>
-            ${p.note} · ${money(p.price)}
-          </small>
+              <br>
 
-        </div>
-      `)
-      .join("")
+              <small>
+                ${p.note}
+                ·
+                ${money(p.price)}
+              </small>
 
-    ||
+            </div>
+          `
+        )
 
-    "<p class='muted'>No fragrance found.</p>";
-};
+        .join("")
+
+      ||
+
+      "<p class='muted'>No fragrance found.</p>";
+
+  };
 
 
 /* =========================
    NEWSLETTER
 ========================= */
 
-$("#newsletter").onsubmit = e => {
+$("#newsletter").onsubmit =
+  e => {
 
-  e.preventDefault();
+    e.preventDefault();
 
-  toast("Thanks — you're on the list.");
+    toast(
+      "Thanks — you're on the list."
+    );
 
-  e.target.reset();
+    e.target.reset();
 
-};
-
-
-/* ==================================================
-   ACCOUNT SYSTEM
-================================================== */
+  };
 
 
-/* ---------- ACCOUNT UI ---------- */
+/* =========================
+   ACCOUNT
+========================= */
 
 function updateAccountUI() {
 
   const user =
     JSON.parse(
-      localStorage.getItem("zevoriaUser") || "null"
+      localStorage.getItem(
+        "zevoriaUser"
+      ) || "null"
     );
 
-  const loggedOut =
+
+  const loggedOutAccount =
     $("#loggedOutAccount");
 
-  const loggedIn =
+  const loggedInAccount =
     $("#loggedInAccount");
 
   const title =
     $("#accountTitle");
 
+
   if (user) {
 
-    loggedOut.style.display = "none";
+    loggedOutAccount.style.display =
+      "none";
 
-    loggedIn.style.display = "block";
+    loggedInAccount.style.display =
+      "block";
 
     title.textContent =
-      "Welcome back, " + user.name;
+      "Welcome back, " +
+      user.name;
 
     $("#accountName").textContent =
       user.name;
@@ -480,9 +578,11 @@ function updateAccountUI() {
 
   } else {
 
-    loggedOut.style.display = "block";
+    loggedOutAccount.style.display =
+      "block";
 
-    loggedIn.style.display = "none";
+    loggedInAccount.style.display =
+      "none";
 
     title.textContent =
       "Welcome to ZEVORIA";
@@ -492,298 +592,425 @@ function updateAccountUI() {
 }
 
 
-/* ---------- SHOW SIGN UP ---------- */
+/* =========================
+   SIGNUP / LOGIN SWITCH
+========================= */
 
-$("#showSignupBtn").onclick = () => {
+$("#showSignupBtn").onclick =
+  () => {
 
-  $("#loginForm").style.display = "none";
+    $("#loginForm").style.display =
+      "none";
 
-  $("#showSignupBtn").style.display = "none";
+    $("#showSignupBtn").style.display =
+      "none";
 
-  $("#signupForm").style.display = "block";
+    $("#signupForm").style.display =
+      "block";
 
-};
-
-
-/* ---------- SHOW LOGIN ---------- */
-
-$("#showLoginBtn").onclick = () => {
-
-  $("#signupForm").style.display = "none";
-
-  $("#loginForm").style.display = "block";
-
-  $("#showSignupBtn").style.display = "block";
-
-};
+  };
 
 
-/* ---------- SIGN UP ---------- */
+$("#showLoginBtn").onclick =
+  () => {
 
-$("#signupForm").onsubmit = async e => {
+    $("#signupForm").style.display =
+      "none";
 
-  e.preventDefault();
+    $("#loginForm").style.display =
+      "block";
 
-  const button =
-    $("#signupBtn");
+    $("#showSignupBtn").style.display =
+      "block";
 
-  const oldText =
-    button.textContent;
-
-  button.disabled = true;
-
-  button.textContent =
-    "Creating account...";
+  };
 
 
-  const name =
-    $("#signupName").value.trim();
+/* =========================
+   SIGNUP
+========================= */
 
-  const email =
-    $("#signupEmail").value.trim();
+$("#signupForm").onsubmit =
+  async e => {
 
-  const phone =
-    $("#signupPhone").value.trim();
-
-  const password =
-    $("#signupPassword").value;
+    e.preventDefault();
 
 
-  try {
+    const button =
+      $("#signupBtn");
 
-    const response =
-      await fetch(
-        `${API_BASE}/api/auth/signup`,
-        {
-          method: "POST",
+    const oldText =
+      button.textContent;
 
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
 
-          body: JSON.stringify({
-            name,
-            email,
-            phone,
-            password
-          })
-        }
+    button.disabled = true;
+
+    button.textContent =
+      "Creating account...";
+
+
+    const name =
+      $("#signupName")
+        .value
+        .trim();
+
+
+    const email =
+      $("#signupEmail")
+        .value
+        .trim();
+
+
+    const phone =
+      $("#signupPhone")
+        .value
+        .trim();
+
+
+    const password =
+      $("#signupPassword")
+        .value;
+
+
+    try {
+
+      const response =
+        await fetch(
+          `${API_BASE}/api/auth/signup`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body: JSON.stringify({
+              name,
+              email,
+              phone,
+              password
+            })
+          }
+        );
+
+
+      const data =
+        await response
+          .json()
+          .catch(
+            () => ({})
+          );
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          data.error ||
+          "Could not create account"
+        );
+
+      }
+
+
+      localStorage.setItem(
+        "zevoriaUser",
+        JSON.stringify(
+          data.user
+        )
       );
 
 
-    const data =
-      await response.json().catch(
-        () => ({})
+      toast(
+        "Account created successfully"
       );
 
 
-    if (!response.ok) {
+      e.target.reset();
 
-      throw new Error(
-        data.error ||
-        "Could not create account"
+      updateAccountUI();
+
+
+    } catch (err) {
+
+      toast(
+        err.message
       );
+
+      alert(
+        "Account could not be created.\n\n" +
+        err.message
+      );
+
+
+    } finally {
+
+      button.disabled =
+        false;
+
+      button.textContent =
+        oldText;
+
+    }
+
+  };
+
+
+/* =========================
+   LOGIN
+========================= */
+
+$("#loginForm").onsubmit =
+  async e => {
+
+    e.preventDefault();
+
+
+    const button =
+      $("#loginBtn");
+
+    const oldText =
+      button.textContent;
+
+
+    button.disabled =
+      true;
+
+    button.textContent =
+      "Signing in...";
+
+
+    const email =
+      $("#loginEmail")
+        .value
+        .trim();
+
+
+    const password =
+      $("#loginPassword")
+        .value;
+
+
+    try {
+
+      const response =
+        await fetch(
+          `${API_BASE}/api/auth/login`,
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body: JSON.stringify({
+              email,
+              password
+            })
+          }
+        );
+
+
+      const data =
+        await response
+          .json()
+          .catch(
+            () => ({})
+          );
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          data.error ||
+          "Invalid email or password"
+        );
+
+      }
+
+
+      localStorage.setItem(
+        "zevoriaUser",
+        JSON.stringify(
+          data.user
+        )
+      );
+
+
+      toast(
+        "Signed in successfully"
+      );
+
+
+      e.target.reset();
+
+      updateAccountUI();
+
+
+    } catch (err) {
+
+      toast(
+        err.message
+      );
+
+      alert(
+        "Sign in failed.\n\n" +
+        err.message
+      );
+
+
+    } finally {
+
+      button.disabled =
+        false;
+
+      button.textContent =
+        oldText;
+
+    }
+
+  };
+
+
+/* =========================
+   LOGOUT
+========================= */
+
+$("#logoutBtn").onclick =
+  () => {
+
+    localStorage.removeItem(
+      "zevoriaUser"
+    );
+
+    updateAccountUI();
+
+    toast(
+      "You have been signed out"
+    );
+
+  };
+
+
+/* =========================
+   CHECKOUT
+========================= */
+
+$("#checkoutBtn").onclick =
+  () => {
+
+    if (!cart.length) {
+
+      toast(
+        "Your bag is empty"
+      );
+
+      return;
 
     }
 
 
-    localStorage.setItem(
-      "zevoriaUser",
-      JSON.stringify(data.user)
+    modal(
+      "#checkoutModal"
     );
 
+  };
 
-    toast(
-      "Account created successfully"
-    );
 
-
-    e.target.reset();
-
-    updateAccountUI();
-
-
-  } catch (err) {
-
-    toast(err.message);
-
-    alert(
-      "Account could not be created.\n\n" +
-      err.message
-    );
-
-  } finally {
-
-    button.disabled = false;
-
-    button.textContent = oldText;
-
-  }
-
-};
-
-
-/* ---------- LOGIN ---------- */
-
-$("#loginForm").onsubmit = async e => {
-
-  e.preventDefault();
-
-  const button =
-    $("#loginBtn");
-
-  const oldText =
-    button.textContent;
-
-  button.disabled = true;
-
-  button.textContent =
-    "Signing in...";
-
-
-  const email =
-    $("#loginEmail").value.trim();
-
-  const password =
-    $("#loginPassword").value;
-
-
-  try {
-
-    const response =
-      await fetch(
-        `${API_BASE}/api/auth/login`,
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body: JSON.stringify({
-            email,
-            password
-          })
-        }
-      );
-
-
-    const data =
-      await response.json().catch(
-        () => ({})
-      );
-
-
-    if (!response.ok) {
-
-      throw new Error(
-        data.error ||
-        "Invalid email or password"
-      );
-
-    }
-
-
-    localStorage.setItem(
-      "zevoriaUser",
-      JSON.stringify(data.user)
-    );
-
-
-    toast(
-      "Signed in successfully"
-    );
-
-
-    e.target.reset();
-
-    updateAccountUI();
-
-
-  } catch (err) {
-
-    toast(err.message);
-
-    alert(
-      "Sign in failed.\n\n" +
-      err.message
-    );
-
-  } finally {
-
-    button.disabled = false;
-
-    button.textContent = oldText;
-
-  }
-
-};
-
-
-/* ---------- LOGOUT ---------- */
-
-$("#logoutBtn").onclick = () => {
-
-  localStorage.removeItem(
-    "zevoriaUser"
-  );
-
-  updateAccountUI();
-
-  toast("You have been signed out");
-
-};
-
-
-/* ==================================================
-   CHECKOUT / ORDERS
-================================================== */
-
-$("#checkoutBtn").onclick = () => {
-
-  if (!cart.length) {
-
-    toast("Your bag is empty");
-
-    return;
-  }
-
-  modal("#checkoutModal");
-
-};
-
+/* =========================
+   SUBMIT ORDER
+   EMAIL INCLUDED
+========================= */
 
 async function submitOrder(form) {
 
   const inputs =
-    form.querySelectorAll("input");
+    form.querySelectorAll(
+      "input"
+    );
 
 
   const customerName =
-    inputs[0].value.trim();
+    inputs[0]
+      .value
+      .trim();
+
 
   const phone =
-    inputs[1].value.trim();
+    inputs[1]
+      .value
+      .trim();
+
 
   const address =
     [
-      inputs[2].value.trim(),
-      inputs[3].value.trim(),
-      inputs[4].value.trim()
+      inputs[2]
+        .value
+        .trim(),
+
+      inputs[3]
+        .value
+        .trim(),
+
+      inputs[4]
+        .value
+        .trim()
+
     ]
       .filter(Boolean)
       .join(", ");
 
 
+  /* =========================
+     GET LOGGED-IN USER
+  ========================= */
+
+  const user =
+    JSON.parse(
+      localStorage.getItem(
+        "zevoriaUser"
+      ) || "null"
+    );
+
+
+  if (
+    !user ||
+    !user.email
+  ) {
+
+    throw new Error(
+      "Please sign in to your ZEVORIA account before placing an order so we can send your confirmation email."
+    );
+
+  }
+
+
+  const customerEmail =
+    user.email;
+
+
+  /* =========================
+     CART ITEMS
+  ========================= */
+
   const items =
     cart.map(x => ({
+
       productId:
-        products[x.i].backendId,
-      qty: x.q
+        products[
+          x.i
+        ].backendId,
+
+      qty:
+        x.q
+
     }));
 
+
+  /* =========================
+     SEND ORDER
+  ========================= */
 
   const response =
     await fetch(
@@ -797,19 +1024,29 @@ async function submitOrder(form) {
         },
 
         body: JSON.stringify({
+
           customerName,
+
+          customerEmail,
+
           phone,
+
           address,
+
           items
+
         })
+
       }
     );
 
 
   const data =
-    await response.json().catch(
-      () => ({})
-    );
+    await response
+      .json()
+      .catch(
+        () => ({})
+      );
 
 
   if (!response.ok) {
@@ -827,23 +1064,33 @@ async function submitOrder(form) {
 }
 
 
+/* =========================
+   CHECKOUT FORM
+========================= */
+
 $("#checkoutForm").onsubmit =
   async e => {
 
     e.preventDefault();
 
+
     const form =
       e.target;
+
 
     const button =
       form.querySelector(
         "button[type='submit']"
       );
 
+
     const oldText =
       button.textContent;
 
-    button.disabled = true;
+
+    button.disabled =
+      true;
+
 
     button.textContent =
       "Placing order...";
@@ -852,7 +1099,10 @@ $("#checkoutForm").onsubmit =
     try {
 
       const data =
-        await submitOrder(form);
+        await submitOrder(
+          form
+        );
+
 
       const orderId =
         data.orderId;
@@ -870,16 +1120,19 @@ $("#checkoutForm").onsubmit =
       );
 
 
-      setTimeout(() => {
+      setTimeout(
+        () => {
 
-        alert(
-          `Thank you for your order!\n\n` +
-          `Order ID: #${orderId}\n` +
-          `Total: ${money(data.total)}\n\n` +
-          `We will contact you on your phone number for delivery confirmation.`
-        );
+          alert(
+            `Thank you for your order!\n\n` +
+            `Order ID: #${orderId}\n` +
+            `Total: ${money(data.total)}\n\n` +
+            `A confirmation email has been sent to your registered email address.`
+          );
 
-      }, 250);
+        },
+        250
+      );
 
 
       form.reset();
@@ -887,7 +1140,10 @@ $("#checkoutForm").onsubmit =
 
     } catch (err) {
 
-      toast(err.message);
+      toast(
+        err.message
+      );
+
 
       alert(
         `Order could not be placed.\n\n` +
@@ -895,9 +1151,11 @@ $("#checkoutForm").onsubmit =
         `Please try again.`
       );
 
+
     } finally {
 
-      button.disabled = false;
+      button.disabled =
+        false;
 
       button.textContent =
         oldText;
