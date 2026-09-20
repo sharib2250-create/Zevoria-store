@@ -895,6 +895,7 @@ $("#logoutBtn").onclick =
 
 /* =========================
    CHECKOUT
+   NEW DEDICATED PAGE
 ========================= */
 
 $("#checkoutBtn").onclick =
@@ -910,259 +911,34 @@ $("#checkoutBtn").onclick =
 
     }
 
+    /*
+      Open the new dedicated
+      premium checkout page.
+    */
 
-    modal(
-      "#checkoutModal"
-    );
+    window.location.href =
+      "checkout.html";
 
   };
 
 
 /* =========================
-   SUBMIT ORDER
-   EMAIL INCLUDED
+   OLD CHECKOUT SUBMIT
 ========================= */
 
-async function submitOrder(form) {
-
-  const inputs =
-    form.querySelectorAll(
-      "input"
-    );
-
-
-  const customerName =
-    inputs[0]
-      .value
-      .trim();
-
-
-  const phone =
-    inputs[1]
-      .value
-      .trim();
-
-
-  const address =
-    [
-      inputs[2]
-        .value
-        .trim(),
-
-      inputs[3]
-        .value
-        .trim(),
-
-      inputs[4]
-        .value
-        .trim()
-
-    ]
-      .filter(Boolean)
-      .join(", ");
-
-
-  /* =========================
-     GET LOGGED-IN USER
-  ========================= */
-
-  const user =
-    JSON.parse(
-      localStorage.getItem(
-        "zevoriaUser"
-      ) || "null"
-    );
-
-
-  if (
-    !user ||
-    !user.email
-  ) {
-
-    throw new Error(
-      "Please sign in to your ZEVORIA account before placing an order so we can send your confirmation email."
-    );
-
-  }
-
-
-  const customerEmail =
-    user.email;
-
-
-  /* =========================
-     CART ITEMS
-  ========================= */
-
-  const items =
-    cart.map(x => ({
-
-      productId:
-        products[
-          x.i
-        ].backendId,
-
-      qty:
-        x.q
-
-    }));
-
-
-  /* =========================
-     SEND ORDER
-  ========================= */
-
-  const response =
-    await fetch(
-      `${API_BASE}/api/orders`,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
-
-        body: JSON.stringify({
-
-          customerName,
-
-          customerEmail,
-
-          phone,
-
-          address,
-
-          items
-
-        })
-
-      }
-    );
-
-
-  const data =
-    await response
-      .json()
-      .catch(
-        () => ({})
-      );
-
-
-  if (!response.ok) {
-
-    throw new Error(
-      data.error ||
-      "Could not place the order"
-    );
-
-  }
-
-
-  return data;
-
-}
-
-
-/* =========================
-   CHECKOUT FORM
-========================= */
-
-$("#checkoutForm").onsubmit =
-  async e => {
-
-    e.preventDefault();
-
-
-    const form =
-      e.target;
-
-
-    const button =
-      form.querySelector(
-        "button[type='submit']"
-      );
-
-
-    const oldText =
-      button.textContent;
-
-
-    button.disabled =
-      true;
-
-
-    button.textContent =
-      "Placing order...";
-
-
-    try {
-
-      const data =
-        await submitOrder(
-          form
-        );
-
-
-      const orderId =
-        data.orderId;
-
-
-      cart = [];
-
-      save();
-
-      closeAll();
-
-
-      toast(
-        `Order placed successfully. Order #${orderId}`
-      );
-
-
-      setTimeout(
-        () => {
-
-          alert(
-            `Thank you for your order!\n\n` +
-            `Order ID: #${orderId}\n` +
-            `Total: ${money(data.total)}\n\n` +
-            `A confirmation email has been sent to your registered email address.`
-          );
-
-        },
-        250
-      );
-
-
-      form.reset();
-
-
-    } catch (err) {
-
-      toast(
-        err.message
-      );
-
-
-      alert(
-        `Order could not be placed.\n\n` +
-        `${err.message}\n\n` +
-        `Please try again.`
-      );
-
-
-    } finally {
-
-      button.disabled =
-        false;
-
-      button.textContent =
-        oldText;
-
-    }
-
-  };
+/*
+  The old checkout modal is no longer
+  used for placing orders.
+
+  Orders are now placed from:
+
+  checkout.html
+  +
+  checkout.js
+
+  This keeps the new checkout page
+  connected to the same backend.
+*/
 
 
 /* =========================
