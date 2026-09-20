@@ -1,302 +1,690 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Checkout | ZEVORIA</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Checkout — ZEVORIA</title>
+
+  <meta
+    name="description"
+    content="Complete your ZEVORIA fragrance order."
+  >
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&family=Manrope:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  >
 
-  <link rel="stylesheet" href="checkout.css">
+  <link
+    rel="stylesheet"
+    href="checkout.css"
+  >
 </head>
+
 
 <body>
 
-  <!-- HEADER -->
+  <!-- =====================================================
+       TOP BAR
+  ====================================================== -->
+
+  <div class="checkout-topbar">
+    FREE SHIPPING ON ORDERS ABOVE ₹1,499
+    <span>•</span>
+    CASH ON DELIVERY AVAILABLE
+  </div>
+
+
+  <!-- =====================================================
+       HEADER
+  ====================================================== -->
+
   <header class="checkout-header">
 
-    <a href="index.html" class="logo">
-      ZEVORIA
+    <a
+      href="index.html"
+      class="checkout-logo"
+    >
+      ZEVORIA<span>®</span>
     </a>
 
-    <a href="index.html" class="back-link">
-      ← Continue Shopping
-    </a>
+
+    <div class="secure-checkout">
+
+      <svg
+        width="17"
+        height="17"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+      >
+        <rect
+          x="3"
+          y="11"
+          width="18"
+          height="10"
+          rx="2"
+        />
+
+        <path
+          d="M7 11V7a5 5 0 0 1 10 0v4"
+        />
+      </svg>
+
+      Secure Checkout
+
+    </div>
 
   </header>
 
 
-  <!-- MAIN -->
-  <main class="checkout-container">
+  <!-- =====================================================
+       MAIN
+  ====================================================== -->
 
-    <div class="checkout-title">
-      <span>SECURE CHECKOUT</span>
-      <h1>Complete Your Order</h1>
-      <p>You're just a few steps away from your fragrance.</p>
-    </div>
+  <main class="checkout-page">
 
-
-    <div class="checkout-grid">
+    <div class="checkout-container">
 
 
-      <!-- LEFT SIDE -->
+      <!-- =================================================
+           LEFT SIDE
+      ================================================== -->
+
       <section class="checkout-left">
 
 
-        <!-- CONTACT -->
-        <div class="checkout-card">
+        <!-- CUSTOMER DETAILS -->
+
+        <div class="checkout-section">
 
           <div class="section-heading">
-            <span class="number">01</span>
+
+            <span class="section-number">
+              01
+            </span>
 
             <div>
-              <h2>Contact Information</h2>
-              <p>Where should we send your order confirmation?</p>
+
+              <h1>
+                Delivery Details
+              </h1>
+
+              <p>
+                Where should we deliver your fragrance?
+              </p>
+
             </div>
+
           </div>
 
 
-          <label for="email">Email Address</label>
-
-          <input
-            type="email"
-            id="email"
-            placeholder="you@example.com"
-            autocomplete="email"
+          <form
+            id="checkoutForm"
+            novalidate
           >
 
-        </div>
 
+            <!-- NAME -->
 
+            <div class="form-group">
 
-        <!-- DELIVERY -->
-        <div class="checkout-card">
-
-          <div class="section-heading">
-
-            <span class="number">02</span>
-
-            <div>
-              <h2>Delivery Information</h2>
-              <p>Enter your shipping details.</p>
-            </div>
-
-          </div>
-
-
-          <div class="form-grid">
-
-            <div class="form-group full">
-              <label for="fullName">Full Name</label>
+              <label for="fullName">
+                Full Name
+              </label>
 
               <input
                 type="text"
                 id="fullName"
-                placeholder="Your full name"
+                name="fullName"
+                placeholder="Enter your full name"
                 autocomplete="name"
-              >
-            </div>
-
-
-            <div class="form-group full">
-
-              <label for="phone">Mobile Number</label>
-
-              <input
-                type="tel"
-                id="phone"
-                placeholder="+91 XXXXX XXXXX"
-                autocomplete="tel"
+                required
               >
 
             </div>
 
 
-            <div class="form-group full">
+            <!-- EMAIL + PHONE -->
 
-              <label for="address">Address</label>
+            <div class="form-row">
+
+              <div class="form-group">
+
+                <label for="email">
+                  Email Address
+                </label>
+
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  placeholder="you@example.com"
+                  autocomplete="email"
+                  required
+                >
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="phone">
+                  Phone Number
+                </label>
+
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  placeholder="10-digit mobile number"
+                  autocomplete="tel"
+                  inputmode="numeric"
+                  required
+                >
+
+              </div>
+
+            </div>
+
+
+            <!-- ADDRESS -->
+
+            <div class="form-group">
+
+              <label for="address">
+                Complete Address
+              </label>
 
               <textarea
                 id="address"
+                name="address"
                 rows="4"
                 placeholder="House / Flat No., Building, Street, Area"
                 autocomplete="street-address"
+                required
               ></textarea>
 
             </div>
 
 
-            <div class="form-group">
+            <!-- CITY / STATE -->
 
-              <label for="city">City</label>
+            <div class="form-row">
 
-              <input
-                type="text"
-                id="city"
-                placeholder="Mumbai"
-                autocomplete="address-level2"
-              >
+              <div class="form-group">
+
+                <label for="city">
+                  City
+                </label>
+
+                <input
+                  type="text"
+                  id="city"
+                  name="city"
+                  placeholder="Mumbai"
+                  autocomplete="address-level2"
+                  required
+                >
+
+              </div>
+
+
+              <div class="form-group">
+
+                <label for="state">
+                  State
+                </label>
+
+                <input
+                  type="text"
+                  id="state"
+                  name="state"
+                  placeholder="Maharashtra"
+                  autocomplete="address-level1"
+                  required
+                >
+
+              </div>
 
             </div>
 
 
-            <div class="form-group">
-
-              <label for="state">State</label>
-
-              <input
-                type="text"
-                id="state"
-                placeholder="Maharashtra"
-                autocomplete="address-level1"
-              >
-
-            </div>
-
+            <!-- PINCODE -->
 
             <div class="form-group">
 
-              <label for="pincode">PIN Code</label>
+              <label for="pincode">
+                Pincode
+              </label>
 
               <input
                 type="text"
                 id="pincode"
+                name="pincode"
                 placeholder="400001"
                 maxlength="6"
+                inputmode="numeric"
                 autocomplete="postal-code"
+                required
               >
 
             </div>
 
-          </div>
 
-        </div>
+            <!-- PAYMENT -->
+
+            <div class="checkout-section payment-section">
+
+              <div class="section-heading">
+
+                <span class="section-number">
+                  02
+                </span>
+
+                <div>
+
+                  <h2>
+                    Payment Method
+                  </h2>
+
+                  <p>
+                    Pay safely when your order arrives.
+                  </p>
+
+                </div>
+
+              </div>
 
 
+              <label
+                class="payment-option selected"
+              >
 
-        <!-- PAYMENT -->
-        <div class="checkout-card">
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="COD"
+                  checked
+                >
 
-          <div class="section-heading">
+                <span class="payment-radio"></span>
 
-            <span class="number">03</span>
 
-            <div>
-              <h2>Payment Method</h2>
-              <p>Select your preferred payment option.</p>
+                <div class="payment-icon">
+
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.7"
+                  >
+
+                    <rect
+                      x="3"
+                      y="5"
+                      width="18"
+                      height="14"
+                      rx="2"
+                    />
+
+                    <path
+                      d="M7 9h10M7 13h5"
+                    />
+
+                  </svg>
+
+                </div>
+
+
+                <div class="payment-details">
+
+                  <strong>
+                    Cash on Delivery
+                  </strong>
+
+                  <span>
+                    Pay in cash when your order is delivered.
+                  </span>
+
+                </div>
+
+
+                <span class="payment-badge">
+                  COD
+                </span>
+
+              </label>
+
+
+              <div class="payment-note">
+
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                >
+
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="9"
+                  />
+
+                  <path
+                    d="M12 8v4M12 16h.01"
+                  />
+
+                </svg>
+
+                Online payment is currently unavailable.
+                Cash on Delivery is available for this order.
+
+              </div>
+
             </div>
 
-          </div>
 
+            <!-- PLACE ORDER -->
 
-          <label class="payment-option">
-
-            <input
-              type="radio"
-              name="payment"
-              value="cod"
-              checked
+            <button
+              type="submit"
+              class="place-order-btn"
             >
 
-            <span class="radio-design"></span>
+              <span>
+                Place Order — Cash on Delivery
+              </span>
 
-            <span class="payment-content">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+              >
 
-              <strong>Cash on Delivery</strong>
+                <path
+                  d="M5 12h14"
+                />
 
-              <small>
-                Pay when your ZEVORIA order arrives.
-              </small>
+                <path
+                  d="m13 6 6 6-6 6"
+                />
 
-            </span>
+              </svg>
 
-          </label>
+            </button>
 
 
-          <div class="payment-coming">
+            <p class="checkout-terms">
 
-            <span>ONLINE PAYMENT</span>
+              By placing your order, you agree to our
+              terms and confirm that your delivery
+              information is correct.
 
-            <strong>Coming Soon</strong>
-
-            <p>
-              Secure online payments will be available soon.
             </p>
 
-          </div>
+
+          </form>
 
         </div>
 
       </section>
 
 
+      <!-- =================================================
+           RIGHT SIDE — ORDER SUMMARY
+      ================================================== -->
 
-      <!-- RIGHT SIDE -->
-      <aside class="order-summary">
+      <aside class="checkout-right">
 
-        <div class="summary-top">
-
-          <span>YOUR ORDER</span>
-
-          <h2>Order Summary</h2>
-
-        </div>
+        <div class="order-summary">
 
 
-        <div id="checkoutItems" class="checkout-items">
+          <div class="summary-heading">
 
-          <!-- Products will be inserted here -->
+            <div>
 
-        </div>
+              <span>
+                YOUR ORDER
+              </span>
 
+              <h2>
+                Order Summary
+              </h2>
 
-        <div class="summary-lines">
+            </div>
 
-          <div>
-            <span>Subtotal</span>
-            <strong id="subtotal">₹0</strong>
           </div>
 
 
-          <div>
-            <span>Delivery</span>
-            <strong id="delivery">FREE</strong>
+          <!-- PRODUCTS -->
+
+          <div
+            id="checkoutItems"
+            class="checkout-items"
+          >
+
+            <!-- Products inserted by checkout.js -->
+
           </div>
 
+
+          <!-- TOTALS -->
+
+          <div class="summary-divider"></div>
+
+
+          <div class="summary-row">
+
+            <span>
+              Subtotal
+            </span>
+
+            <strong
+              id="checkoutSubtotal"
+            >
+              ₹0
+            </strong>
+
+          </div>
+
+
+          <div class="summary-row">
+
+            <span>
+              Delivery
+            </span>
+
+            <strong
+              id="checkoutDelivery"
+            >
+              FREE
+            </strong>
+
+          </div>
+
+
+          <div class="summary-divider"></div>
+
+
+          <div class="summary-total">
+
+            <span>
+              Total
+            </span>
+
+            <strong
+              id="checkoutTotal"
+            >
+              ₹0
+            </strong>
+
+          </div>
+
+
+          <!-- COD INFO -->
+
+          <div class="summary-cod">
+
+            <div class="cod-icon">
+
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+
+                <path
+                  d="M3 7h18v10H3z"
+                />
+
+                <path
+                  d="M7 11h10M7 14h5"
+                />
+
+              </svg>
+
+            </div>
+
+
+            <div>
+
+              <strong>
+                Cash on Delivery
+              </strong>
+
+              <p>
+                No online payment required.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <!-- TRUST -->
+
+          <div class="checkout-trust">
+
+            <div>
+
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+
+                <path
+                  d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4z"
+                />
+
+                <path
+                  d="m9 12 2 2 4-4"
+                />
+
+              </svg>
+
+              Secure order processing
+
+            </div>
+
+
+            <div>
+
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+
+                <path
+                  d="M3 7h18"
+                />
+
+                <path
+                  d="M5 7v10h14V7"
+                />
+
+                <path
+                  d="M8 11h8"
+                />
+
+              </svg>
+
+              Premium fragrance packaging
+
+            </div>
+
+
+            <div>
+
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+              >
+
+                <path
+                  d="M3 12h13"
+                />
+
+                <path
+                  d="m13 6 6 6-6 6"
+                />
+
+                <path
+                  d="M19 12h2"
+                />
+
+              </svg>
+
+              Fast delivery
+
+            </div>
+
+          </div>
+
+
+          <a
+            href="index.html"
+            class="back-shopping"
+          >
+
+            ← Continue Shopping
+
+          </a>
+
+
         </div>
-
-
-        <div class="summary-total">
-
-          <span>Total</span>
-
-          <strong id="grandTotal">₹0</strong>
-
-        </div>
-
-
-        <button
-          type="button"
-          id="placeOrderBtn"
-          class="place-order-btn"
-        >
-          Place Order
-        </button>
-
-
-        <p class="secure-note">
-          🔒 Your order information is securely processed.
-        </p>
-
-
-        <a href="index.html" class="return-link">
-          ← Return to shopping
-        </a>
 
       </aside>
 
@@ -305,35 +693,205 @@
   </main>
 
 
+  <!-- =====================================================
+       SUCCESS MODAL
+  ====================================================== -->
 
-  <!-- SUCCESS MODAL -->
-  <div id="successModal" class="modal-overlay">
+  <div
+    id="successModal"
+    class="success-modal"
+  >
 
-    <div class="success-modal">
+    <div
+      class="success-overlay"
+    ></div>
 
-      <div class="success-icon">
-        ✓
+
+    <div
+      class="success-card"
+    >
+
+      <button
+        type="button"
+        class="success-close"
+        onclick="
+          document
+            .getElementById('successModal')
+            .classList.remove('open')
+        "
+        aria-label="Close"
+      >
+
+        ×
+
+      </button>
+
+
+      <div class="success-check">
+
+        <svg
+          width="34"
+          height="34"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        >
+
+          <path
+            d="m5 12 4 4L19 6"
+          />
+
+        </svg>
+
       </div>
 
-      <span>ORDER CONFIRMED</span>
 
-      <h2>Thank You!</h2>
+      <span class="success-label">
+        ORDER CONFIRMED
+      </span>
 
-      <p id="successMessage">
-        Your ZEVORIA order has been placed successfully.
+
+      <h2>
+        Thank You
+      </h2>
+
+
+      <p class="success-message">
+
+        Your ZEVORIA fragrance order has
+        been successfully placed.
+
       </p>
 
-      <button onclick="window.location.href='index.html'">
-        Continue Shopping
-      </button>
+
+      <div class="success-order-box">
+
+        <span>
+          ORDER NUMBER
+        </span>
+
+        <strong
+          id="successOrderNumber"
+        >
+          —
+        </strong>
+
+      </div>
+
+
+      <div class="success-total-box">
+
+        <span>
+          TOTAL
+        </span>
+
+        <strong
+          id="successTotal"
+        >
+          ₹0
+        </strong>
+
+      </div>
+
+
+      <div class="success-cod">
+
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+        >
+
+          <rect
+            x="3"
+            y="5"
+            width="18"
+            height="14"
+            rx="2"
+          />
+
+          <path
+            d="M7 9h10M7 13h5"
+          />
+
+        </svg>
+
+
+        <span>
+          Cash on Delivery
+        </span>
+
+      </div>
+
+
+      <p class="email-note">
+
+        A confirmation email will be sent
+        to your email address.
+
+      </p>
+
+
+      <div class="success-actions">
+
+        <button
+          id="trackOrderBtn"
+          type="button"
+          class="success-track-btn"
+        >
+
+          Track Order
+
+          <svg
+            width="17"
+            height="17"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+          >
+
+            <path
+              d="M5 12h14"
+            />
+
+            <path
+              d="m13 6 6 6-6 6"
+            />
+
+          </svg>
+
+        </button>
+
+
+        <button
+          id="continueShopping"
+          type="button"
+          class="success-shopping-btn"
+        >
+
+          Continue Shopping
+
+        </button>
+
+      </div>
 
     </div>
 
   </div>
 
 
+  <!-- =====================================================
+       SCRIPT
+  ====================================================== -->
 
-  <script src="checkout.js"></script>
+  <script
+    src="checkout.js"
+  ></script>
 
 </body>
 </html>
