@@ -1,5 +1,10 @@
 const API_BASE = "https://zevoria-backend.onrender.com";
 
+
+/* =========================================================
+   ZEVORIA PRODUCTS
+========================================================= */
+
 const products = [
   {
     name: "No. 01 Noir",
@@ -7,7 +12,10 @@ const products = [
     type: "Eau de Parfum",
     price: 1499,
     note: "Amber • Oud • Vanilla",
-    backendId: 1
+    backendId: 1,
+    description:
+      "A deep and sophisticated fragrance built around warm amber, rich oud and smooth vanilla.",
+    styles: ["dark", "oud", "sweet", "woody"]
   },
   {
     name: "No. 02 Santal",
@@ -15,7 +23,10 @@ const products = [
     type: "Eau de Parfum",
     price: 1699,
     note: "Sandalwood • Musk • Cedar",
-    backendId: 2
+    backendId: 2,
+    description:
+      "A refined woody fragrance combining creamy sandalwood, clean musk and dry cedar.",
+    styles: ["woody", "fresh"]
   },
   {
     name: "No. 03 Bloom",
@@ -23,7 +34,10 @@ const products = [
     type: "Eau de Parfum",
     price: 1399,
     note: "Rose • Peony • Vanilla",
-    backendId: 3
+    backendId: 3,
+    description:
+      "A soft floral composition with elegant rose, delicate peony and creamy vanilla.",
+    styles: ["floral", "sweet"]
   },
   {
     name: "No. 04 Oud",
@@ -31,7 +45,10 @@ const products = [
     type: "Attar",
     price: 899,
     note: "Oud • Saffron • Amber",
-    backendId: 4
+    backendId: 4,
+    description:
+      "A concentrated attar with rich oud, warm saffron and smooth amber.",
+    styles: ["oud", "dark", "woody"]
   },
   {
     name: "No. 05 Azure",
@@ -39,7 +56,10 @@ const products = [
     type: "Eau de Parfum",
     price: 1599,
     note: "Bergamot • Marine • Musk",
-    backendId: 5
+    backendId: 5,
+    description:
+      "A fresh modern fragrance combining bright bergamot, marine notes and clean musk.",
+    styles: ["fresh"]
   },
   {
     name: "No. 06 Velvet",
@@ -47,90 +67,183 @@ const products = [
     type: "Eau de Parfum",
     price: 1499,
     note: "Iris • Tonka • Amber",
-    backendId: 6
+    backendId: 6,
+    description:
+      "A smooth elegant fragrance with powdery iris, creamy tonka and warm amber.",
+    styles: ["sweet", "floral", "dark"]
   }
 ];
+
+
+/* =========================================================
+   LOCAL STORAGE
+========================================================= */
 
 let cart = JSON.parse(
   localStorage.getItem("zevoriaCart") || "[]"
 );
 
+let wishlist = JSON.parse(
+  localStorage.getItem("zevoriaWishlist") || "[]"
+);
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
 const $ = s => document.querySelector(s);
+
 const $$ = s => document.querySelectorAll(s);
 
 const money = n =>
   "₹" + Number(n).toLocaleString("en-IN");
 
 
-/* =========================
-   PRODUCTS
-========================= */
-
-function renderProducts(list = products) {
-
-  $("#products").innerHTML = list.map(p => `
-    <article class="product">
-
-      <div class="product-img">
-
-        <button
-          class="heart"
-          onclick="wish(this)"
-        >
-          ♡
-        </button>
-
-        <div class="mini-bottle">
-          <div class="mini-cap"></div>
-        </div>
-
-      </div>
-
-      <div class="product-info">
-
-        <div class="meta">
-          ${p.type} · ${p.cat}
-        </div>
-
-        <h3>${p.name}</h3>
-
-        <div class="meta">
-          ${p.note}
-        </div>
-
-        <div class="price">
-          ${money(p.price)}
-        </div>
-
-        <button
-          class="add"
-          onclick="add(${products.indexOf(p)})"
-        >
-          Add to bag
-        </button>
-
-      </div>
-
-    </article>
-  `).join("");
+function getProduct(i) {
+  return products[i];
 }
 
 
-/* =========================
+function saveWishlist() {
+
+  localStorage.setItem(
+    "zevoriaWishlist",
+    JSON.stringify(wishlist)
+  );
+
+}
+
+
+/* =========================================================
+   LUCIDE ICONS
+========================================================= */
+
+function refreshIcons() {
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+
+}
+
+
+/* =========================================================
+   PRODUCTS
+========================================================= */
+
+function renderProducts(list = products) {
+
+  const el = $("#products");
+
+  if (!el) return;
+
+  if (!list.length) {
+
+    el.innerHTML = `
+      <div class="empty-products">
+        <p class="muted">
+          No fragrances found.
+        </p>
+      </div>
+    `;
+
+    return;
+  }
+
+
+  el.innerHTML = list.map(p => {
+
+    const index = products.indexOf(p);
+
+    const liked =
+      wishlist.includes(index);
+
+
+    return `
+      <article class="product">
+
+        <div
+          class="product-img"
+          onclick="quickView(${index})"
+        >
+
+          <button
+            class="heart ${liked ? "active" : ""}"
+            onclick="event.stopPropagation(); toggleWishlist(${index})"
+            aria-label="Wishlist"
+          >
+            <i
+              data-lucide="heart"
+              ${liked ? 'fill="currentColor"' : ""}
+            ></i>
+          </button>
+
+          <div class="mini-bottle">
+            <div class="mini-cap"></div>
+          </div>
+
+          <button
+            class="quick-view-btn"
+            onclick="event.stopPropagation(); quickView(${index})"
+          >
+            <i data-lucide="eye"></i>
+            Quick view
+          </button>
+
+        </div>
+
+        <div class="product-info">
+
+          <div class="meta">
+            ${p.type} · ${p.cat}
+          </div>
+
+          <h3>${p.name}</h3>
+
+          <div class="meta">
+            ${p.note}
+          </div>
+
+          <div class="price">
+            ${money(p.price)}
+          </div>
+
+          <button
+            class="add"
+            onclick="add(${index})"
+          >
+            Add to bag
+          </button>
+
+        </div>
+
+      </article>
+    `;
+
+  }).join("");
+
+
+  refreshIcons();
+}
+
+
+/* =========================================================
    CART
-========================= */
+========================================================= */
 
 function add(i) {
 
   const p = products[i];
 
-  const x = cart.find(
+  const existing = cart.find(
     x => x.i === i
   );
 
-  if (x) {
 
-    x.q++;
+  if (existing) {
+
+    existing.q++;
 
   } else {
 
@@ -140,6 +253,7 @@ function add(i) {
     });
 
   }
+
 
   save();
 
@@ -162,9 +276,10 @@ function save() {
 
   $("#cartCount").textContent =
     cart.reduce(
-      (a, x) => a + x.q,
+      (total, item) => total + item.q,
       0
     );
+
 }
 
 
@@ -172,26 +287,32 @@ function renderCart() {
 
   const el = $("#cartItems");
 
+  if (!el) return;
+
+
   if (!cart.length) {
 
     el.innerHTML = `
-      <p class="muted">
-        Your bag is empty.
-        Explore the collection and
-        add a fragrance.
-      </p>
+      <div class="empty-cart">
+        <p class="muted">
+          Your bag is empty.
+        </p>
+
+        <p class="muted">
+          Explore the collection and add a fragrance.
+        </p>
+      </div>
     `;
 
-    $("#subtotal").textContent =
-      "₹0";
+    $("#subtotal").textContent = "₹0";
 
     return;
   }
 
 
-  el.innerHTML = cart.map(x => {
+  el.innerHTML = cart.map(item => {
 
-    const p = products[x.i];
+    const p = products[item.i];
 
     return `
       <div class="cart-row">
@@ -200,39 +321,31 @@ function renderCart() {
 
         <div style="flex:1">
 
-          <h4>
-            ${p.name}
-          </h4>
+          <h4>${p.name}</h4>
 
-          <small>
-            ${money(p.price)}
-          </small>
+          <small>${money(p.price)}</small>
 
           <div class="qty">
 
             <button
-              onclick="change(${x.i},-1)"
+              onclick="change(${item.i},-1)"
+              aria-label="Decrease"
             >
               −
             </button>
 
-            ${x.q}
+            <span>${item.q}</span>
 
             <button
-              onclick="change(${x.i},1)"
+              onclick="change(${item.i},1)"
+              aria-label="Increase"
             >
               +
             </button>
 
             <button
-              style="
-                margin-left:auto;
-                border:0;
-                background:none;
-                color:#9a3d32;
-                cursor:pointer
-              "
-              onclick="removeItem(${x.i})"
+              class="cart-remove"
+              onclick="removeItem(${item.i})"
             >
               Remove
             </button>
@@ -247,30 +360,33 @@ function renderCart() {
   }).join("");
 
 
-  $("#subtotal").textContent =
-    money(
-      cart.reduce(
-        (a, x) =>
-          a +
-          products[x.i].price *
-          x.q,
-        0
-      )
+  const subtotal =
+    cart.reduce(
+      (total, item) =>
+        total +
+        products[item.i].price * item.q,
+      0
     );
+
+
+  $("#subtotal").textContent =
+    money(subtotal);
 }
 
 
-function change(i, d) {
+function change(i, amount) {
 
-  const x = cart.find(
+  const item = cart.find(
     x => x.i === i
   );
 
-  if (!x) return;
+  if (!item) return;
 
-  x.q += d;
 
-  if (x.q <= 0) {
+  item.q += amount;
+
+
+  if (item.q <= 0) {
 
     cart =
       cart.filter(
@@ -278,6 +394,7 @@ function change(i, d) {
       );
 
   }
+
 
   save();
 }
@@ -291,38 +408,221 @@ function removeItem(i) {
     );
 
   save();
+
+  toast("Item removed from bag");
 }
 
 
-function wish(b) {
+/* =========================================================
+   WISHLIST
+========================================================= */
 
-  b.textContent =
-    b.textContent === "♡"
-      ? "♥"
-      : "♡";
+function toggleWishlist(i) {
 
-  toast(
-    b.textContent === "♥"
-      ? "Added to wishlist"
-      : "Removed from wishlist"
+  const p = products[i];
+
+  if (wishlist.includes(i)) {
+
+    wishlist =
+      wishlist.filter(
+        x => x !== i
+      );
+
+    toast(
+      p.name + " removed from wishlist"
+    );
+
+  } else {
+
+    wishlist.push(i);
+
+    toast(
+      p.name + " added to wishlist"
+    );
+
+  }
+
+
+  saveWishlist();
+
+  renderProducts(
+    getCurrentProductList()
+  );
+
+}
+
+
+function getCurrentProductList() {
+
+  const active =
+    document.querySelector(
+      ".filter.active"
+    );
+
+  if (!active || active.dataset.filter === "all") {
+    return products;
+  }
+
+  return products.filter(
+    p =>
+      p.cat === active.dataset.filter
   );
 }
 
 
-/* =========================
+function openWishlist() {
+
+  renderWishlist();
+
+  modal("#wishlistModal");
+}
+
+
+function renderWishlist() {
+
+  const el =
+    $("#wishlistItems");
+
+  if (!el) return;
+
+
+  if (!wishlist.length) {
+
+    el.innerHTML = `
+      <p class="muted">
+        Your wishlist is empty.
+      </p>
+
+      <p class="muted">
+        Tap the heart on a fragrance to save it here.
+      </p>
+    `;
+
+    return;
+  }
+
+
+  el.innerHTML =
+    wishlist.map(i => {
+
+      const p = products[i];
+
+      return `
+        <div class="wishlist-card">
+
+          <div class="wishlist-card-thumb"></div>
+
+          <div class="wishlist-card-info">
+
+            <strong>${p.name}</strong>
+
+            <div class="meta">
+              ${p.note}
+            </div>
+
+            <div class="price">
+              ${money(p.price)}
+            </div>
+
+          </div>
+
+          <div class="wishlist-actions">
+
+            <button onclick="add(${i})">
+              Add
+            </button>
+
+            <button onclick="toggleWishlist(${i})">
+              Remove
+            </button>
+
+          </div>
+
+        </div>
+      `;
+
+    }).join("");
+
+}
+
+
+/* =========================================================
+   QUICK VIEW
+========================================================= */
+
+function quickView(i) {
+
+  const p = products[i];
+
+  $("#quickViewContent").innerHTML = `
+
+    <div class="quick-view">
+
+      <div class="quick-view-image">
+
+        <div class="quick-view-bottle"></div>
+
+      </div>
+
+      <div class="quick-view-info">
+
+        <div class="meta">
+          ${p.type} · ${p.cat}
+        </div>
+
+        <h3>
+          ${p.name}
+        </h3>
+
+        <div class="meta">
+          ${p.note}
+        </div>
+
+        <p class="quick-view-note">
+          ${p.description}
+        </p>
+
+        <div class="quick-view-price">
+          ${money(p.price)}
+        </div>
+
+        <button
+          class="btn btn-dark full"
+          onclick="add(${i}); closeAll();"
+        >
+          Add to bag
+          <i data-lucide="shopping-bag"></i>
+        </button>
+
+      </div>
+
+    </div>
+  `;
+
+  modal("#quickViewModal");
+
+  refreshIcons();
+}
+
+
+/* =========================================================
    UI
-========================= */
+========================================================= */
 
-function toast(t) {
+function toast(message) {
 
-  const e = $("#toast");
+  const element =
+    $("#toast");
 
-  e.textContent = t;
+  element.textContent =
+    message;
 
-  e.classList.add("show");
+  element.classList.add("show");
+
 
   setTimeout(
-    () => e.classList.remove("show"),
+    () =>
+      element.classList.remove("show"),
     1800
   );
 }
@@ -330,41 +630,33 @@ function toast(t) {
 
 function openCart() {
 
-  $("#overlay").classList.add(
-    "show"
-  );
+  $("#overlay").classList.add("show");
 
-  $("#cartDrawer").classList.add(
-    "open"
-  );
+  $("#cartDrawer").classList.add("open");
+
 }
 
 
 function closeAll() {
 
-  $("#overlay").classList.remove(
-    "show"
-  );
+  $("#overlay").classList.remove("show");
 
-  $("#cartDrawer").classList.remove(
-    "open"
-  );
+  $("#cartDrawer").classList.remove("open");
 
   $$(".modal").forEach(
-    x => x.classList.remove("show")
+    element =>
+      element.classList.remove("show")
   );
+
 }
 
 
 function modal(id) {
 
-  $("#overlay").classList.add(
-    "show"
-  );
+  $("#overlay").classList.add("show");
 
-  $(id).classList.add(
-    "show"
-  );
+  $(id).classList.add("show");
+
 }
 
 
@@ -391,45 +683,43 @@ $("#overlay").onclick =
 
 
 $$("[data-close]").forEach(
-  x => x.onclick =
-    closeAll
+  element =>
+    element.onclick = closeAll
 );
 
 
 $("#menuBtn").onclick =
   () =>
-    $("#nav").classList.toggle(
-      "open"
-    );
+    $("#nav").classList.toggle("open");
 
 
-/* =========================
+/* =========================================================
    FILTERS
-========================= */
+========================================================= */
 
-$$(".filter").forEach(b => {
+$$(".filter").forEach(button => {
 
-  b.onclick = () => {
+  button.onclick = () => {
 
     $$(".filter").forEach(
-      x =>
-        x.classList.remove(
-          "active"
-        )
+      item =>
+        item.classList.remove("active")
     );
 
-    b.classList.add(
-      "active"
-    );
+
+    button.classList.add("active");
+
+
+    const filter =
+      button.dataset.filter;
 
 
     renderProducts(
-      b.dataset.filter === "all"
+      filter === "all"
         ? products
         : products.filter(
             p =>
-              p.cat ===
-              b.dataset.filter
+              p.cat === filter
           )
     );
 
@@ -438,102 +728,187 @@ $$(".filter").forEach(b => {
 });
 
 
-/* =========================
+/* =========================================================
    ATTARS
-========================= */
+========================================================= */
 
 $("#attarBtn").onclick = () => {
 
+  $$(".filter").forEach(
+    button =>
+      button.classList.remove("active")
+  );
+
+
+  const allButton =
+    document.querySelector(
+      '[data-filter="all"]'
+    );
+
+
+  if (allButton) {
+    allButton.classList.add("active");
+  }
+
+
   renderProducts(
     products.filter(
-      p => p.type === "Attar"
+      p =>
+        p.type === "Attar"
     )
   );
 
+
   $("#shop").scrollIntoView({
-    behavior: "smooth"
+    behavior:"smooth"
   });
 
 };
 
 
-/* =========================
+/* =========================================================
    SEARCH
-========================= */
+========================================================= */
 
 $("#searchInput").oninput =
-  e => {
+  event => {
 
-    const q =
-      e.target.value.toLowerCase();
+    const query =
+      event.target.value
+        .trim()
+        .toLowerCase();
+
+
+    if (!query) {
+
+      $("#searchResults").innerHTML = `
+        <p class="muted">
+          Search by perfume name, note or fragrance type.
+        </p>
+      `;
+
+      return;
+    }
+
+
+    const results =
+      products.filter(
+        p =>
+          (
+            p.name +
+            " " +
+            p.note +
+            " " +
+            p.type +
+            " " +
+            p.cat +
+            " " +
+            p.description
+          )
+            .toLowerCase()
+            .includes(query)
+      );
+
+
+    if (!results.length) {
+
+      $("#searchResults").innerHTML =
+        "<p class='muted'>No fragrance found.</p>";
+
+      return;
+    }
 
 
     $("#searchResults").innerHTML =
-      products
+      results.map(p => {
 
-        .filter(
-          p =>
-            (
-              p.name +
-              " " +
-              p.note +
-              " " +
-              p.type
-            )
-              .toLowerCase()
-              .includes(q)
-        )
+        const index =
+          products.indexOf(p);
 
-        .map(
-          p => `
-            <div class="search-result">
+        return `
+          <div
+            class="search-result"
+            onclick="quickView(${index})"
+          >
 
-              <strong>
-                ${p.name}
-              </strong>
+            <div>
+              <strong>${p.name}</strong>
 
               <br>
 
               <small>
-                ${p.note}
-                ·
-                ${money(p.price)}
+                ${p.note} · ${p.type}
               </small>
-
             </div>
-          `
-        )
 
-        .join("")
+            <strong>
+              ${money(p.price)}
+            </strong>
 
-      ||
+          </div>
+        `;
 
-      "<p class='muted'>No fragrance found.</p>";
+      }).join("");
 
   };
 
 
-/* =========================
+/* =========================================================
    NEWSLETTER
-========================= */
+========================================================= */
 
 $("#newsletter").onsubmit =
-  e => {
+  event => {
 
-    e.preventDefault();
+    event.preventDefault();
+
+    const email =
+      event.target.querySelector(
+        "input"
+      ).value.trim();
+
+
+    if (!email) return;
+
+
+    /*
+      Saved locally for now.
+      Later this can be connected
+      to the backend newsletter table.
+    */
+
+    const subscribers =
+      JSON.parse(
+        localStorage.getItem(
+          "zevoriaNewsletter"
+        ) || "[]"
+      );
+
+
+    if (!subscribers.includes(email)) {
+      subscribers.push(email);
+    }
+
+
+    localStorage.setItem(
+      "zevoriaNewsletter",
+      JSON.stringify(subscribers)
+    );
+
 
     toast(
       "Thanks — you're on the list."
     );
 
-    e.target.reset();
+
+    event.target.reset();
 
   };
 
 
-/* =========================
+/* =========================================================
    ACCOUNT
-========================= */
+========================================================= */
 
 function updateAccountUI() {
 
@@ -545,10 +920,10 @@ function updateAccountUI() {
     );
 
 
-  const loggedOutAccount =
+  const loggedOut =
     $("#loggedOutAccount");
 
-  const loggedInAccount =
+  const loggedIn =
     $("#loggedInAccount");
 
   const title =
@@ -557,31 +932,35 @@ function updateAccountUI() {
 
   if (user) {
 
-    loggedOutAccount.style.display =
+    loggedOut.style.display =
       "none";
 
-    loggedInAccount.style.display =
+    loggedIn.style.display =
       "block";
 
     title.textContent =
       "Welcome back, " +
       user.name;
 
+
     $("#accountName").textContent =
-      user.name;
+      user.name || "";
+
 
     $("#accountEmail").textContent =
-      user.email;
+      user.email || "";
+
 
     $("#accountPhone").textContent =
-      user.phone;
+      user.phone || "";
+
 
   } else {
 
-    loggedOutAccount.style.display =
+    loggedOut.style.display =
       "block";
 
-    loggedInAccount.style.display =
+    loggedIn.style.display =
       "none";
 
     title.textContent =
@@ -592,9 +971,9 @@ function updateAccountUI() {
 }
 
 
-/* =========================
+/* =========================================================
    SIGNUP / LOGIN SWITCH
-========================= */
+========================================================= */
 
 $("#showSignupBtn").onclick =
   () => {
@@ -626,14 +1005,14 @@ $("#showLoginBtn").onclick =
   };
 
 
-/* =========================
+/* =========================================================
    SIGNUP
-========================= */
+========================================================= */
 
 $("#signupForm").onsubmit =
-  async e => {
+  async event => {
 
-    e.preventDefault();
+    event.preventDefault();
 
 
     const button =
@@ -678,14 +1057,14 @@ $("#signupForm").onsubmit =
         await fetch(
           `${API_BASE}/api/auth/signup`,
           {
-            method: "POST",
+            method:"POST",
 
-            headers: {
+            headers:{
               "Content-Type":
                 "application/json"
             },
 
-            body: JSON.stringify({
+            body:JSON.stringify({
               name,
               email,
               phone,
@@ -726,20 +1105,18 @@ $("#signupForm").onsubmit =
       );
 
 
-      e.target.reset();
+      event.target.reset();
 
       updateAccountUI();
 
 
-    } catch (err) {
+    } catch (error) {
 
-      toast(
-        err.message
-      );
+      toast(error.message);
 
       alert(
         "Account could not be created.\n\n" +
-        err.message
+        error.message
       );
 
 
@@ -756,14 +1133,14 @@ $("#signupForm").onsubmit =
   };
 
 
-/* =========================
+/* =========================================================
    LOGIN
-========================= */
+========================================================= */
 
 $("#loginForm").onsubmit =
-  async e => {
+  async event => {
 
-    e.preventDefault();
+    event.preventDefault();
 
 
     const button =
@@ -773,8 +1150,7 @@ $("#loginForm").onsubmit =
       button.textContent;
 
 
-    button.disabled =
-      true;
+    button.disabled = true;
 
     button.textContent =
       "Signing in...";
@@ -797,14 +1173,14 @@ $("#loginForm").onsubmit =
         await fetch(
           `${API_BASE}/api/auth/login`,
           {
-            method: "POST",
+            method:"POST",
 
-            headers: {
+            headers:{
               "Content-Type":
                 "application/json"
             },
 
-            body: JSON.stringify({
+            body:JSON.stringify({
               email,
               password
             })
@@ -843,20 +1219,18 @@ $("#loginForm").onsubmit =
       );
 
 
-      e.target.reset();
+      event.target.reset();
 
       updateAccountUI();
 
 
-    } catch (err) {
+    } catch (error) {
 
-      toast(
-        err.message
-      );
+      toast(error.message);
 
       alert(
         "Sign in failed.\n\n" +
-        err.message
+        error.message
       );
 
 
@@ -873,9 +1247,9 @@ $("#loginForm").onsubmit =
   };
 
 
-/* =========================
+/* =========================================================
    LOGOUT
-========================= */
+========================================================= */
 
 $("#logoutBtn").onclick =
   () => {
@@ -893,10 +1267,154 @@ $("#logoutBtn").onclick =
   };
 
 
-/* =========================
+/* =========================================================
+   ACCOUNT WISHLIST
+========================================================= */
+
+$("#wishlistAccountBtn").onclick =
+  () => {
+
+    closeAll();
+
+    openWishlist();
+
+  };
+
+
+/* =========================================================
+   SCENT FINDER
+========================================================= */
+
+function openScentFinder() {
+
+  $("#scentStep").style.display =
+    "block";
+
+  $("#scentResults").style.display =
+    "none";
+
+  modal("#scentModal");
+
+}
+
+
+$("#scentFinderBtn").onclick =
+  openScentFinder;
+
+
+$("#storyScentBtn").onclick =
+  openScentFinder;
+
+
+$$(".scent-options button").forEach(
+  button => {
+
+    button.onclick = () => {
+
+      const style =
+        button.dataset.value;
+
+      showScentResults(style);
+
+    };
+
+  }
+);
+
+
+function showScentResults(style) {
+
+  const matches =
+    products
+      .filter(
+        product =>
+          product.styles.includes(style)
+      )
+      .slice(0,3);
+
+
+  $("#scentStep").style.display =
+    "none";
+
+  $("#scentResults").style.display =
+    "block";
+
+
+  if (!matches.length) {
+
+    $("#scentRecommendations").innerHTML = `
+      <p class="muted">
+        We couldn't find a direct match.
+        Explore the complete collection.
+      </p>
+    `;
+
+    return;
+  }
+
+
+  $("#scentRecommendations").innerHTML =
+    matches.map(product => {
+
+      const index =
+        products.indexOf(product);
+
+      return `
+        <div class="scent-result-card">
+
+          <h4>${product.name}</h4>
+
+          <div class="meta">
+            ${product.type} · ${product.cat}
+          </div>
+
+          <p>
+            ${product.note}
+          </p>
+
+          <strong>
+            ${money(product.price)}
+          </strong>
+
+          <div class="scent-result-actions">
+
+            <button
+              onclick="quickView(${index})"
+            >
+              Quick view
+            </button>
+
+            <button
+              onclick="add(${index})"
+            >
+              Add to bag
+            </button>
+
+          </div>
+
+        </div>
+      `;
+
+    }).join("");
+
+}
+
+
+$("#restartScentBtn").onclick =
+  () => {
+
+    $("#scentResults").style.display =
+      "none";
+
+    $("#scentStep").style.display =
+      "block";
+
+  };
+
+
+/* =========================================================
    CHECKOUT
-   NEW DEDICATED PAGE
-========================= */
+========================================================= */
 
 $("#checkoutBtn").onclick =
   () => {
@@ -911,10 +1429,6 @@ $("#checkoutBtn").onclick =
 
     }
 
-    /*
-      Open the new dedicated
-      premium checkout page.
-    */
 
     window.location.href =
       "checkout.html";
@@ -922,31 +1436,14 @@ $("#checkoutBtn").onclick =
   };
 
 
-/* =========================
-   OLD CHECKOUT SUBMIT
-========================= */
-
-/*
-  The old checkout modal is no longer
-  used for placing orders.
-
-  Orders are now placed from:
-
-  checkout.html
-  +
-  checkout.js
-
-  This keeps the new checkout page
-  connected to the same backend.
-*/
-
-
-/* =========================
+/* =========================================================
    START APP
-========================= */
+========================================================= */
 
 renderProducts();
 
 save();
 
 updateAccountUI();
+
+refreshIcons();
