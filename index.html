@@ -5,93 +5,519 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ZEVORIA — Fine Fragrance</title>
 <meta name="description" content="ZEVORIA luxury perfumes and attars. Discover signature fragrances crafted for everyday elegance.">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+
 <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<div class="topbar">FREE SHIPPING ON ORDERS ABOVE ₹1,499 <span>•</span> COD AVAILABLE</div>
+
+<div class="topbar">
+  FREE SHIPPING ON ORDERS ABOVE ₹1,499 <span>•</span> COD AVAILABLE
+</div>
 
 <header class="header">
   <a class="logo" href="#home">ZEVORIA<span>®</span></a>
+
   <nav class="nav" id="nav">
-    <a href="#home">Home</a><a href="#shop">Perfumes</a><a href="#attars">Attars</a>
-    <a href="#story">Our Story</a><a href="#contact">Contact</a>
+    <a href="#home">Home</a>
+    <a href="#shop">Perfumes</a>
+    <a href="#attars">Attars</a>
+    <a href="#story">Our Story</a>
+    <a href="#contact">Contact</a>
   </nav>
+
   <div class="actions">
     <button class="icon-btn" id="searchBtn" aria-label="Search">⌕</button>
     <button class="icon-btn" id="accountBtn" aria-label="Account">♙</button>
-    <button class="cart-btn" id="cartBtn">Bag <b id="cartCount">0</b></button>
+    <button class="cart-btn" id="cartBtn">
+      Bag <b id="cartCount">0</b>
+    </button>
     <button class="menu-btn" id="menuBtn">☰</button>
   </div>
 </header>
 
-main id="home">
+<main id="home">
+
 <section class="hero">
   <div class="hero-copy">
     <p class="eyebrow">ZEVORIA / FINE FRAGRANCE</p>
-    <h1>A fragrance<br><i>that stays.</i></h1>
-    <p class="hero-text">Modern perfumes and timeless attars, made to become part of your signature.</p>
+
+    <h1>
+      A fragrance<br>
+      <i>that stays.</i>
+    </h1>
+
+    <p class="hero-text">
+      Modern perfumes and timeless attars, made to become part of your signature.
+    </p>
+
     <div class="hero-actions">
-      <a class="btn btn-dark" href="#shop">Shop collection <span>→</span></a>
-      <a class="text-link" href="#story">Discover ZEVORIA</a>
+      <a class="btn btn-dark" href="#shop">
+        Shop collection <span>→</span>
+      </a>
+
+      <a class="text-link" href="#story">
+        Discover ZEVORIA
+      </a>
     </div>
-    <div class="trust"><span>✓ IFRA-inspired compositions</span><span>✓ 100% secure checkout</span></div>
+
+    <div class="trust">
+      <span>✓ IFRA-inspired compositions</span>
+      <span>✓ 100% secure checkout</span>
+    </div>
   </div>
+
   <div class="hero-product">
     <div class="glow"></div>
+
     <div class="bottle">
-      <div class="cap"></div><div class="bottle-label">ZEVORIA<small>NO. 01</small></div>
+      <div class="cap"></div>
+      <div class="bottle-label">
+        ZEVORIA
+        <small>NO. 01</small>
+      </div>
     </div>
-    <div class="hero-note">NO. 01<br><strong>EAU DE PARFUM</strong></div>
+
+    <div class="hero-note">
+      NO. 01<br>
+      <strong>EAU DE PARFUM</strong>
+    </div>
   </div>
 </section>
 
-<section class="ticker"><div>LONG LASTING <span>✦</span> ELEGANT <span>✦</span> EVERYDAY LUXURY <span>✦</span> MADE FOR YOUR SIGNATURE <span>✦</span></div></section>
+<section class="ticker">
+  <div>
+    LONG LASTING <span>✦</span>
+    ELEGANT <span>✦</span>
+    EVERYDAY LUXURY <span>✦</span>
+    MADE FOR YOUR SIGNATURE <span>✦</span>
+  </div>
+</section>
 
 <section class="section" id="shop">
-  <div class="section-head"><div><p class="eyebrow">THE COLLECTION</p><h2>Best sellers</h2></div>
-  <div class="filters"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="men">Men</button><button class="filter" data-filter="women">Women</button><button class="filter" data-filter="unisex">Unisex</button></div></div>
+
+  <div class="section-head">
+
+    <div>
+      <p class="eyebrow">THE COLLECTION</p>
+      <h2>Best sellers</h2>
+    </div>
+
+    <div class="filters">
+      <button class="filter active" data-filter="all">All</button>
+      <button class="filter" data-filter="men">Men</button>
+      <button class="filter" data-filter="women">Women</button>
+      <button class="filter" data-filter="unisex">Unisex</button>
+    </div>
+
+  </div>
+
   <div class="products" id="products"></div>
+
 </section>
 
 <section class="split" id="attars">
-  <div class="split-image"><div class="attar-bottle"><div></div></div></div>
-  <div class="split-copy"><p class="eyebrow">THE ATTAR EDIT</p><h2>Pure oils.<br><i>Deep character.</i></h2>
-  <p>Concentrated fragrance oils inspired by traditional perfumery, presented in a clean modern form.</p>
-  <button class="btn btn-dark" id="attarBtn">Shop attars <span>→</span></button></div>
+
+  <div class="split-image">
+    <div class="attar-bottle">
+      <div></div>
+    </div>
+  </div>
+
+  <div class="split-copy">
+    <p class="eyebrow">THE ATTAR EDIT</p>
+
+    <h2>
+      Pure oils.<br>
+      <i>Deep character.</i>
+    </h2>
+
+    <p>
+      Concentrated fragrance oils inspired by traditional perfumery,
+      presented in a clean modern form.
+    </p>
+
+    <button class="btn btn-dark" id="attarBtn">
+      Shop attars <span>→</span>
+    </button>
+  </div>
+
 </section>
 
 <section class="story" id="story">
-  <div><p class="eyebrow">OUR STORY</p><h2>Luxury doesn't<br>need to shout.</h2></div>
-  <div><p>ZEVORIA was created around a simple idea: a good fragrance should feel personal. We pair familiar notes with contemporary compositions and keep the experience clean, understated and accessible.</p><p>From the first spray to the last dry-down, every bottle is designed to become part of your routine.</p><a class="text-link" href="#contact">Talk to us →</a></div>
+
+  <div>
+    <p class="eyebrow">OUR STORY</p>
+    <h2>
+      Luxury doesn't<br>
+      need to shout.
+    </h2>
+  </div>
+
+  <div>
+    <p>
+      ZEVORIA was created around a simple idea: a good fragrance should feel personal.
+      We pair familiar notes with contemporary compositions and keep the experience
+      clean, understated and accessible.
+    </p>
+
+    <p>
+      From the first spray to the last dry-down, every bottle is designed to become
+      part of your routine.
+    </p>
+
+    <a class="text-link" href="#contact">
+      Talk to us →
+    </a>
+  </div>
+
 </section>
 
 <section class="newsletter">
-  <div><p class="eyebrow">STAY IN THE LOOP</p><h2>New drops. Private offers.</h2></div>
-  <form id="newsletter"><input type="email" placeholder="Your email address" required><button class="btn btn-dark">Subscribe</button></form>
+
+  <div>
+    <p class="eyebrow">STAY IN THE LOOP</p>
+    <h2>New drops. Private offers.</h2>
+  </div>
+
+  <form id="newsletter">
+    <input
+      type="email"
+      placeholder="Your email address"
+      required
+    >
+    <button class="btn btn-dark" type="submit">
+      Subscribe
+    </button>
+  </form>
+
 </section>
 
 <section class="contact" id="contact">
-  <div><p class="eyebrow">CONTACT</p><h2>We're here to help.</h2></div>
-  <div class="contact-grid"><a href="mailto:hello@zevoria.in"><small>Email</small>hello@zevoria.in</a><a href="https://wa.me/919999999999" target="_blank"><small>WhatsApp</small>Chat with us</a><div><small>Hours</small>Mon–Sat, 10am–7pm</div></div>
+
+  <div>
+    <p class="eyebrow">CONTACT</p>
+    <h2>We're here to help.</h2>
+  </div>
+
+  <div class="contact-grid">
+
+    <a href="mailto:hello@zevoria.in">
+      <small>Email</small>
+      hello@zevoria.in
+    </a>
+
+    <a href="https://wa.me/919999999999" target="_blank">
+      <small>WhatsApp</small>
+      Chat with us
+    </a>
+
+    <div>
+      <small>Hours</small>
+      Mon–Sat, 10am–7pm
+    </div>
+
+  </div>
+
 </section>
+
 </main>
 
-<footer><div class="logo">ZEVORIA<span>®</span></div><p>Fine fragrance for your everyday signature.</p><div class="footer-links"><a href="#shop">Shop</a><a href="#story">About</a><a href="#contact">Contact</a><a href="#">Privacy</a><a href="#">Terms</a></div><small>© 2026 ZEVORIA. All rights reserved.</small></footer>
+<footer>
+
+  <div class="logo">
+    ZEVORIA<span>®</span>
+  </div>
+
+  <p>Fine fragrance for your everyday signature.</p>
+
+  <div class="footer-links">
+    <a href="#shop">Shop</a>
+    <a href="#story">About</a>
+    <a href="#contact">Contact</a>
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+  </div>
+
+  <small>
+    © 2026 ZEVORIA. All rights reserved.
+  </small>
+
+</footer>
+
+
+<!-- OVERLAY -->
 
 <div class="overlay" id="overlay"></div>
+
+
+<!-- CART -->
+
 <aside class="drawer" id="cartDrawer">
-  <div class="drawer-head"><h3>Your bag</h3><button class="close" data-close>×</button></div>
+
+  <div class="drawer-head">
+    <h3>Your bag</h3>
+    <button class="close" data-close>×</button>
+  </div>
+
   <div id="cartItems" class="cart-items"></div>
-  <div class="cart-bottom"><div><span>Subtotal</span><strong id="subtotal">₹0</strong></div><button class="btn btn-dark full" id="checkoutBtn">Proceed to checkout</button><small>Taxes and shipping calculated at checkout.</small></div>
+
+  <div class="cart-bottom">
+
+    <div>
+      <span>Subtotal</span>
+      <strong id="subtotal">₹0</strong>
+    </div>
+
+    <button class="btn btn-dark full" id="checkoutBtn">
+      Proceed to checkout
+    </button>
+
+    <small>
+      Taxes and shipping calculated at checkout.
+    </small>
+
+  </div>
+
 </aside>
 
-<div class="modal" id="searchModal"><button class="close" data-close>×</button><p class="eyebrow">SEARCH</p><h3>Find your fragrance</h3><input id="searchInput" placeholder="Search perfumes or attars..."><div id="searchResults"></div></div>
-<div class="modal small" id="accountModal"><button class="close" data-close>×</button><p class="eyebrow">MY ACCOUNT</p><h3>Welcome to ZEVORIA</h3><input placeholder="Email address" type="email"><input placeholder="Password" type="password"><button class="btn btn-dark full" id="loginBtn">Sign in</button><p class="muted">Demo account form — connect authentication before launch.</p></div>
-<div class="modal small" id="checkoutModal"><button class="close" data-close>×</button><p class="eyebrow">CHECKOUT</p><h3>Complete your order</h3><form id="checkoutForm"><input required placeholder="Full name"><input required type="tel" placeholder="Phone number"><input required placeholder="Delivery address"><input required placeholder="City"><input required placeholder="Pincode"><button class="btn btn-dark full">Continue to payment</button></form><p class="muted">Payment gateway can be connected here for live Razorpay/UPI checkout.</p></div>
+
+<!-- SEARCH -->
+
+<div class="modal" id="searchModal">
+
+  <button class="close" data-close>×</button>
+
+  <p class="eyebrow">SEARCH</p>
+
+  <h3>Find your fragrance</h3>
+
+  <input
+    id="searchInput"
+    placeholder="Search perfumes or attars..."
+  >
+
+  <div id="searchResults"></div>
+
+</div>
+
+
+<!-- ACCOUNT -->
+
+<div class="modal small" id="accountModal">
+
+  <button class="close" data-close>×</button>
+
+  <p class="eyebrow">MY ACCOUNT</p>
+
+  <h3 id="accountTitle">Welcome to ZEVORIA</h3>
+
+
+  <!-- LOGGED OUT -->
+
+  <div id="loggedOutAccount">
+
+    <!-- LOGIN FORM -->
+
+    <form id="loginForm">
+
+      <input
+        id="loginEmail"
+        type="email"
+        placeholder="Email address"
+        required
+      >
+
+      <input
+        id="loginPassword"
+        type="password"
+        placeholder="Password"
+        required
+      >
+
+      <button
+        class="btn btn-dark full"
+        id="loginBtn"
+        type="submit"
+      >
+        Sign in
+      </button>
+
+    </form>
+
+
+    <p class="muted" style="text-align:center;">
+      Don't have an account?
+    </p>
+
+    <button
+      class="btn full"
+      id="showSignupBtn"
+      type="button"
+    >
+      Create new account
+    </button>
+
+
+    <!-- SIGN UP FORM -->
+
+    <form id="signupForm" style="display:none;">
+
+      <input
+        id="signupName"
+        type="text"
+        placeholder="Full name"
+        required
+      >
+
+      <input
+        id="signupEmail"
+        type="email"
+        placeholder="Email address"
+        required
+      >
+
+      <input
+        id="signupPhone"
+        type="tel"
+        placeholder="Phone number"
+        required
+      >
+
+      <input
+        id="signupPassword"
+        type="password"
+        placeholder="Create password"
+        required
+      >
+
+      <button
+        class="btn btn-dark full"
+        id="signupBtn"
+        type="submit"
+      >
+        Create account
+      </button>
+
+      <p class="muted" style="text-align:center;">
+        Already have an account?
+      </p>
+
+      <button
+        class="btn full"
+        id="showLoginBtn"
+        type="button"
+      >
+        Sign in
+      </button>
+
+    </form>
+
+  </div>
+
+
+  <!-- LOGGED IN -->
+
+  <div id="loggedInAccount" style="display:none;">
+
+    <p class="muted">
+      You are signed in to your ZEVORIA account.
+    </p>
+
+    <div class="account-info">
+
+      <p>
+        <small>Name</small><br>
+        <strong id="accountName"></strong>
+      </p>
+
+      <p>
+        <small>Email</small><br>
+        <strong id="accountEmail"></strong>
+      </p>
+
+      <p>
+        <small>Phone</small><br>
+        <strong id="accountPhone"></strong>
+      </p>
+
+    </div>
+
+    <button
+      class="btn btn-dark full"
+      id="logoutBtn"
+      type="button"
+    >
+      Sign out
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- CHECKOUT -->
+
+<div class="modal small" id="checkoutModal">
+
+  <button class="close" data-close>×</button>
+
+  <p class="eyebrow">CHECKOUT</p>
+
+  <h3>Complete your order</h3>
+
+  <form id="checkoutForm">
+
+    <input
+      required
+      placeholder="Full name"
+    >
+
+    <input
+      required
+      type="tel"
+      placeholder="Phone number"
+    >
+
+    <input
+      required
+      placeholder="Delivery address"
+    >
+
+    <input
+      required
+      placeholder="City"
+    >
+
+    <input
+      required
+      placeholder="Pincode"
+    >
+
+    <button
+      class="btn btn-dark full"
+      type="submit"
+    >
+      Continue to payment
+    </button>
+
+  </form>
+
+  <p class="muted">
+    Payment gateway can be connected here for live Razorpay/UPI checkout.
+  </p>
+
+</div>
+
+
 <div class="toast" id="toast"></div>
+
+
 <script src="app.js"></script>
+
 </body>
 </html>
