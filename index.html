@@ -11,8 +11,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Premium typography -->
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+<!-- Lucide icons -->
 <script src="https://unpkg.com/lucide@latest"></script>
 
 <link rel="stylesheet" href="style.css">
@@ -20,9 +22,20 @@
 
 <body>
 
+<!-- =========================
+     TOP BAR
+========================= -->
+
 <div class="topbar">
-  FREE SHIPPING ON ORDERS ABOVE ₹1,499 <span>•</span> COD AVAILABLE
+  FREE SHIPPING ON ORDERS ABOVE ₹1,499
+  <span>•</span>
+  COD AVAILABLE
 </div>
+
+
+<!-- =========================
+     HEADER
+========================= -->
 
 <header class="header">
 
@@ -31,34 +44,111 @@
   </a>
 
   <nav class="nav" id="nav">
-    <a href="#home">Home</a>
-    <a href="#shop">Perfumes</a>
-    <a href="#attars">Attars</a>
-    <a href="#story">Our Story</a>
-    <a href="#contact">Contact</a>
+
+    <a href="#home">
+      Home
+    </a>
+
+    <a href="#shop">
+      Perfumes
+    </a>
+
+    <a href="#attars">
+      Attars
+    </a>
+
+    <a href="#story">
+      Our Story
+    </a>
+
+    <a href="#contact">
+      Contact
+    </a>
+
   </nav>
+
 
   <div class="actions">
 
-    <a class="admin-link" href="admin.html">
+    <!-- ADMIN -->
+
+    <a
+      href="admin.html"
+      class="admin-link"
+    >
       Admin
     </a>
 
-    <button class="icon-btn" id="searchBtn" aria-label="Search">
+
+    <!-- SEARCH -->
+
+    <button
+      class="icon-btn"
+      id="searchBtn"
+      aria-label="Search"
+      title="Search"
+    >
       <i data-lucide="search"></i>
     </button>
 
-    <button class="icon-btn" id="accountBtn" aria-label="Account">
+
+    <!-- ACCOUNT -->
+
+    <button
+      class="icon-btn"
+      id="accountBtn"
+      aria-label="Account"
+      title="My account"
+    >
       <i data-lucide="user-round"></i>
     </button>
 
-    <button class="cart-btn" id="cartBtn">
-      <i data-lucide="shopping-bag"></i>
-      <span>Bag</span>
-      <b id="cartCount">0</b>
+
+    <!-- WISHLIST -->
+
+    <button
+      class="icon-btn"
+      id="wishlistBtn"
+      aria-label="Wishlist"
+      title="Wishlist"
+    >
+      <i data-lucide="heart"></i>
+      <span
+        class="icon-count"
+        id="wishlistCount"
+      >
+        0
+      </span>
     </button>
 
-    <button class="menu-btn" id="menuBtn" aria-label="Menu">
+
+    <!-- CART -->
+
+    <button
+      class="cart-btn"
+      id="cartBtn"
+      aria-label="Shopping bag"
+    >
+      <i data-lucide="shopping-bag"></i>
+
+      <span>
+        Bag
+      </span>
+
+      <b id="cartCount">
+        0
+      </b>
+
+    </button>
+
+
+    <!-- MOBILE MENU -->
+
+    <button
+      class="menu-btn"
+      id="menuBtn"
+      aria-label="Menu"
+    >
       <i data-lucide="menu"></i>
     </button>
 
@@ -66,13 +156,25 @@
 
 </header>
 
+
+<!-- =========================
+     MAIN
+========================= -->
+
 <main id="home">
+
+
+<!-- =========================
+     HERO
+========================= -->
 
 <section class="hero">
 
   <div class="hero-copy">
 
-    <p class="eyebrow">ZEVORIA / FINE FRAGRANCE</p>
+    <p class="eyebrow">
+      ZEVORIA / FINE FRAGRANCE
+    </p>
 
     <h1>
       A fragrance<br>
@@ -85,35 +187,64 @@
 
     <div class="hero-actions">
 
-      <a class="btn btn-dark" href="#shop">
+      <a
+        class="btn btn-dark"
+        href="#shop"
+      >
         Shop collection
+
         <i data-lucide="arrow-right"></i>
+
       </a>
 
-      <button class="text-link scent-link" id="scentFinderBtn">
-        Find your scent
-      </button>
+
+      <a
+        class="text-link"
+        href="#story"
+      >
+        Discover ZEVORIA
+      </a>
 
     </div>
 
+
     <div class="trust">
-      <span><i data-lucide="check"></i> IFRA-inspired compositions</span>
-      <span><i data-lucide="shield-check"></i> Secure checkout</span>
+
+      <span>
+        <i data-lucide="check"></i>
+        IFRA-inspired compositions
+      </span>
+
+      <span>
+        <i data-lucide="check"></i>
+        Secure checkout
+      </span>
+
+      <span>
+        <i data-lucide="truck"></i>
+        COD available
+      </span>
+
     </div>
 
   </div>
+
 
   <div class="hero-product">
 
     <div class="glow"></div>
 
     <div class="bottle">
+
       <div class="cap"></div>
 
       <div class="bottle-label">
         ZEVORIA
-        <small>NO. 01</small>
+        <small>
+          NO. 01
+        </small>
       </div>
+
     </div>
 
     <div class="hero-note">
@@ -125,52 +256,164 @@
 
 </section>
 
+
+<!-- =========================
+     TICKER
+========================= -->
+
 <section class="ticker">
+
   <div>
-    LONG LASTING <span>✦</span>
-    ELEGANT <span>✦</span>
-    EVERYDAY LUXURY <span>✦</span>
-    MADE FOR YOUR SIGNATURE <span>✦</span>
+
+    LONG LASTING
+    <span>✦</span>
+
+    ELEGANT
+    <span>✦</span>
+
+    EVERYDAY LUXURY
+    <span>✦</span>
+
+    MADE FOR YOUR SIGNATURE
+    <span>✦</span>
+
   </div>
+
 </section>
 
-<section class="section" id="shop">
+
+<!-- =========================
+     SHOP
+========================= -->
+
+<section
+  class="section"
+  id="shop"
+>
 
   <div class="section-head">
 
     <div>
-      <p class="eyebrow">THE COLLECTION</p>
-      <h2>Best sellers</h2>
+
+      <p class="eyebrow">
+        THE COLLECTION
+      </p>
+
+      <h2>
+        Best sellers
+      </h2>
+
     </div>
+
 
     <div class="filters">
 
-      <button class="filter active" data-filter="all">All</button>
-      <button class="filter" data-filter="men">Men</button>
-      <button class="filter" data-filter="women">Women</button>
-      <button class="filter" data-filter="unisex">Unisex</button>
+      <button
+        class="filter active"
+        data-filter="all"
+      >
+        All
+      </button>
+
+      <button
+        class="filter"
+        data-filter="men"
+      >
+        Men
+      </button>
+
+      <button
+        class="filter"
+        data-filter="women"
+      >
+        Women
+      </button>
+
+      <button
+        class="filter"
+        data-filter="unisex"
+      >
+        Unisex
+      </button>
 
     </div>
 
   </div>
 
-  <div class="products" id="products"></div>
+
+  <!-- ADVANCED SEARCH -->
+
+  <div class="shop-tools">
+
+    <div class="shop-search">
+
+      <i data-lucide="search"></i>
+
+      <input
+        type="search"
+        id="shopSearch"
+        placeholder="Search fragrances, notes or type..."
+        autocomplete="off"
+      >
+
+    </div>
+
+
+    <button
+      class="feature-btn"
+      id="scentFinderBtn"
+    >
+      <i data-lucide="sparkles"></i>
+      Scent Finder
+    </button>
+
+
+    <button
+      class="feature-btn"
+      id="sortBtn"
+    >
+      <i data-lucide="arrow-down-up"></i>
+      Sort
+    </button>
+
+  </div>
+
+
+  <!-- PRODUCTS -->
+
+  <div
+    class="products"
+    id="products"
+  ></div>
 
 </section>
 
-<section class="split" id="attars">
+
+<!-- =========================
+     ATTARS
+========================= -->
+
+<section
+  class="split"
+  id="attars"
+>
 
   <div class="split-image">
 
     <div class="attar-bottle">
+
       <div></div>
+
     </div>
 
   </div>
 
+
   <div class="split-copy">
 
-    <p class="eyebrow">THE ATTAR EDIT</p>
+    <p class="eyebrow">
+      THE ATTAR EDIT
+    </p>
 
     <h2>
       Pure oils.<br>
@@ -182,53 +425,127 @@
       presented in a clean modern form.
     </p>
 
-    <button class="btn btn-dark" id="attarBtn">
+    <button
+      class="btn btn-dark"
+      id="attarBtn"
+    >
       Shop attars
+
       <i data-lucide="arrow-right"></i>
+
     </button>
 
   </div>
 
 </section>
 
-<section class="story" id="story">
+
+<!-- =========================
+     SCENT FINDER TEASER
+========================= -->
+
+<section class="scent-section">
+
+  <div class="scent-content">
+
+    <p class="eyebrow">
+      FIND YOUR SIGNATURE
+    </p>
+
+    <h2>
+      Not sure what to wear?
+    </h2>
+
+    <p>
+      Tell us the kind of fragrance you like and discover
+      a ZEVORIA scent that matches your style.
+    </p>
+
+    <button
+      class="btn btn-dark"
+      id="openScentFinder"
+    >
+      Find my scent
+
+      <i data-lucide="sparkles"></i>
+
+    </button>
+
+  </div>
+
+</section>
+
+
+<!-- =========================
+     STORY
+========================= -->
+
+<section
+  class="story"
+  id="story"
+>
 
   <div>
-    <p class="eyebrow">OUR STORY</p>
+
+    <p class="eyebrow">
+      OUR STORY
+    </p>
 
     <h2>
       Luxury doesn't<br>
       need to shout.
     </h2>
+
   </div>
+
 
   <div>
 
     <p>
-      ZEVORIA was created around a simple idea: a good fragrance should feel personal.
-      We pair familiar notes with contemporary compositions and keep the experience
-      clean, understated and accessible.
+      ZEVORIA was created around a simple idea:
+      a good fragrance should feel personal.
+      We pair familiar notes with contemporary compositions
+      and keep the experience clean, understated and accessible.
     </p>
 
     <p>
-      From the first spray to the last dry-down, every bottle is designed to become
-      part of your routine.
+      From the first spray to the last dry-down,
+      every bottle is designed to become part of your routine.
     </p>
 
-    <button class="text-link scent-link" id="storyScentBtn">
-      Discover your scent →
-    </button>
+    <a
+      class="text-link"
+      href="#contact"
+    >
+      Talk to us
+
+      <i data-lucide="arrow-right"></i>
+
+    </a>
 
   </div>
 
 </section>
 
+
+<!-- =========================
+     NEWSLETTER
+========================= -->
+
 <section class="newsletter">
 
   <div>
-    <p class="eyebrow">STAY IN THE LOOP</p>
-    <h2>New drops. Private offers.</h2>
+
+    <p class="eyebrow">
+      STAY IN THE LOOP
+    </p>
+
+    <h2>
+      New drops. Private offers.
+    </h2>
+
   </div>
+
 
   <form id="newsletter">
 
@@ -238,7 +555,10 @@
       required
     >
 
-    <button class="btn btn-dark" type="submit">
+    <button
+      class="btn btn-dark"
+      type="submit"
+    >
       Subscribe
     </button>
 
@@ -246,35 +566,81 @@
 
 </section>
 
-<section class="contact" id="contact">
+
+<!-- =========================
+     CONTACT
+========================= -->
+
+<section
+  class="contact"
+  id="contact"
+>
 
   <div>
-    <p class="eyebrow">CONTACT</p>
-    <h2>We're here to help.</h2>
+
+    <p class="eyebrow">
+      CONTACT
+    </p>
+
+    <h2>
+      We're here to help.
+    </h2>
+
   </div>
+
 
   <div class="contact-grid">
 
     <a href="mailto:hello@zevoria.in">
-      <small>Email</small>
+
+      <small>
+        <i data-lucide="mail"></i>
+        Email
+      </small>
+
       hello@zevoria.in
+
     </a>
 
-    <a href="https://wa.me/919999999999" target="_blank">
-      <small>WhatsApp</small>
+
+    <a
+      href="https://wa.me/919999999999"
+      target="_blank"
+      rel="noopener"
+    >
+
+      <small>
+        <i data-lucide="message-circle"></i>
+        WhatsApp
+      </small>
+
       Chat with us
+
     </a>
+
 
     <div>
-      <small>Hours</small>
+
+      <small>
+        <i data-lucide="clock-3"></i>
+        Hours
+      </small>
+
       Mon–Sat, 10am–7pm
+
     </div>
 
   </div>
 
 </section>
 
+
 </main>
+
+
+<!-- =========================
+     FOOTER
+========================= -->
 
 <footer>
 
@@ -286,15 +652,31 @@
     Fine fragrance for your everyday signature.
   </p>
 
+
   <div class="footer-links">
 
-    <a href="#shop">Shop</a>
-    <a href="#story">About</a>
-    <a href="#contact">Contact</a>
-    <a href="#">Privacy</a>
-    <a href="#">Terms</a>
+    <a href="#shop">
+      Shop
+    </a>
+
+    <a href="#story">
+      About
+    </a>
+
+    <a href="#contact">
+      Contact
+    </a>
+
+    <a href="#">
+      Privacy
+    </a>
+
+    <a href="#">
+      Terms
+    </a>
 
   </div>
+
 
   <small>
     © 2026 ZEVORIA. All rights reserved.
@@ -303,37 +685,129 @@
 </footer>
 
 
-<!-- OVERLAY -->
+<!-- =========================
+     OVERLAY
+========================= -->
 
-<div class="overlay" id="overlay"></div>
+<div
+  class="overlay"
+  id="overlay"
+></div>
 
 
-<!-- CART -->
+<!-- =========================
+     CART DRAWER
+========================= -->
 
-<aside class="drawer" id="cartDrawer">
+<aside
+  class="drawer"
+  id="cartDrawer"
+>
 
   <div class="drawer-head">
 
-    <h3>Your bag</h3>
+    <h3>
+      Your bag
+    </h3>
 
-    <button class="close" data-close aria-label="Close">
+    <button
+      class="close"
+      data-close
+      aria-label="Close"
+    >
       <i data-lucide="x"></i>
     </button>
 
   </div>
 
-  <div id="cartItems" class="cart-items"></div>
+
+  <div
+    id="cartItems"
+    class="cart-items"
+  ></div>
+
 
   <div class="cart-bottom">
 
     <div>
-      <span>Subtotal</span>
-      <strong id="subtotal">₹0</strong>
+
+      <span>
+        Subtotal
+      </span>
+
+      <strong id="subtotal">
+        ₹0
+      </strong>
+
     </div>
 
-    <button class="btn btn-dark full" id="checkoutBtn">
+
+    <!-- COUPON -->
+
+    <div class="cart-coupon">
+
+      <div class="coupon-input">
+
+        <input
+          id="couponInput"
+          placeholder="Coupon code"
+          autocomplete="off"
+        >
+
+        <button
+          id="applyCouponBtn"
+          type="button"
+        >
+          Apply
+        </button>
+
+      </div>
+
+      <small id="couponMessage"></small>
+
+    </div>
+
+
+    <div
+      class="discount-row"
+      id="discountRow"
+      style="display:none;"
+    >
+
+      <span>
+        Discount
+      </span>
+
+      <strong id="discountAmount">
+        -₹0
+      </strong>
+
+    </div>
+
+
+    <div class="cart-total">
+
+      <span>
+        Total
+      </span>
+
+      <strong id="cartTotal">
+        ₹0
+      </strong>
+
+    </div>
+
+
+    <button
+      class="btn btn-dark full"
+      id="checkoutBtn"
+    >
       Proceed to checkout
+
+      <i data-lucide="arrow-right"></i>
+
     </button>
+
 
     <small>
       Taxes and shipping calculated at checkout.
@@ -344,90 +818,186 @@
 </aside>
 
 
-<!-- SEARCH -->
+<!-- =========================
+     SEARCH MODAL
+========================= -->
 
-<div class="modal search-modal" id="searchModal">
+<div
+  class="modal"
+  id="searchModal"
+>
 
-  <button class="close" data-close aria-label="Close">
+  <button
+    class="close"
+    data-close
+    aria-label="Close"
+  >
     <i data-lucide="x"></i>
   </button>
 
-  <p class="eyebrow">SEARCH</p>
+  <p class="eyebrow">
+    SEARCH
+  </p>
 
-  <h3>Find your fragrance</h3>
+  <h3>
+    Find your fragrance
+  </h3>
 
-  <div class="search-box">
+
+  <div class="modal-search">
 
     <i data-lucide="search"></i>
 
     <input
       id="searchInput"
-      placeholder="Search perfumes, attars or notes..."
+      placeholder="Search perfumes or attars..."
       autocomplete="off"
     >
 
   </div>
 
-  <div id="searchResults"></div>
+
+  <div
+    id="searchResults"
+  ></div>
 
 </div>
 
 
-<!-- ACCOUNT -->
+<!-- =========================
+     ACCOUNT MODAL
+========================= -->
 
-<div class="modal small" id="accountModal">
+<div
+  class="modal small"
+  id="accountModal"
+>
 
-  <button class="close" data-close aria-label="Close">
+  <button
+    class="close"
+    data-close
+    aria-label="Close"
+  >
     <i data-lucide="x"></i>
   </button>
 
-  <p class="eyebrow">MY ACCOUNT</p>
+  <p class="eyebrow">
+    MY ACCOUNT
+  </p>
 
   <h3 id="accountTitle">
     Welcome to ZEVORIA
   </h3>
 
+
+  <!-- LOGGED OUT -->
+
   <div id="loggedOutAccount">
+
+
+    <!-- LOGIN -->
 
     <form id="loginForm">
 
-      <input id="loginEmail" type="email" placeholder="Email address" required>
+      <input
+        id="loginEmail"
+        type="email"
+        placeholder="Email address"
+        required
+      >
 
-      <input id="loginPassword" type="password" placeholder="Password" required>
+      <input
+        id="loginPassword"
+        type="password"
+        placeholder="Password"
+        required
+      >
 
-      <button class="btn btn-dark full" id="loginBtn" type="submit">
+      <button
+        class="btn btn-dark full"
+        id="loginBtn"
+        type="submit"
+      >
         Sign in
       </button>
 
     </form>
 
-    <p class="muted account-switch-text">
+
+    <p
+      class="muted"
+      style="text-align:center;"
+    >
       Don't have an account?
     </p>
 
-    <button class="btn full" id="showSignupBtn" type="button">
+
+    <button
+      class="btn full"
+      id="showSignupBtn"
+      type="button"
+    >
       Create new account
     </button>
 
-    <form id="signupForm" style="display:none;">
 
-      <input id="signupName" type="text" placeholder="Full name" required>
+    <!-- SIGN UP -->
 
-      <input id="signupEmail" type="email" placeholder="Email address" required>
+    <form
+      id="signupForm"
+      style="display:none;"
+    >
 
-      <input id="signupPhone" type="tel" placeholder="Phone number" required>
+      <input
+        id="signupName"
+        type="text"
+        placeholder="Full name"
+        required
+      >
 
-      <input id="signupPassword" type="password" placeholder="Create password" required>
+      <input
+        id="signupEmail"
+        type="email"
+        placeholder="Email address"
+        required
+      >
 
-      <button class="btn btn-dark full" id="signupBtn" type="submit">
+      <input
+        id="signupPhone"
+        type="tel"
+        placeholder="Phone number"
+        required
+      >
+
+      <input
+        id="signupPassword"
+        type="password"
+        placeholder="Create password"
+        required
+      >
+
+      <button
+        class="btn btn-dark full"
+        id="signupBtn"
+        type="submit"
+      >
         Create account
       </button>
 
-      <p class="muted account-switch-text">
+
+      <p
+        class="muted"
+        style="text-align:center;"
+      >
         Already have an account?
       </p>
 
-      <button class="btn full" id="showLoginBtn" type="button">
+
+      <button
+        class="btn full"
+        id="showLoginBtn"
+        type="button"
+      >
         Sign in
       </button>
 
@@ -435,39 +1005,91 @@
 
   </div>
 
-  <div id="loggedInAccount" style="display:none;">
+
+  <!-- LOGGED IN -->
+
+  <div
+    id="loggedInAccount"
+    style="display:none;"
+  >
 
     <p class="muted">
       You are signed in to your ZEVORIA account.
     </p>
 
+
     <div class="account-info">
 
       <p>
-        <small>Name</small><br>
+
+        <small>
+          Name
+        </small>
+
+        <br>
+
         <strong id="accountName"></strong>
+
       </p>
 
+
       <p>
-        <small>Email</small><br>
+
+        <small>
+          Email
+        </small>
+
+        <br>
+
         <strong id="accountEmail"></strong>
+
       </p>
 
+
       <p>
-        <small>Phone</small><br>
+
+        <small>
+          Phone
+        </small>
+
+        <br>
+
         <strong id="accountPhone"></strong>
+
       </p>
 
     </div>
 
-    <div class="account-feature-buttons">
 
-      <button class="btn full" id="wishlistAccountBtn">
-        <i data-lucide="heart"></i>
-        My Wishlist
+    <!-- ACCOUNT ACTIONS -->
+
+    <div class="account-actions">
+
+      <button
+        class="btn full"
+        id="viewOrdersBtn"
+        type="button"
+      >
+        <i data-lucide="package"></i>
+        My orders
       </button>
 
-      <button class="btn full" id="logoutBtn" type="button">
+
+      <button
+        class="btn full"
+        id="viewWishlistBtn"
+        type="button"
+      >
+        <i data-lucide="heart"></i>
+        My wishlist
+      </button>
+
+
+      <button
+        class="btn btn-dark full"
+        id="logoutBtn"
+        type="button"
+      >
         Sign out
       </button>
 
@@ -478,115 +1100,330 @@
 </div>
 
 
-<!-- QUICK VIEW -->
+<!-- =========================
+     QUICK VIEW MODAL
+========================= -->
 
-<div class="modal quick-view-modal" id="quickViewModal">
+<div
+  class="modal quick-view-modal"
+  id="quickViewModal"
+>
 
-  <button class="close" data-close aria-label="Close">
+  <button
+    class="close"
+    data-close
+    aria-label="Close"
+  >
     <i data-lucide="x"></i>
   </button>
 
-  <div id="quickViewContent"></div>
+
+  <div
+    id="quickViewContent"
+    class="quick-view-content"
+  ></div>
 
 </div>
 
 
-<!-- WISHLIST -->
+<!-- =========================
+     WISHLIST MODAL
+========================= -->
 
-<div class="modal wishlist-modal" id="wishlistModal">
+<div
+  class="modal"
+  id="wishlistModal"
+>
 
-  <button class="close" data-close aria-label="Close">
+  <button
+    class="close"
+    data-close
+    aria-label="Close"
+  >
     <i data-lucide="x"></i>
   </button>
 
-  <p class="eyebrow">YOUR COLLECTION</p>
+  <p class="eyebrow">
+    SAVED FRAGRANCES
+  </p>
 
-  <h3>Wishlist</h3>
+  <h3>
+    My wishlist
+  </h3>
 
-  <div id="wishlistItems"></div>
+  <div
+    id="wishlistItems"
+    class="wishlist-items"
+  ></div>
 
 </div>
 
 
-<!-- SCENT FINDER -->
+<!-- =========================
+     SCENT FINDER MODAL
+========================= -->
 
-<div class="modal scent-modal" id="scentModal">
+<div
+  class="modal scent-modal"
+  id="scentFinderModal"
+>
 
-  <button class="close" data-close aria-label="Close">
+  <button
+    class="close"
+    data-close
+    aria-label="Close"
+  >
     <i data-lucide="x"></i>
   </button>
 
-  <div id="scentStep">
 
-    <p class="eyebrow">ZEVORIA SCENT FINDER</p>
+  <p class="eyebrow">
+    ZEVORIA SCENT FINDER
+  </p>
 
-    <h3>Find your signature.</h3>
+  <h3>
+    Find your signature scent
+  </h3>
 
-    <p class="scent-intro">
-      Answer a few simple questions and we'll suggest fragrances
-      based on the style you prefer.
+
+  <div class="scent-step">
+
+    <p class="scent-question">
+      What style of fragrance do you prefer?
     </p>
 
-    <div class="scent-question">
 
-      <label>What kind of fragrance do you prefer?</label>
+    <div class="scent-options">
 
-      <div class="scent-options" data-question="style">
+      <button
+        class="scent-option"
+        data-scent="fresh"
+      >
+        <i data-lucide="wind"></i>
+        Fresh
+      </button>
 
-        <button data-value="fresh">
-          <strong>Fresh</strong>
-          <span>Clean & energetic</span>
-        </button>
 
-        <button data-value="woody">
-          <strong>Woody</strong>
-          <span>Warm & refined</span>
-        </button>
+      <button
+        class="scent-option"
+        data-scent="woody"
+      >
+        <i data-lucide="trees"></i>
+        Woody
+      </button>
 
-        <button data-value="sweet">
-          <strong>Sweet</strong>
-          <span>Soft & smooth</span>
-        </button>
 
-        <button data-value="dark">
-          <strong>Dark</strong>
-          <span>Deep & mysterious</span>
-        </button>
+      <button
+        class="scent-option"
+        data-scent="sweet"
+      >
+        <i data-lucide="cake"></i>
+        Sweet
+      </button>
 
-        <button data-value="floral">
-          <strong>Floral</strong>
-          <span>Elegant & romantic</span>
-        </button>
 
-        <button data-value="oud">
-          <strong>Oud</strong>
-          <span>Rich & traditional</span>
-        </button>
+      <button
+        class="scent-option"
+        data-scent="dark"
+      >
+        <i data-lucide="moon"></i>
+        Dark
+      </button>
 
-      </div>
+
+      <button
+        class="scent-option"
+        data-scent="floral"
+      >
+        <i data-lucide="flower-2"></i>
+        Floral
+      </button>
+
+
+      <button
+        class="scent-option"
+        data-scent="oud"
+      >
+        <i data-lucide="flame"></i>
+        Oud
+      </button>
 
     </div>
 
   </div>
 
-  <div id="scentResults" style="display:none;">
 
-    <p class="eyebrow">YOUR ZEVORIA MATCH</p>
+  <div
+    id="scentResult"
+    class="scent-result"
+    style="display:none;"
+  ></div>
 
-    <h3>We found your style.</h3>
+</div>
 
-    <div id="scentRecommendations"></div>
 
-    <button class="btn btn-dark full" id="restartScentBtn">
-      Try again
-    </button>
+<!-- =========================
+     ORDER TRACKING MODAL
+========================= -->
+
+<div
+  class="modal"
+  id="ordersModal"
+>
+
+  <button
+    class="close"
+    data-close
+    aria-label="Close"
+  >
+    <i data-lucide="x"></i>
+  </button>
+
+  <p class="eyebrow">
+    MY ORDERS
+  </p>
+
+  <h3>
+    Order history
+  </h3>
+
+
+  <div
+    id="ordersList"
+    class="orders-list"
+  >
+
+    <p class="muted">
+      Loading your orders...
+    </p>
 
   </div>
 
 </div>
 
 
-<div class="toast" id="toast"></div>
+<!-- =========================
+     ORDER TRACKING DETAIL
+========================= -->
+
+<div
+  class="modal"
+  id="trackingModal"
+>
+
+  <button
+    class="close"
+    data-close
+    aria-label="Close"
+  >
+    <i data-lucide="x"></i>
+  </button>
+
+
+  <div
+    id="trackingContent"
+  ></div>
+
+</div>
+
+
+<!-- =========================
+     OLD CHECKOUT MODAL
+========================= -->
+
+<div
+  class="modal small"
+  id="checkoutModal"
+>
+
+  <button
+    class="close"
+    data-close
+    aria-label="Close"
+  >
+    <i data-lucide="x"></i>
+  </button>
+
+  <p class="eyebrow">
+    CHECKOUT
+  </p>
+
+  <h3>
+    Complete your order
+  </h3>
+
+
+  <form id="checkoutForm">
+
+    <input
+      required
+      placeholder="Full name"
+    >
+
+    <input
+      required
+      type="tel"
+      placeholder="Phone number"
+    >
+
+    <input
+      required
+      placeholder="Delivery address"
+    >
+
+    <input
+      required
+      placeholder="City"
+    >
+
+    <input
+      required
+      placeholder="Pincode"
+    >
+
+
+    <button
+      class="btn btn-dark full"
+      type="submit"
+    >
+      Continue to checkout
+
+      <i data-lucide="arrow-right"></i>
+
+    </button>
+
+  </form>
+
+
+  <p class="muted">
+    Cash on Delivery is currently available.
+  </p>
+
+</div>
+
+
+<!-- =========================
+     TOAST
+========================= -->
+
+<div
+  class="toast"
+  id="toast"
+></div>
+
+
+<!-- =========================
+     LUCIDE INITIALIZATION
+========================= -->
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  });
+</script>
+
 
 <script src="app.js"></script>
 
