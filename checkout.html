@@ -1,1 +1,339 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Checkout | ZEVORIA</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="checkout.css">
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <header class="checkout-header">
+
+    <a href="index.html" class="logo">
+      ZEVORIA
+    </a>
+
+    <a href="index.html" class="back-link">
+      ← Continue Shopping
+    </a>
+
+  </header>
+
+
+  <!-- MAIN -->
+  <main class="checkout-container">
+
+    <div class="checkout-title">
+      <span>SECURE CHECKOUT</span>
+      <h1>Complete Your Order</h1>
+      <p>You're just a few steps away from your fragrance.</p>
+    </div>
+
+
+    <div class="checkout-grid">
+
+
+      <!-- LEFT SIDE -->
+      <section class="checkout-left">
+
+
+        <!-- CONTACT -->
+        <div class="checkout-card">
+
+          <div class="section-heading">
+            <span class="number">01</span>
+
+            <div>
+              <h2>Contact Information</h2>
+              <p>Where should we send your order confirmation?</p>
+            </div>
+          </div>
+
+
+          <label for="email">Email Address</label>
+
+          <input
+            type="email"
+            id="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+          >
+
+        </div>
+
+
+
+        <!-- DELIVERY -->
+        <div class="checkout-card">
+
+          <div class="section-heading">
+
+            <span class="number">02</span>
+
+            <div>
+              <h2>Delivery Information</h2>
+              <p>Enter your shipping details.</p>
+            </div>
+
+          </div>
+
+
+          <div class="form-grid">
+
+            <div class="form-group full">
+              <label for="fullName">Full Name</label>
+
+              <input
+                type="text"
+                id="fullName"
+                placeholder="Your full name"
+                autocomplete="name"
+              >
+            </div>
+
+
+            <div class="form-group full">
+
+              <label for="phone">Mobile Number</label>
+
+              <input
+                type="tel"
+                id="phone"
+                placeholder="+91 XXXXX XXXXX"
+                autocomplete="tel"
+              >
+
+            </div>
+
+
+            <div class="form-group full">
+
+              <label for="address">Address</label>
+
+              <textarea
+                id="address"
+                rows="4"
+                placeholder="House / Flat No., Building, Street, Area"
+                autocomplete="street-address"
+              ></textarea>
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="city">City</label>
+
+              <input
+                type="text"
+                id="city"
+                placeholder="Mumbai"
+                autocomplete="address-level2"
+              >
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="state">State</label>
+
+              <input
+                type="text"
+                id="state"
+                placeholder="Maharashtra"
+                autocomplete="address-level1"
+              >
+
+            </div>
+
+
+            <div class="form-group">
+
+              <label for="pincode">PIN Code</label>
+
+              <input
+                type="text"
+                id="pincode"
+                placeholder="400001"
+                maxlength="6"
+                autocomplete="postal-code"
+              >
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+
+        <!-- PAYMENT -->
+        <div class="checkout-card">
+
+          <div class="section-heading">
+
+            <span class="number">03</span>
+
+            <div>
+              <h2>Payment Method</h2>
+              <p>Select your preferred payment option.</p>
+            </div>
+
+          </div>
+
+
+          <label class="payment-option">
+
+            <input
+              type="radio"
+              name="payment"
+              value="cod"
+              checked
+            >
+
+            <span class="radio-design"></span>
+
+            <span class="payment-content">
+
+              <strong>Cash on Delivery</strong>
+
+              <small>
+                Pay when your ZEVORIA order arrives.
+              </small>
+
+            </span>
+
+          </label>
+
+
+          <div class="payment-coming">
+
+            <span>ONLINE PAYMENT</span>
+
+            <strong>Coming Soon</strong>
+
+            <p>
+              Secure online payments will be available soon.
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- RIGHT SIDE -->
+      <aside class="order-summary">
+
+        <div class="summary-top">
+
+          <span>YOUR ORDER</span>
+
+          <h2>Order Summary</h2>
+
+        </div>
+
+
+        <div id="checkoutItems" class="checkout-items">
+
+          <!-- Products will be inserted here -->
+
+        </div>
+
+
+        <div class="summary-lines">
+
+          <div>
+            <span>Subtotal</span>
+            <strong id="subtotal">₹0</strong>
+          </div>
+
+
+          <div>
+            <span>Delivery</span>
+            <strong id="delivery">FREE</strong>
+          </div>
+
+        </div>
+
+
+        <div class="summary-total">
+
+          <span>Total</span>
+
+          <strong id="grandTotal">₹0</strong>
+
+        </div>
+
+
+        <button
+          type="button"
+          id="placeOrderBtn"
+          class="place-order-btn"
+        >
+          Place Order
+        </button>
+
+
+        <p class="secure-note">
+          🔒 Your order information is securely processed.
+        </p>
+
+
+        <a href="index.html" class="return-link">
+          ← Return to shopping
+        </a>
+
+      </aside>
+
+    </div>
+
+  </main>
+
+
+
+  <!-- SUCCESS MODAL -->
+  <div id="successModal" class="modal-overlay">
+
+    <div class="success-modal">
+
+      <div class="success-icon">
+        ✓
+      </div>
+
+      <span>ORDER CONFIRMED</span>
+
+      <h2>Thank You!</h2>
+
+      <p id="successMessage">
+        Your ZEVORIA order has been placed successfully.
+      </p>
+
+      <button onclick="window.location.href='index.html'">
+        Continue Shopping
+      </button>
+
+    </div>
+
+  </div>
+
+
+
+  <script src="checkout.js"></script>
+
+</body>
+</html>
