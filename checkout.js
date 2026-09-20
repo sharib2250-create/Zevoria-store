@@ -1,5 +1,10 @@
 const API_BASE = "https://zevoria-backend.onrender.com";
 
+
+/* =========================
+   PRODUCTS
+========================= */
+
 const products = [
   {
     name: "No. 01 Noir",
@@ -39,12 +44,14 @@ const products = [
   }
 ];
 
+
+/* =========================
+   CART
+========================= */
+
 let cart = JSON.parse(
   localStorage.getItem("zevoriaCart") || "[]"
 );
-
-const money = n =>
-  "₹" + Number(n).toLocaleString("en-IN");
 
 
 /* =========================
@@ -57,27 +64,66 @@ const user = JSON.parse(
 
 
 /* =========================
-   ELEMENTS
+   MONEY
 ========================= */
 
-const checkoutItems =
-  document.querySelector("#checkoutItems");
+function money(amount) {
 
-const subtotalEl =
-  document.querySelector("#checkoutSubtotal");
+  return "₹" +
+    Number(amount).toLocaleString("en-IN");
 
-const deliveryEl =
-  document.querySelector("#checkoutDelivery");
-
-const totalEl =
-  document.querySelector("#checkoutTotal");
-
-const emailInput =
-  document.querySelector("#checkoutEmail");
+}
 
 
 /* =========================
-   EMAIL
+   HTML ELEMENTS
+========================= */
+
+const checkoutItems =
+  document.getElementById("checkoutItems");
+
+const subtotalEl =
+  document.getElementById("subtotal");
+
+const deliveryEl =
+  document.getElementById("delivery");
+
+const totalEl =
+  document.getElementById("grandTotal");
+
+const emailInput =
+  document.getElementById("email");
+
+const fullNameInput =
+  document.getElementById("fullName");
+
+const phoneInput =
+  document.getElementById("phone");
+
+const addressInput =
+  document.getElementById("address");
+
+const cityInput =
+  document.getElementById("city");
+
+const stateInput =
+  document.getElementById("state");
+
+const pincodeInput =
+  document.getElementById("pincode");
+
+const placeOrderBtn =
+  document.getElementById("placeOrderBtn");
+
+const successModal =
+  document.getElementById("successModal");
+
+const successMessage =
+  document.getElementById("successMessage");
+
+
+/* =========================
+   LOAD USER EMAIL
 ========================= */
 
 if (user && user.email) {
@@ -89,67 +135,93 @@ if (user && user.email) {
 
 
 /* =========================
-   CHECK CART
-========================= */
-
-if (!cart.length) {
-
-  checkoutItems.innerHTML = `
-    <div class="empty-checkout">
-      <h3>Your bag is empty</h3>
-
-      <p>
-        Add a fragrance before
-        continuing to checkout.
-      </p>
-
-      <a href="index.html">
-        Continue Shopping
-      </a>
-    </div>
-  `;
-
-}
-
-
-/* =========================
-   RENDER ORDER
+   RENDER CHECKOUT
 ========================= */
 
 function renderCheckout() {
 
+  /*
+    Always reload the latest cart
+    from localStorage.
+  */
+
+  cart = JSON.parse(
+    localStorage.getItem("zevoriaCart") || "[]"
+  );
+
+
+  /* =========================
+     EMPTY CART
+  ========================= */
+
   if (!cart.length) {
+
+    checkoutItems.innerHTML = `
+      <div class="empty-checkout">
+
+        <h3>
+          Your bag is empty
+        </h3>
+
+        <p>
+          Add a fragrance before
+          continuing to checkout.
+        </p>
+
+        <a href="index.html">
+          Continue Shopping
+        </a>
+
+      </div>
+    `;
 
     subtotalEl.textContent =
       "₹0";
 
     deliveryEl.textContent =
-      "₹0";
+      "FREE";
 
     totalEl.textContent =
       "₹0";
+
+    placeOrderBtn.disabled =
+      true;
 
     return;
 
   }
 
 
+  /* =========================
+     CALCULATE SUBTOTAL
+  ========================= */
+
+  let subtotal = 0;
+
+
   checkoutItems.innerHTML =
     cart.map(item => {
 
       const product =
-        products[item.i];
+        products[Number(item.i)];
 
-      if (!product) return "";
+
+      if (!product) {
+        return "";
+      }
 
 
       const quantity =
-        item.q || 1;
+        Number(item.q) || 1;
 
 
       const itemTotal =
-        product.price *
+        Number(product.price) *
         quantity;
+
+
+      subtotal +=
+        itemTotal;
 
 
       return `
@@ -166,7 +238,9 @@ function renderCheckout() {
             </p>
 
             <span>
-              Qty: ${quantity}
+              ${money(product.price)}
+              ×
+              ${quantity}
             </span>
 
           </div>
@@ -181,31 +255,24 @@ function renderCheckout() {
     }).join("");
 
 
-  const subtotal =
-    cart.reduce(
-      (total, item) => {
-
-        const product =
-          products[item.i];
-
-        return total +
-          product.price *
-          item.q;
-
-      },
-      0
-    );
-
-
-  /*
-    Free delivery for now.
-  */
+  /* =========================
+     DELIVERY
+  ========================= */
 
   const delivery = 0;
 
-  const total =
+
+  /* =========================
+     GRAND TOTAL
+  ========================= */
+
+  const grandTotal =
     subtotal + delivery;
 
+
+  /* =========================
+     DISPLAY AMOUNTS
+  ========================= */
 
   subtotalEl.textContent =
     money(subtotal);
@@ -216,10 +283,22 @@ function renderCheckout() {
       : money(delivery);
 
   totalEl.textContent =
-    money(total);
+    money(grandTotal);
+
+
+  /* =========================
+     ENABLE ORDER BUTTON
+  ========================= */
+
+  placeOrderBtn.disabled =
+    false;
 
 }
 
+
+/* =========================
+   START
+========================= */
 
 renderCheckout();
 
@@ -228,15 +307,17 @@ renderCheckout();
    PLACE ORDER
 ========================= */
 
-const checkoutForm =
-  document.querySelector("#checkoutForm");
+placeOrderBtn.addEventListener(
+  "click",
+  async () => {
 
+    /* =========================
+       RELOAD CART
+    ========================= */
 
-checkoutForm.addEventListener(
-  "submit",
-  async event => {
-
-    event.preventDefault();
+    cart = JSON.parse(
+      localStorage.getItem("zevoriaCart") || "[]"
+    );
 
 
     if (!cart.length) {
@@ -249,6 +330,10 @@ checkoutForm.addEventListener(
 
     }
 
+
+    /* =========================
+       CHECK LOGIN
+    ========================= */
 
     if (!user || !user.email) {
 
@@ -264,64 +349,161 @@ checkoutForm.addEventListener(
     }
 
 
-    const submitButton =
-      checkoutForm.querySelector(
-        "button[type='submit']"
-      );
+    /* =========================
+       GET CUSTOMER DETAILS
+    ========================= */
 
-
-    const originalText =
-      submitButton.textContent;
-
-
-    submitButton.disabled =
-      true;
-
-    submitButton.textContent =
-      "Placing Order...";
-
-
-    const formData =
-      new FormData(
-        checkoutForm
-      );
-
+    const email =
+      emailInput.value.trim();
 
     const customerName =
-      formData
-        .get("name")
-        ?.trim();
-
+      fullNameInput.value.trim();
 
     const phone =
-      formData
-        .get("phone")
-        ?.trim();
-
+      phoneInput.value.trim();
 
     const address =
-      formData
-        .get("address")
-        ?.trim();
-
+      addressInput.value.trim();
 
     const city =
-      formData
-        .get("city")
-        ?.trim();
-
+      cityInput.value.trim();
 
     const state =
-      formData
-        .get("state")
-        ?.trim();
-
+      stateInput.value.trim();
 
     const pincode =
-      formData
-        .get("pincode")
-        ?.trim();
+      pincodeInput.value.trim();
 
+
+    /* =========================
+       VALIDATION
+    ========================= */
+
+    if (!email) {
+
+      alert(
+        "Please enter your email address."
+      );
+
+      emailInput.focus();
+
+      return;
+
+    }
+
+
+    if (!customerName) {
+
+      alert(
+        "Please enter your full name."
+      );
+
+      fullNameInput.focus();
+
+      return;
+
+    }
+
+
+    if (!phone) {
+
+      alert(
+        "Please enter your mobile number."
+      );
+
+      phoneInput.focus();
+
+      return;
+
+    }
+
+
+    if (!address) {
+
+      alert(
+        "Please enter your address."
+      );
+
+      addressInput.focus();
+
+      return;
+
+    }
+
+
+    if (!city) {
+
+      alert(
+        "Please enter your city."
+      );
+
+      cityInput.focus();
+
+      return;
+
+    }
+
+
+    if (!state) {
+
+      alert(
+        "Please enter your state."
+      );
+
+      stateInput.focus();
+
+      return;
+
+    }
+
+
+    if (!/^\d{6}$/.test(pincode)) {
+
+      alert(
+        "Please enter a valid 6-digit PIN code."
+      );
+
+      pincodeInput.focus();
+
+      return;
+
+    }
+
+
+    /* =========================
+       CREATE ORDER ITEMS
+    ========================= */
+
+    const items =
+      cart
+        .map(item => {
+
+          const product =
+            products[Number(item.i)];
+
+
+          if (!product) {
+            return null;
+          }
+
+
+          return {
+
+            productId:
+              product.backendId,
+
+            qty:
+              Number(item.q) || 1
+
+          };
+
+        })
+        .filter(Boolean);
+
+
+    /* =========================
+       FULL ADDRESS
+    ========================= */
 
     const fullAddress =
       [
@@ -334,18 +516,24 @@ checkoutForm.addEventListener(
         .join(", ");
 
 
-    const items =
-      cart.map(item => ({
+    /* =========================
+       BUTTON LOADING
+    ========================= */
 
-        productId:
-          products[item.i]
-            .backendId,
+    const oldText =
+      placeOrderBtn.textContent;
 
-        qty:
-          item.q
 
-      }));
+    placeOrderBtn.disabled =
+      true;
 
+    placeOrderBtn.textContent =
+      "Placing Order...";
+
+
+    /* =========================
+       SEND TO BACKEND
+    ========================= */
 
     try {
 
@@ -362,17 +550,20 @@ checkoutForm.addEventListener(
 
             body: JSON.stringify({
 
-              customerName,
+              customerName:
+                customerName,
 
               customerEmail:
-                user.email,
+                email,
 
-              phone,
+              phone:
+                phone,
 
               address:
                 fullAddress,
 
-              items
+              items:
+                items
 
             })
 
@@ -388,20 +579,24 @@ checkoutForm.addEventListener(
           );
 
 
+      /* =========================
+         CHECK RESPONSE
+      ========================= */
+
       if (!response.ok) {
 
         throw new Error(
           data.error ||
-          "Could not place order"
+          data.message ||
+          "Could not place order."
         );
 
       }
 
 
-      /*
-        Clear cart after
-        successful order.
-      */
+      /* =========================
+         CLEAR CART
+      ========================= */
 
       localStorage.removeItem(
         "zevoriaCart"
@@ -414,143 +609,79 @@ checkoutForm.addEventListener(
          SUCCESS
       ========================= */
 
-      showSuccess(
-        data.orderId,
-        data.total
-      );
+      if (successMessage) {
+
+        successMessage.innerHTML = `
+          Your ZEVORIA order has been
+          placed successfully.
+
+          <br><br>
+
+          <strong>
+            Order #${data.orderId}
+          </strong>
+
+          <br>
+
+          <strong>
+            Total: ${money(data.total)}
+          </strong>
+
+          <br><br>
+
+          A confirmation email has been
+          sent to ${email}.
+        `;
+
+      }
+
+
+      if (successModal) {
+
+        successModal.classList.add(
+          "show"
+        );
+
+      } else {
+
+        alert(
+          "Order placed successfully!\n\n" +
+          "Order #" +
+          data.orderId +
+          "\n" +
+          "Total: " +
+          money(data.total)
+        );
+
+        window.location.href =
+          "index.html";
+
+      }
 
 
     } catch (error) {
+
+      console.error(
+        "ORDER ERROR:",
+        error
+      );
+
 
       alert(
         "Order could not be placed.\n\n" +
         error.message
       );
 
+
     } finally {
 
-      submitButton.disabled =
+      placeOrderBtn.disabled =
         false;
 
-      submitButton.textContent =
-        originalText;
+      placeOrderBtn.textContent =
+        oldText;
 
     }
 
   }
 );
-
-
-/* =========================
-   SUCCESS MODAL
-========================= */
-
-function showSuccess(
-  orderId,
-  total
-) {
-
-  const modal =
-    document.querySelector(
-      "#successModal"
-    );
-
-
-  if (!modal) {
-
-    alert(
-      "Order placed successfully!\n\n" +
-      "Order #" +
-      orderId +
-      "\n" +
-      "Total: " +
-      money(total)
-    );
-
-    window.location.href =
-      "index.html";
-
-    return;
-
-  }
-
-
-  const orderNumber =
-    modal.querySelector(
-      "#successOrderId"
-    );
-
-
-  const orderTotal =
-    modal.querySelector(
-      "#successTotal"
-    );
-
-
-  if (orderNumber) {
-
-    orderNumber.textContent =
-      "#" + orderId;
-
-  }
-
-
-  if (orderTotal) {
-
-    orderTotal.textContent =
-      money(total);
-
-  }
-
-
-  modal.classList.add(
-    "show"
-  );
-
-}
-
-
-/* =========================
-   CONTINUE SHOPPING
-========================= */
-
-const continueShopping =
-  document.querySelector(
-    "#continueShopping"
-  );
-
-
-if (continueShopping) {
-
-  continueShopping.onclick =
-    () => {
-
-      window.location.href =
-        "index.html";
-
-    };
-
-}
-
-
-/* =========================
-   SUCCESS CLOSE
-========================= */
-
-const successClose =
-  document.querySelector(
-    "#successClose"
-  );
-
-
-if (successClose) {
-
-  successClose.onclick =
-    () => {
-
-      window.location.href =
-        "index.html";
-
-    };
-
-}
