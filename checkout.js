@@ -1,974 +1,712 @@
 const API_BASE = "https://zevoria-backend.onrender.com";
 
-const CART_KEY = "zevoriaCart";
-const USER_KEY = "zevoriaUser";
-const ORDERS_KEY = "zevoriaOrders";
+const cart = JSON.parse(localStorage.getItem("zevoriaCart") || "[]");
 
-const cart = JSON.parse(
-  localStorage.getItem(CART_KEY) || "[]"
-);
-
-
-/* =========================================================
-   PRODUCT DATA
-========================================================= */
-
-const products = [
+const PRODUCTS = [
   {
     id: 1,
     name: "No. 01 Noir",
     category: "men",
+    type: "Eau de Parfum",
     price: 1499,
-    note: "Amber • Oud • Vanilla"
+    notes: "Amber • Oud • Vanilla"
   },
-
   {
     id: 2,
     name: "No. 02 Santal",
     category: "unisex",
+    type: "Eau de Parfum",
     price: 1699,
-    note: "Sandalwood • Musk • Cedar"
+    notes: "Sandalwood • Musk • Cedar"
   },
-
   {
     id: 3,
     name: "No. 03 Bloom",
     category: "women",
+    type: "Eau de Parfum",
     price: 1399,
-    note: "Rose • Peony • Vanilla"
+    notes: "Rose • Peony • Vanilla"
   },
-
   {
     id: 4,
     name: "No. 04 Oud",
     category: "unisex",
+    type: "Attar",
     price: 899,
-    note: "Oud • Saffron • Amber"
+    notes: "Oud • Saffron • Amber"
   },
-
   {
     id: 5,
     name: "No. 05 Azure",
     category: "men",
+    type: "Eau de Parfum",
     price: 1599,
-    note: "Bergamot • Marine • Musk"
+    notes: "Bergamot • Marine • Musk"
   },
-
   {
     id: 6,
     name: "No. 06 Velvet",
     category: "women",
+    type: "Eau de Parfum",
     price: 1499,
-    note: "Iris • Tonka • Amber"
+    notes: "Iris • Tonka • Amber"
   }
 ];
 
+const cartItems = cart
+  .map(item => {
+    const product = PRODUCTS.find(p => p.id === Number(item.i));
 
-/* =========================================================
-   DOM
-========================================================= */
+    if (!product) return null;
 
-const checkoutForm =
-  document.getElementById("checkoutForm");
+    return {
+      ...product,
+      qty: Math.max(1, Number(item.q) || 1)
+    };
+  })
+  .filter(Boolean);
 
-const checkoutItems =
-  document.getElementById("checkoutItems");
+const $ = selector => document.querySelector(selector);
 
-const subtotalEl =
-  document.getElementById("checkoutSubtotal");
-
-const deliveryEl =
-  document.getElementById("checkoutDelivery");
-
-const totalEl =
-  document.getElementById("checkoutTotal");
-
-const successModal =
-  document.getElementById("successModal");
-
-const successOrderNumber =
-  document.getElementById("successOrderNumber");
-
-const successTotal =
-  document.getElementById("successTotal");
-
-const continueShoppingBtn =
-  document.getElementById("continueShopping");
-
-const trackOrderBtn =
-  document.getElementById("trackOrderBtn");
-
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function money(value) {
-
-  return `₹${Number(value).toLocaleString("en-IN")}`;
-
+function money(amount) {
+  return `₹${Number(amount).toLocaleString("en-IN")}`;
 }
 
-
-function getCartProducts() {
-
-  return cart
-    .map((item) => {
-
-      const product =
-        products.find(
-          (p) =>
-            p.id === Number(item.i)
-        );
-
-      if (!product) {
-        return null;
-      }
-
-      return {
-
-        ...product,
-
-        qty:
-          Number(item.q) || 1
-
-      };
-
-    })
-    .filter(Boolean);
-
+function escapeHTML(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
-
-function calculateSubtotal() {
-
-  return getCartProducts()
-    .reduce(
-      (sum, product) =>
-        sum +
-        product.price *
-        product.qty,
-
-      0
-    );
-
-}
-
-
-/* =========================================================
-   RENDER CHECKOUT
-========================================================= */
-
-function renderCheckout() {
-
-  const items =
-    getCartProducts();
-
-
-  if (
-    !checkoutItems
-  ) {
-    return;
+function getLoggedInUser() {
+  try {
+    return JSON.parse(localStorage.getItem("zevoriaUser") || "null");
+  } catch {
+    return null;
   }
+}
 
+function renderCart() {
+  const container =
+    $("#checkoutItems") ||
+    $("#orderItems") ||
+    $(".checkout-items");
 
-  if (
-    items.length === 0
-  ) {
+  if (!container) return;
 
-    checkoutItems.innerHTML = `
-
-      <div class="empty-checkout">
-
-        <p>
-          Your bag is empty.
-        </p>
-
-        <a href="index.html">
-          Continue Shopping
-        </a>
-
+  if (!cartItems.length) {
+    container.innerHTML = `
+      <div class="checkout-empty">
+        <h3>Your bag is empty</h3>
+        <p>Add a fragrance before continuing to checkout.</p>
+        <a href="index.html">Continue Shopping</a>
       </div>
-
     `;
 
-    if (subtotalEl) {
-      subtotalEl.textContent =
-        money(0);
-    }
+    const submitButton =
+      $("#placeOrderBtn") ||
+      $("#submitOrder") ||
+      document.querySelector('button[type="submit"]');
 
-    if (deliveryEl) {
-      deliveryEl.textContent =
-        "FREE";
-    }
-
-    if (totalEl) {
-      totalEl.textContent =
-        money(0);
+    if (submitButton) {
+      submitButton.disabled = true;
     }
 
     return;
   }
 
+  container.innerHTML = cartItems
+    .map(item => {
+      const subtotal = item.price * item.qty;
 
-  checkoutItems.innerHTML =
-    items
-      .map(
-        (product) => `
-
-          <div
-            class="checkout-product"
-          >
-
-            <div
-              class="checkout-product-image"
-            >
-              <div
-                class="checkout-mini-bottle"
-              ></div>
+      return `
+        <div class="checkout-item">
+          <div class="checkout-item-info">
+            <div class="checkout-item-name">
+              ${escapeHTML(item.name)}
             </div>
 
-
-            <div
-              class="checkout-product-info"
-            >
-
-              <h3>
-                ${product.name}
-              </h3>
-
-              <p>
-                ${product.note}
-              </p>
-
-              <span>
-                Qty: ${product.qty}
-              </span>
-
+            <div class="checkout-item-meta">
+              ${escapeHTML(item.type)} • ${escapeHTML(item.notes)}
             </div>
 
-
-            <strong>
-              ${money(
-                product.price *
-                product.qty
-              )}
-            </strong>
-
+            <div class="checkout-item-qty">
+              Quantity: ${item.qty}
+            </div>
           </div>
 
-        `
-      )
-      .join("");
-
-
-  const subtotal =
-    calculateSubtotal();
-
-
-  const delivery = 0;
-
-
-  const total =
-    subtotal +
-    delivery;
-
-
-  if (subtotalEl) {
-
-    subtotalEl.textContent =
-      money(subtotal);
-
-  }
-
-
-  if (deliveryEl) {
-
-    deliveryEl.textContent =
-      delivery === 0
-        ? "FREE"
-        : money(delivery);
-
-  }
-
-
-  if (totalEl) {
-
-    totalEl.textContent =
-      money(total);
-
-  }
-
+          <div class="checkout-item-price">
+            ${money(subtotal)}
+          </div>
+        </div>
+      `;
+    })
+    .join("");
 }
 
+function calculateSubtotal() {
+  return cartItems.reduce(
+    (total, item) => total + item.price * item.qty,
+    0
+  );
+}
 
-/* =========================================================
-   PREFILL USER DETAILS
-========================================================= */
+function renderTotals() {
+  const subtotal = calculateSubtotal();
 
-function prefillUser() {
+  // COD is currently free delivery.
+  const delivery = 0;
 
-  const savedUser =
-    JSON.parse(
-      localStorage.getItem(
-        USER_KEY
-      ) || "null"
+  const total = subtotal + delivery;
+
+  const subtotalElement =
+    $("#checkoutSubtotal") ||
+    $("#subtotal") ||
+    document.querySelector("[data-subtotal]");
+
+  const deliveryElement =
+    $("#checkoutDelivery") ||
+    $("#delivery") ||
+    document.querySelector("[data-delivery]");
+
+  const totalElement =
+    $("#checkoutTotal") ||
+    $("#total") ||
+    document.querySelector("[data-total]");
+
+  if (subtotalElement) {
+    subtotalElement.textContent = money(subtotal);
+  }
+
+  if (deliveryElement) {
+    deliveryElement.textContent =
+      delivery === 0 ? "FREE" : money(delivery);
+  }
+
+  if (totalElement) {
+    totalElement.textContent = money(total);
+  }
+}
+
+function prefillCustomerDetails() {
+  const user = getLoggedInUser();
+
+  if (!user) return;
+
+  const nameInput =
+    $("#customerName") ||
+    $("#fullName") ||
+    $("#name") ||
+    document.querySelector('[name="customerName"]');
+
+  const emailInput =
+    $("#customerEmail") ||
+    $("#email") ||
+    document.querySelector('[name="customerEmail"]');
+
+  const phoneInput =
+    $("#phone") ||
+    document.querySelector('[name="phone"]');
+
+  if (nameInput && user.name) {
+    nameInput.value = user.name;
+  }
+
+  if (emailInput && user.email) {
+    emailInput.value = user.email;
+  }
+
+  if (phoneInput && user.phone) {
+    phoneInput.value = user.phone;
+  }
+}
+
+function getValue(selectors) {
+  for (const selector of selectors) {
+    const element = document.querySelector(selector);
+
+    if (element && String(element.value).trim()) {
+      return String(element.value).trim();
+    }
+  }
+
+  return "";
+}
+
+function showMessage(message, type = "error") {
+  let box = $("#checkoutMessage");
+
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "checkoutMessage";
+
+    const form =
+      $("#checkoutForm") ||
+      document.querySelector("form");
+
+    if (form) {
+      form.prepend(box);
+    } else {
+      document.body.prepend(box);
+    }
+  }
+
+  box.className = `checkout-message ${type}`;
+  box.textContent = message;
+
+  box.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+}
+
+function clearMessage() {
+  const box = $("#checkoutMessage");
+
+  if (box) {
+    box.textContent = "";
+    box.className = "";
+  }
+}
+
+function validateIndianPhone(phone) {
+  return /^[6-9]\d{9}$/.test(phone);
+}
+
+function validatePincode(pincode) {
+  return /^\d{6}$/.test(pincode);
+}
+
+function validateEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function getFormData() {
+  const customerName = getValue([
+    "#customerName",
+    "#fullName",
+    "#name",
+    '[name="customerName"]',
+    '[name="fullName"]'
+  ]);
+
+  const customerEmail = getValue([
+    "#customerEmail",
+    "#email",
+    '[name="customerEmail"]',
+    '[name="email"]'
+  ]);
+
+  const phone = getValue([
+    "#phone",
+    "#mobile",
+    '[name="phone"]',
+    '[name="mobile"]'
+  ]).replace(/\s+/g, "");
+
+  const addressLine = getValue([
+    "#address",
+    "#addressLine",
+    '[name="address"]',
+    '[name="addressLine"]'
+  ]);
+
+  const city = getValue([
+    "#city",
+    '[name="city"]'
+  ]);
+
+  const state = getValue([
+    "#state",
+    '[name="state"]'
+  ]);
+
+  const pincode = getValue([
+    "#pincode",
+    "#pinCode",
+    "#zip",
+    '[name="pincode"]',
+    '[name="pinCode"]',
+    '[name="zip"]'
+  ]);
+
+  return {
+    customerName,
+    customerEmail,
+    phone,
+    addressLine,
+    city,
+    state,
+    pincode
+  };
+}
+
+function validateForm(data) {
+  if (!data.customerName) {
+    showMessage("Please enter your full name.");
+    return false;
+  }
+
+  if (!data.customerEmail) {
+    showMessage("Please enter your email address.");
+    return false;
+  }
+
+  if (!validateEmail(data.customerEmail)) {
+    showMessage("Please enter a valid email address.");
+    return false;
+  }
+
+  if (!data.phone) {
+    showMessage("Please enter your mobile number.");
+    return false;
+  }
+
+  if (!validateIndianPhone(data.phone)) {
+    showMessage("Please enter a valid 10-digit Indian mobile number.");
+    return false;
+  }
+
+  if (!data.addressLine) {
+    showMessage("Please enter your complete address.");
+    return false;
+  }
+
+  if (!data.city) {
+    showMessage("Please enter your city.");
+    return false;
+  }
+
+  if (!data.state) {
+    showMessage("Please enter your state.");
+    return false;
+  }
+
+  if (!data.pincode) {
+    showMessage("Please enter your PIN code.");
+    return false;
+  }
+
+  if (!validatePincode(data.pincode)) {
+    showMessage("Please enter a valid 6-digit PIN code.");
+    return false;
+  }
+
+  return true;
+}
+
+function buildAddress(data) {
+  return [
+    data.addressLine,
+    data.city,
+    data.state,
+    data.pincode
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
+function saveOrderForCustomer(orderData) {
+  const existing = JSON.parse(
+    localStorage.getItem("zevoriaOrders") || "[]"
+  );
+
+  const order = {
+    orderId: orderData.orderId,
+    orderToken: orderData.orderToken || "",
+    total: Number(orderData.total) || 0,
+    paymentMethod: "COD",
+    createdAt: new Date().toISOString()
+  };
+
+  const index = existing.findIndex(
+    item => String(item.orderId) === String(order.orderId)
+  );
+
+  if (index >= 0) {
+    existing[index] = {
+      ...existing[index],
+      ...order
+    };
+  } else {
+    existing.unshift(order);
+  }
+
+  localStorage.setItem(
+    "zevoriaOrders",
+    JSON.stringify(existing)
+  );
+}
+
+function notifyAppAboutOrder(orderData) {
+  // app.js exposes this function.
+  if (
+    typeof window.rememberOrderFromCheckout === "function"
+  ) {
+    window.rememberOrderFromCheckout(
+      orderData.orderId,
+      orderData.total,
+      orderData.orderToken
     );
+  }
+}
 
+function showSuccess(orderData) {
+  const orderNumber = escapeHTML(orderData.orderId);
+  const total = money(orderData.total);
 
-  if (!savedUser) {
+  const modal =
+    $("#successModal") ||
+    $("#orderSuccessModal");
+
+  if (modal) {
+    modal.classList.add("active");
+    modal.classList.add("show");
+
+    const orderNumberElement =
+      modal.querySelector(".success-order-number") ||
+      modal.querySelector("[data-order-id]");
+
+    const totalElement =
+      modal.querySelector(".success-total") ||
+      modal.querySelector("[data-total]");
+
+    if (orderNumberElement) {
+      orderNumberElement.textContent = orderNumber;
+    }
+
+    if (totalElement) {
+      totalElement.textContent = total;
+    }
+
     return;
   }
 
+  const successContainer =
+    $("#checkoutSuccess") ||
+    document.querySelector(".checkout-success");
 
-  const nameInput =
-    document.getElementById(
-      "fullName"
-    );
+  if (successContainer) {
+    successContainer.innerHTML = `
+      <div class="success-icon">✓</div>
 
-  const emailInput =
-    document.getElementById(
-      "email"
-    );
+      <h2>Order Confirmed</h2>
 
-  const phoneInput =
-    document.getElementById(
-      "phone"
-    );
+      <p>
+        Thank you for shopping with ZEVORIA.
+      </p>
 
+      <p>
+        Your order number is
+        <strong>#${orderNumber}</strong>
+      </p>
 
-  if (
-    nameInput &&
-    savedUser.name
-  ) {
+      <p>
+        Total:
+        <strong>${total}</strong>
+      </p>
 
-    nameInput.value =
-      savedUser.name;
+      <p>
+        Payment Method:
+        <strong>Cash on Delivery</strong>
+      </p>
 
+      <div class="success-actions">
+        <a href="index.html">Continue Shopping</a>
+      </div>
+    `;
+
+    successContainer.style.display = "block";
+
+    return;
   }
 
-
-  if (
-    emailInput &&
-    savedUser.email
-  ) {
-
-    emailInput.value =
-      savedUser.email;
-
-  }
-
-
-  if (
-    phoneInput &&
-    savedUser.phone
-  ) {
-
-    phoneInput.value =
-      savedUser.phone;
-
-  }
-
-}
-
-
-/* =========================================================
-   SAVE ORDER LOCALLY
-========================================================= */
-
-function saveOrderHistory(order) {
-
-  const existingOrders =
-    JSON.parse(
-      localStorage.getItem(
-        ORDERS_KEY
-      ) || "[]"
-    );
-
-
-  /*
-    Never delete previous orders.
-    New orders are added to the beginning.
-  */
-
-  existingOrders.unshift(order);
-
-
-  localStorage.setItem(
-    ORDERS_KEY,
-    JSON.stringify(
-      existingOrders
-    )
+  alert(
+    `Order confirmed!\n\nOrder #${orderData.orderId}\nTotal: ${total}\nPayment: Cash on Delivery`
   );
-
-
-  /*
-    Also allow app.js to use the
-    order later if needed.
-  */
-
-  window.zevoriaOrders =
-    existingOrders;
-
 }
 
+async function placeOrder(event) {
+  event.preventDefault();
 
-/* =========================================================
-   FORM SUBMISSION
-========================================================= */
+  clearMessage();
 
-if (checkoutForm) {
+  if (!cartItems.length) {
+    showMessage("Your cart is empty.");
+    return;
+  }
 
-  checkoutForm.addEventListener(
-    "submit",
-    async (event) => {
+  const data = getFormData();
 
-      event.preventDefault();
+  if (!validateForm(data)) {
+    return;
+  }
 
+  const submitButton =
+    $("#placeOrderBtn") ||
+    $("#submitOrder") ||
+    document.querySelector(
+      '#checkoutForm button[type="submit"]'
+    ) ||
+    document.querySelector(
+      'form button[type="submit"]'
+    );
 
-      if (
-        cart.length === 0
-      ) {
+  const originalButtonText = submitButton
+    ? submitButton.textContent
+    : "";
 
-        alert(
-          "Your bag is empty."
-        );
+  if (submitButton) {
+    submitButton.disabled = true;
+    submitButton.textContent = "Placing Order...";
+  }
 
-        return;
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/orders`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          customerName: data.customerName,
+          customerEmail: data.customerEmail,
+          phone: data.phone,
+          address: buildAddress(data),
 
+          // COD only for now.
+          paymentMethod: "COD",
+
+          items: cartItems.map(item => ({
+            productId: item.id,
+            qty: item.qty
+          }))
+        })
       }
-
-
-      const submitButton =
-        checkoutForm.querySelector(
-          'button[type="submit"]'
-        );
-
-
-      if (submitButton) {
-
-        submitButton.disabled =
-          true;
-
-        submitButton.textContent =
-          "Placing Order...";
-
-      }
-
-
-      try {
-
-        const fullName =
-          document
-            .getElementById(
-              "fullName"
-            )
-            ?.value
-            .trim();
-
-
-        const email =
-          document
-            .getElementById(
-              "email"
-            )
-            ?.value
-            .trim();
-
-
-        const phone =
-          document
-            .getElementById(
-              "phone"
-            )
-            ?.value
-            .trim();
-
-
-        const address =
-          document
-            .getElementById(
-              "address"
-            )
-            ?.value
-            .trim();
-
-
-        const city =
-          document
-            .getElementById(
-              "city"
-            )
-            ?.value
-            .trim();
-
-
-        const state =
-          document
-            .getElementById(
-              "state"
-            )
-            ?.value
-            .trim();
-
-
-        const pincode =
-          document
-            .getElementById(
-              "pincode"
-            )
-            ?.value
-            .trim();
-
-
-        /* =================================================
-           VALIDATION
-        ================================================= */
-
-        if (!fullName) {
-
-          throw new Error(
-            "Please enter your full name."
-          );
-
-        }
-
-
-        if (!email) {
-
-          throw new Error(
-            "Please enter your email address."
-          );
-
-        }
-
-
-        if (!phone) {
-
-          throw new Error(
-            "Please enter your phone number."
-          );
-
-        }
-
-
-        if (!address) {
-
-          throw new Error(
-            "Please enter your delivery address."
-          );
-
-        }
-
-
-        if (!city) {
-
-          throw new Error(
-            "Please enter your city."
-          );
-
-        }
-
-
-        if (!state) {
-
-          throw new Error(
-            "Please enter your state."
-          );
-
-        }
-
-
-        if (!pincode) {
-
-          throw new Error(
-            "Please enter your pincode."
-          );
-
-        }
-
-
-        const emailPattern =
-          /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-
-        if (
-          !emailPattern.test(
-            email
-          )
-        ) {
-
-          throw new Error(
-            "Please enter a valid email address."
-          );
-
-        }
-
-
-        const phoneDigits =
-          phone.replace(
-            /\D/g,
-            ""
-          );
-
-
-        if (
-          phoneDigits.length <
-          10
-        ) {
-
-          throw new Error(
-            "Please enter a valid phone number."
-          );
-
-        }
-
-
-        if (
-          !/^\d{6}$/.test(
-            pincode
-          )
-        ) {
-
-          throw new Error(
-            "Please enter a valid 6-digit pincode."
-          );
-
-        }
-
-
-        /* =================================================
-           CREATE BACKEND ITEMS
-        ================================================= */
-
-        const orderItems =
-          cart.map(
-            (item) => ({
-
-              productId:
-                Number(item.i),
-
-              qty:
-                Number(item.q) || 1
-
-            })
-          );
-
-
-        const fullAddress = [
-
-          address,
-
-          city,
-
-          state,
-
-          pincode
-
-        ]
-          .filter(Boolean)
-          .join(", ");
-
-
-        /* =================================================
-           SEND ORDER
-        ================================================= */
-
-        const response =
-          await fetch(
-            `${API_BASE}/api/orders`,
-            {
-
-              method:
-                "POST",
-
-              headers: {
-
-                "Content-Type":
-                  "application/json"
-
-              },
-
-              body:
-                JSON.stringify({
-
-                  customerName:
-                    fullName,
-
-                  customerEmail:
-                    email,
-
-                  phone:
-                    phone,
-
-                  address:
-                    fullAddress,
-
-                  items:
-                    orderItems
-
-                })
-
-            }
-          );
-
-
-        const result =
-          await response.json();
-
-
-        if (
-          !response.ok
-        ) {
-
-          throw new Error(
-            result.error ||
-            "Could not place your order."
-          );
-
-        }
-
-
-        /* =================================================
-           CHECK PRIVATE ORDER TOKEN
-        ================================================= */
-
-        if (
-          !result.orderToken
-        ) {
-
-          throw new Error(
-            "Order was created, but tracking access could not be generated."
-          );
-
-        }
-
-
-        /* =================================================
-           SAVE ORDER HISTORY
-        ================================================= */
-
-        const orderRecord = {
-
-          orderId:
-            result.orderId,
-
-          orderToken:
-            result.orderToken,
-
-          total:
-            result.total,
-
-          paymentMethod:
-            "COD",
-
-          customerName:
-            fullName,
-
-          customerEmail:
-            email,
-
-          phone:
-            phone,
-
-          address:
-            fullAddress,
-
-          items:
-            orderItems,
-
-          status:
-            "pending",
-
-          createdAt:
-            new Date().toISOString()
-
-        };
-
-
-        saveOrderHistory(
-          orderRecord
-        );
-
-
-        /* =================================================
-           CLEAR CART
-        ================================================= */
-
-        localStorage.removeItem(
-          CART_KEY
-        );
-
-
-        /* Keep global cart empty */
-
-        window.zevoriaCart =
-          [];
-
-
-        /* =================================================
-           SHOW SUCCESS
-        ================================================= */
-
-        if (
-          successOrderNumber
-        ) {
-
-          successOrderNumber.textContent =
-            `#${result.orderId}`;
-
-        }
-
-
-        if (
-          successTotal
-        ) {
-
-          successTotal.textContent =
-            money(
-              result.total
-            );
-
-        }
-
-
-        if (
-          successModal
-        ) {
-
-          successModal.classList.add(
-            "open"
-          );
-
-        } else {
-
-          alert(
-            `Order #${result.orderId} placed successfully!`
-          );
-
-        }
-
-
-        /*
-          Save currently selected order
-          for tracking button.
-        */
-
-        window.currentZevoriaOrder =
-          orderRecord;
-
-
-      } catch (error) {
-
-        console.error(
-          "Checkout error:",
-          error
-        );
-
-
-        alert(
-          error.message ||
-          "Something went wrong while placing your order."
-        );
-
-
-      } finally {
-
-        if (submitButton) {
-
-          submitButton.disabled =
-            false;
-
-          submitButton.textContent =
-            "Place Order — Cash on Delivery";
-
-        }
-
-      }
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   TRACK ORDER BUTTON
-========================================================= */
-
-if (trackOrderBtn) {
-
-  trackOrderBtn.addEventListener(
-    "click",
-    () => {
-
-      const order =
-        window.currentZevoriaOrder;
-
-
-      if (!order) {
-
-        return;
-
-      }
-
-
-      /*
-        Store the selected order so
-        index.html/app.js can open tracking.
-      */
-
-      localStorage.setItem(
-        "zevoriaSelectedOrder",
-        JSON.stringify(
-          order
-        )
+    );
+
+    const result = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(
+        result.message ||
+        result.error ||
+        "Unable to place your order."
       );
-
-
-      /*
-        Return to main website.
-        app.js can read the selected
-        order and open tracking.
-      */
-
-      window.location.href =
-        "index.html?track=" +
-        encodeURIComponent(
-          order.orderId
-        );
-
     }
-  );
 
+    if (!result.orderId) {
+      throw new Error(
+        "The server did not return an order number."
+      );
+    }
+
+    /*
+      IMPORTANT:
+
+      The secure backend should return:
+
+      {
+        orderId,
+        total,
+        paymentMethod: "COD",
+        orderToken
+      }
+
+      The orderToken is required for secure
+      customer order tracking.
+    */
+
+    const orderData = {
+      orderId: result.orderId,
+      total: Number(result.total) || 0,
+      orderToken: result.orderToken || "",
+      paymentMethod: "COD"
+    };
+
+    saveOrderForCustomer(orderData);
+
+    notifyAppAboutOrder(orderData);
+
+    // Cart is cleared only AFTER the server successfully
+    // creates the order.
+    localStorage.removeItem("zevoriaCart");
+
+    showSuccess(orderData);
+
+    /*
+      Give the email system a moment to process the request,
+      but do not block the order confirmation if email delivery
+      takes longer.
+    */
+
+  } catch (error) {
+    console.error("Checkout error:", error);
+
+    showMessage(
+      error.message ||
+      "Something went wrong while placing your order."
+    );
+  } finally {
+    if (submitButton) {
+      submitButton.disabled = false;
+      submitButton.textContent = originalButtonText || "Place Order";
+    }
+  }
 }
 
+function setupForm() {
+  const form =
+    $("#checkoutForm") ||
+    document.querySelector("form");
 
-/* =========================================================
-   CONTINUE SHOPPING
-========================================================= */
+  if (!form) {
+    console.warn("Checkout form not found.");
+    return;
+  }
 
-if (
-  continueShoppingBtn
-) {
-
-  continueShoppingBtn.addEventListener(
-    "click",
-    () => {
-
-      window.location.href =
-        "index.html";
-
-    }
-  );
-
+  form.addEventListener("submit", placeOrder);
 }
 
+function setupSuccessButtons() {
+  document.addEventListener("click", event => {
+    const continueButton =
+      event.target.closest("[data-continue-shopping]");
 
-/* =========================================================
-   INITIALIZE
-========================================================= */
+    if (continueButton) {
+      window.location.href = "index.html";
+    }
 
-prefillUser();
+    const trackButton =
+      event.target.closest("[data-track-order]");
 
-renderCheckout();
+    if (trackButton) {
+      const orderId =
+        trackButton.dataset.trackOrder;
+
+      if (orderId) {
+        window.location.href =
+          `index.html?track=${encodeURIComponent(orderId)}`;
+      }
+    }
+  });
+}
+
+function initializeCheckout() {
+  renderCart();
+  renderTotals();
+  prefillCustomerDetails();
+  setupForm();
+  setupSuccessButtons();
+
+  console.log("ZEVORIA checkout initialized.");
+}
+
+document.addEventListener(
+  "DOMContentLoaded",
+  initializeCheckout
+);
