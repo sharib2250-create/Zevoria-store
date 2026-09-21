@@ -1,6 +1,8 @@
 const API_BASE = "https://zevoria-backend.onrender.com";
 
-const cart = JSON.parse(localStorage.getItem("zevoriaCart") || "[]");
+const cart = JSON.parse(
+  localStorage.getItem("zevoriaCart") || "[]"
+);
 
 const PRODUCTS = [
   {
@@ -53,18 +55,10 @@ const PRODUCTS = [
   }
 ];
 
-const cartItems = cart
-  .map(item => {
-    const product = PRODUCTS.find(p => p.id === Number(item.i));
 
-    if (!product) return null;
-
-    return {
-      ...product,
-      qty: Math.max(1, Number(item.q) || 1)
-    };
-  })
-  .filter(Boolean);
+/* =========================================
+   HELPERS
+   ========================================= */
 
 const $ = selector => document.querySelector(selector);
 
@@ -81,35 +75,95 @@ function escapeHTML(value) {
     .replaceAll("'", "&#039;");
 }
 
+
+/* =========================================
+   CART
+   ========================================= */
+
+const cartItems = cart
+  .map(item => {
+
+    const product = PRODUCTS.find(
+      p => p.id === Number(item.i)
+    );
+
+    if (!product) {
+      return null;
+    }
+
+    return {
+      ...product,
+      qty: Math.max(
+        1,
+        Number(item.q) || 1
+      )
+    };
+
+  })
+  .filter(Boolean);
+
+
+/* =========================================
+   LOGGED-IN USER
+   ========================================= */
+
 function getLoggedInUser() {
+
   try {
-    return JSON.parse(localStorage.getItem("zevoriaUser") || "null");
+
+    return JSON.parse(
+      localStorage.getItem("zevoriaUser") || "null"
+    );
+
   } catch {
+
     return null;
+
   }
+
 }
 
+
+/* =========================================
+   RENDER CART
+   ========================================= */
+
 function renderCart() {
+
   const container =
     $("#checkoutItems") ||
     $("#orderItems") ||
     $(".checkout-items");
 
-  if (!container) return;
+  if (!container) {
+    return;
+  }
+
 
   if (!cartItems.length) {
+
     container.innerHTML = `
       <div class="checkout-empty">
         <h3>Your bag is empty</h3>
-        <p>Add a fragrance before continuing to checkout.</p>
-        <a href="index.html">Continue Shopping</a>
+
+        <p>
+          Add a fragrance before continuing to checkout.
+        </p>
+
+        <a href="index.html">
+          Continue Shopping
+        </a>
       </div>
     `;
+
 
     const submitButton =
       $("#placeOrderBtn") ||
       $("#submitOrder") ||
-      document.querySelector('button[type="submit"]');
+      document.querySelector(
+        'button[type="submit"]'
+      );
+
 
     if (submitButton) {
       submitButton.disabled = true;
@@ -118,220 +172,247 @@ function renderCart() {
     return;
   }
 
+
   container.innerHTML = cartItems
     .map(item => {
-      const subtotal = item.price * item.qty;
+
+      const subtotal =
+        item.price * item.qty;
+
 
       return `
         <div class="checkout-item">
+
+          <div class="checkout-item-image"></div>
+
           <div class="checkout-item-info">
-            <div class="checkout-item-name">
+
+            <strong>
               ${escapeHTML(item.name)}
-            </div>
+            </strong>
 
-            <div class="checkout-item-meta">
-              ${escapeHTML(item.type)} • ${escapeHTML(item.notes)}
-            </div>
+            <small>
+              ${escapeHTML(item.type)}
+              ·
+              ${escapeHTML(item.notes)}
+            </small>
 
-            <div class="checkout-item-qty">
+            <small>
               Quantity: ${item.qty}
-            </div>
+            </small>
+
           </div>
 
           <div class="checkout-item-price">
             ${money(subtotal)}
           </div>
+
         </div>
       `;
+
     })
     .join("");
+
 }
+
+
+/* =========================================
+   TOTALS
+   ========================================= */
 
 function calculateSubtotal() {
+
   return cartItems.reduce(
-    (total, item) => total + item.price * item.qty,
+    (total, item) =>
+      total + item.price * item.qty,
     0
   );
+
 }
+
 
 function renderTotals() {
-  const subtotal = calculateSubtotal();
 
-  // COD is currently free delivery.
+  const subtotal =
+    calculateSubtotal();
+
   const delivery = 0;
 
-  const total = subtotal + delivery;
+  const total =
+    subtotal + delivery;
+
 
   const subtotalElement =
-    $("#checkoutSubtotal") ||
-    $("#subtotal") ||
-    document.querySelector("[data-subtotal]");
+    $("#checkoutSubtotal");
 
   const deliveryElement =
-    $("#checkoutDelivery") ||
-    $("#delivery") ||
-    document.querySelector("[data-delivery]");
+    $("#checkoutDelivery");
 
   const totalElement =
-    $("#checkoutTotal") ||
-    $("#total") ||
-    document.querySelector("[data-total]");
+    $("#checkoutTotal");
+
 
   if (subtotalElement) {
-    subtotalElement.textContent = money(subtotal);
+
+    subtotalElement.textContent =
+      money(subtotal);
+
   }
+
 
   if (deliveryElement) {
+
     deliveryElement.textContent =
-      delivery === 0 ? "FREE" : money(delivery);
+      delivery === 0
+        ? "FREE"
+        : money(delivery);
+
   }
+
 
   if (totalElement) {
-    totalElement.textContent = money(total);
+
+    totalElement.textContent =
+      money(total);
+
   }
+
 }
+
+
+/* =========================================
+   PREFILL CUSTOMER
+   ========================================= */
 
 function prefillCustomerDetails() {
-  const user = getLoggedInUser();
 
-  if (!user) return;
+  const user =
+    getLoggedInUser();
+
+  if (!user) {
+    return;
+  }
+
 
   const nameInput =
-    $("#customerName") ||
-    $("#fullName") ||
-    $("#name") ||
-    document.querySelector('[name="customerName"]');
+    $("#customerName");
 
   const emailInput =
-    $("#customerEmail") ||
-    $("#email") ||
-    document.querySelector('[name="customerEmail"]');
+    $("#customerEmail");
 
   const phoneInput =
-    $("#phone") ||
-    document.querySelector('[name="phone"]');
+    $("#phone");
+
 
   if (nameInput && user.name) {
-    nameInput.value = user.name;
+
+    nameInput.value =
+      user.name;
+
   }
+
 
   if (emailInput && user.email) {
-    emailInput.value = user.email;
+
+    emailInput.value =
+      user.email;
+
   }
+
 
   if (phoneInput && user.phone) {
-    phoneInput.value = user.phone;
+
+    phoneInput.value =
+      user.phone;
+
   }
+
 }
 
-function getValue(selectors) {
-  for (const selector of selectors) {
-    const element = document.querySelector(selector);
 
-    if (element && String(element.value).trim()) {
-      return String(element.value).trim();
+/* =========================================
+   GET FORM VALUE
+   ========================================= */
+
+function getValue(selectors) {
+
+  for (const selector of selectors) {
+
+    const element =
+      document.querySelector(selector);
+
+    if (
+      element &&
+      String(element.value).trim()
+    ) {
+
+      return String(
+        element.value
+      ).trim();
+
     }
+
   }
 
   return "";
 }
 
-function showMessage(message, type = "error") {
-  let box = $("#checkoutMessage");
 
-  if (!box) {
-    box = document.createElement("div");
-    box.id = "checkoutMessage";
-
-    const form =
-      $("#checkoutForm") ||
-      document.querySelector("form");
-
-    if (form) {
-      form.prepend(box);
-    } else {
-      document.body.prepend(box);
-    }
-  }
-
-  box.className = `checkout-message ${type}`;
-  box.textContent = message;
-
-  box.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-  });
-}
-
-function clearMessage() {
-  const box = $("#checkoutMessage");
-
-  if (box) {
-    box.textContent = "";
-    box.className = "";
-  }
-}
-
-function validateIndianPhone(phone) {
-  return /^[6-9]\d{9}$/.test(phone);
-}
-
-function validatePincode(pincode) {
-  return /^\d{6}$/.test(pincode);
-}
-
-function validateEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
+/* =========================================
+   FORM DATA
+   ========================================= */
 
 function getFormData() {
-  const customerName = getValue([
-    "#customerName",
-    "#fullName",
-    "#name",
-    '[name="customerName"]',
-    '[name="fullName"]'
-  ]);
 
-  const customerEmail = getValue([
-    "#customerEmail",
-    "#email",
-    '[name="customerEmail"]',
-    '[name="email"]'
-  ]);
+  const customerName =
+    getValue([
+      "#customerName",
+      '[name="customerName"]'
+    ]);
 
-  const phone = getValue([
-    "#phone",
-    "#mobile",
-    '[name="phone"]',
-    '[name="mobile"]'
-  ]).replace(/\s+/g, "");
 
-  const addressLine = getValue([
-    "#address",
-    "#addressLine",
-    '[name="address"]',
-    '[name="addressLine"]'
-  ]);
+  const customerEmail =
+    getValue([
+      "#customerEmail",
+      '[name="customerEmail"]'
+    ]);
 
-  const city = getValue([
-    "#city",
-    '[name="city"]'
-  ]);
 
-  const state = getValue([
-    "#state",
-    '[name="state"]'
-  ]);
+  const phone =
+    getValue([
+      "#phone",
+      '[name="phone"]'
+    ])
+    .replace(/\s+/g, "");
 
-  const pincode = getValue([
-    "#pincode",
-    "#pinCode",
-    "#zip",
-    '[name="pincode"]',
-    '[name="pinCode"]',
-    '[name="zip"]'
-  ]);
+
+  const addressLine =
+    getValue([
+      "#address",
+      '[name="address"]'
+    ]);
+
+
+  const city =
+    getValue([
+      "#city",
+      '[name="city"]'
+    ]);
+
+
+  const state =
+    getValue([
+      "#state",
+      '[name="state"]'
+    ]);
+
+
+  const pincode =
+    getValue([
+      "#pincode",
+      '[name="pincode"]'
+    ]);
+
 
   return {
     customerName,
@@ -342,63 +423,148 @@ function getFormData() {
     state,
     pincode
   };
+
 }
+
+
+/* =========================================
+   VALIDATION
+   ========================================= */
+
+function validateIndianPhone(phone) {
+
+  return /^[6-9]\d{9}$/.test(phone);
+
+}
+
+
+function validatePincode(pincode) {
+
+  return /^\d{6}$/.test(pincode);
+
+}
+
+
+function validateEmail(email) {
+
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+}
+
 
 function validateForm(data) {
+
   if (!data.customerName) {
-    showMessage("Please enter your full name.");
+
+    showMessage(
+      "Please enter your full name."
+    );
+
     return false;
   }
+
 
   if (!data.customerEmail) {
-    showMessage("Please enter your email address.");
+
+    showMessage(
+      "Please enter your email address."
+    );
+
     return false;
   }
+
 
   if (!validateEmail(data.customerEmail)) {
-    showMessage("Please enter a valid email address.");
+
+    showMessage(
+      "Please enter a valid email address."
+    );
+
     return false;
   }
+
 
   if (!data.phone) {
-    showMessage("Please enter your mobile number.");
+
+    showMessage(
+      "Please enter your mobile number."
+    );
+
     return false;
   }
+
 
   if (!validateIndianPhone(data.phone)) {
-    showMessage("Please enter a valid 10-digit Indian mobile number.");
+
+    showMessage(
+      "Please enter a valid 10-digit Indian mobile number."
+    );
+
     return false;
   }
+
 
   if (!data.addressLine) {
-    showMessage("Please enter your complete address.");
+
+    showMessage(
+      "Please enter your complete address."
+    );
+
     return false;
   }
+
 
   if (!data.city) {
-    showMessage("Please enter your city.");
+
+    showMessage(
+      "Please enter your city."
+    );
+
     return false;
   }
+
 
   if (!data.state) {
-    showMessage("Please enter your state.");
+
+    showMessage(
+      "Please select your state."
+    );
+
     return false;
   }
+
 
   if (!data.pincode) {
-    showMessage("Please enter your PIN code.");
+
+    showMessage(
+      "Please enter your PIN code."
+    );
+
     return false;
   }
+
 
   if (!validatePincode(data.pincode)) {
-    showMessage("Please enter a valid 6-digit PIN code.");
+
+    showMessage(
+      "Please enter a valid 6-digit PIN code."
+    );
+
     return false;
   }
 
+
   return true;
+
 }
 
+
+/* =========================================
+   ADDRESS
+   ========================================= */
+
 function buildAddress(data) {
+
   return [
     data.addressLine,
     data.city,
@@ -407,304 +573,495 @@ function buildAddress(data) {
   ]
     .filter(Boolean)
     .join(", ");
+
 }
 
+
+/* =========================================
+   MESSAGE
+   ========================================= */
+
+function showMessage(
+  message,
+  type = "error"
+) {
+
+  const box =
+    $("#checkoutMessage");
+
+  if (!box) {
+    alert(message);
+    return;
+  }
+
+
+  box.textContent =
+    message;
+
+  box.className =
+    `checkout-message ${type}`;
+
+}
+
+
+function clearMessage() {
+
+  const box =
+    $("#checkoutMessage");
+
+  if (!box) {
+    return;
+  }
+
+
+  box.textContent = "";
+
+  box.className =
+    "checkout-message";
+
+}
+
+
+/* =========================================
+   SAVE ORDER LOCALLY
+   ========================================= */
+
 function saveOrderForCustomer(orderData) {
-  const existing = JSON.parse(
-    localStorage.getItem("zevoriaOrders") || "[]"
-  );
+
+  let existing = [];
+
+  try {
+
+    existing = JSON.parse(
+      localStorage.getItem(
+        "zevoriaOrders"
+      ) || "[]"
+    );
+
+  } catch {
+
+    existing = [];
+
+  }
+
 
   const order = {
-    orderId: orderData.orderId,
-    orderToken: orderData.orderToken || "",
-    total: Number(orderData.total) || 0,
-    paymentMethod: "COD",
-    createdAt: new Date().toISOString()
+
+    orderId:
+      orderData.orderId,
+
+    orderToken:
+      orderData.orderToken || "",
+
+    total:
+      Number(orderData.total) || 0,
+
+    paymentMethod:
+      "COD",
+
+    createdAt:
+      new Date().toISOString()
+
   };
 
-  const index = existing.findIndex(
-    item => String(item.orderId) === String(order.orderId)
-  );
 
-  if (index >= 0) {
-    existing[index] = {
-      ...existing[index],
+  const existingIndex =
+    existing.findIndex(
+      item =>
+        String(item.orderId) ===
+        String(order.orderId)
+    );
+
+
+  if (existingIndex >= 0) {
+
+    existing[existingIndex] = {
+      ...existing[existingIndex],
       ...order
     };
+
   } else {
+
     existing.unshift(order);
+
   }
+
 
   localStorage.setItem(
     "zevoriaOrders",
     JSON.stringify(existing)
   );
+
 }
 
+
+/* =========================================
+   TELL app.js ABOUT ORDER
+   ========================================= */
+
 function notifyAppAboutOrder(orderData) {
-  // app.js exposes this function.
+
   if (
-    typeof window.rememberOrderFromCheckout === "function"
+    typeof window.rememberOrderFromCheckout ===
+    "function"
   ) {
+
     window.rememberOrderFromCheckout(
       orderData.orderId,
       orderData.total,
       orderData.orderToken
     );
+
   }
+
 }
+
+
+/* =========================================
+   ORDER CONFIRMATION
+   ========================================= */
 
 function showSuccess(orderData) {
-  const orderNumber = escapeHTML(orderData.orderId);
-  const total = money(orderData.total);
-
-  const modal =
-    $("#successModal") ||
-    $("#orderSuccessModal");
-
-  if (modal) {
-    modal.classList.add("active");
-    modal.classList.add("show");
-
-    const orderNumberElement =
-      modal.querySelector(".success-order-number") ||
-      modal.querySelector("[data-order-id]");
-
-    const totalElement =
-      modal.querySelector(".success-total") ||
-      modal.querySelector("[data-total]");
-
-    if (orderNumberElement) {
-      orderNumberElement.textContent = orderNumber;
-    }
-
-    if (totalElement) {
-      totalElement.textContent = total;
-    }
-
-    return;
-  }
 
   const successContainer =
-    $("#checkoutSuccess") ||
-    document.querySelector(".checkout-success");
+    $("#checkoutSuccess");
 
-  if (successContainer) {
-    successContainer.innerHTML = `
-      <div class="success-icon">✓</div>
 
-      <h2>Order Confirmed</h2>
+  if (!successContainer) {
 
-      <p>
-        Thank you for shopping with ZEVORIA.
-      </p>
-
-      <p>
-        Your order number is
-        <strong>#${orderNumber}</strong>
-      </p>
-
-      <p>
-        Total:
-        <strong>${total}</strong>
-      </p>
-
-      <p>
-        Payment Method:
-        <strong>Cash on Delivery</strong>
-      </p>
-
-      <div class="success-actions">
-        <a href="index.html">Continue Shopping</a>
-      </div>
-    `;
-
-    successContainer.style.display = "block";
+    alert(
+      `Order Confirmed!\n\n` +
+      `Order #${orderData.orderId}\n` +
+      `Total: ${money(orderData.total)}\n` +
+      `Payment: Cash on Delivery`
+    );
 
     return;
+
   }
 
-  alert(
-    `Order confirmed!\n\nOrder #${orderData.orderId}\nTotal: ${total}\nPayment: Cash on Delivery`
-  );
+
+  const orderIdElement =
+    $("#successOrderId");
+
+
+  const totalElement =
+    $("#successTotal");
+
+
+  if (orderIdElement) {
+
+    orderIdElement.textContent =
+      `#${orderData.orderId}`;
+
+  }
+
+
+  if (totalElement) {
+
+    totalElement.textContent =
+      money(orderData.total);
+
+  }
+
+
+  /*
+   * IMPORTANT:
+   * Hide checkout after successful order.
+   */
+
+  const checkoutWrapper =
+    document.querySelector(
+      ".checkout-wrapper"
+    );
+
+
+  if (checkoutWrapper) {
+
+    checkoutWrapper.style.display =
+      "none";
+
+  }
+
+
+  /*
+   * Show ORDER CONFIRMED screen.
+   */
+
+  successContainer.style.display =
+    "flex";
+
+
+  /*
+   * Scroll to top.
+   */
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+
 }
 
+
+/* =========================================
+   PLACE ORDER
+   ========================================= */
+
 async function placeOrder(event) {
+
   event.preventDefault();
 
   clearMessage();
 
+
   if (!cartItems.length) {
-    showMessage("Your cart is empty.");
+
+    showMessage(
+      "Your bag is empty."
+    );
+
     return;
+
   }
 
-  const data = getFormData();
+
+  const data =
+    getFormData();
+
 
   if (!validateForm(data)) {
+
     return;
+
   }
+
 
   const submitButton =
-    $("#placeOrderBtn") ||
-    $("#submitOrder") ||
-    document.querySelector(
-      '#checkoutForm button[type="submit"]'
-    ) ||
-    document.querySelector(
-      'form button[type="submit"]'
-    );
+    $("#placeOrderBtn");
 
-  const originalButtonText = submitButton
-    ? submitButton.textContent
-    : "";
+
+  const originalText =
+    submitButton
+      ? submitButton.innerHTML
+      : "PLACE ORDER";
+
 
   if (submitButton) {
-    submitButton.disabled = true;
-    submitButton.textContent = "Placing Order...";
+
+    submitButton.disabled =
+      true;
+
+    submitButton.innerHTML =
+      `<span>PLACING ORDER...</span>`;
+
   }
 
+
   try {
-    const response = await fetch(
-      `${API_BASE}/api/orders`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          customerName: data.customerName,
-          customerEmail: data.customerEmail,
-          phone: data.phone,
-          address: buildAddress(data),
 
-          // COD only for now.
-          paymentMethod: "COD",
+    /*
+     * SEND ORDER TO BACKEND
+     */
 
-          items: cartItems.map(item => ({
-            productId: item.id,
-            qty: item.qty
-          }))
-        })
-      }
-    );
+    const response =
+      await fetch(
+        `${API_BASE}/api/orders`,
+        {
+          method: "POST",
 
-    const result = await response.json().catch(() => ({}));
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
+
+          body: JSON.stringify({
+
+            customerName:
+              data.customerName,
+
+            customerEmail:
+              data.customerEmail,
+
+            phone:
+              data.phone,
+
+            address:
+              buildAddress(data),
+
+            paymentMethod:
+              "COD",
+
+            items:
+              cartItems.map(item => ({
+                productId:
+                  item.id,
+
+                qty:
+                  item.qty
+              }))
+
+          })
+        }
+      );
+
+
+    const result =
+      await response
+        .json()
+        .catch(() => ({}));
+
+
+    /*
+     * BACKEND ERROR
+     */
 
     if (!response.ok) {
+
       throw new Error(
-        result.message ||
         result.error ||
+        result.message ||
         "Unable to place your order."
       );
+
     }
+
+
+    /*
+     * MAKE SURE ORDER ID EXISTS
+     */
 
     if (!result.orderId) {
+
       throw new Error(
-        "The server did not return an order number."
+        "Order was not confirmed by the server."
       );
+
     }
 
+
     /*
-      IMPORTANT:
-
-      The secure backend should return:
-
-      {
-        orderId,
-        total,
-        paymentMethod: "COD",
-        orderToken
-      }
-
-      The orderToken is required for secure
-      customer order tracking.
-    */
+     * CREATE ORDER DATA
+     */
 
     const orderData = {
-      orderId: result.orderId,
-      total: Number(result.total) || 0,
-      orderToken: result.orderToken || "",
-      paymentMethod: "COD"
+
+      orderId:
+        result.orderId,
+
+      total:
+        Number(result.total) || 0,
+
+      orderToken:
+        result.orderToken || "",
+
+      paymentMethod:
+        "COD"
+
     };
 
-    saveOrderForCustomer(orderData);
-
-    notifyAppAboutOrder(orderData);
-
-    // Cart is cleared only AFTER the server successfully
-    // creates the order.
-    localStorage.removeItem("zevoriaCart");
-
-    showSuccess(orderData);
 
     /*
-      Give the email system a moment to process the request,
-      but do not block the order confirmation if email delivery
-      takes longer.
-    */
+     * SAVE ORDER HISTORY
+     */
+
+    saveOrderForCustomer(
+      orderData
+    );
+
+
+    /*
+     * UPDATE app.js
+     */
+
+    notifyAppAboutOrder(
+      orderData
+    );
+
+
+    /*
+     * CLEAR CART ONLY AFTER
+     * SUCCESSFUL BACKEND RESPONSE
+     */
+
+    localStorage.removeItem(
+      "zevoriaCart"
+    );
+
+
+    /*
+     * SHOW ORDER CONFIRMED
+     */
+
+    showSuccess(
+      orderData
+    );
+
 
   } catch (error) {
-    console.error("Checkout error:", error);
+
+    console.error(
+      "ZEVORIA checkout error:",
+      error
+    );
+
 
     showMessage(
       error.message ||
       "Something went wrong while placing your order."
     );
+
+
   } finally {
+
     if (submitButton) {
-      submitButton.disabled = false;
-      submitButton.textContent = originalButtonText || "Place Order";
+
+      submitButton.disabled =
+        false;
+
+      submitButton.innerHTML =
+        originalText;
+
     }
-  }
-}
 
-function setupForm() {
-  const form =
-    $("#checkoutForm") ||
-    document.querySelector("form");
-
-  if (!form) {
-    console.warn("Checkout form not found.");
-    return;
   }
 
-  form.addEventListener("submit", placeOrder);
 }
 
-function setupSuccessButtons() {
-  document.addEventListener("click", event => {
-    const continueButton =
-      event.target.closest("[data-continue-shopping]");
 
-    if (continueButton) {
-      window.location.href = "index.html";
-    }
-
-    const trackButton =
-      event.target.closest("[data-track-order]");
-
-    if (trackButton) {
-      const orderId =
-        trackButton.dataset.trackOrder;
-
-      if (orderId) {
-        window.location.href =
-          `index.html?track=${encodeURIComponent(orderId)}`;
-      }
-    }
-  });
-}
+/* =========================================
+   INITIALIZE
+   ========================================= */
 
 function initializeCheckout() {
-  renderCart();
-  renderTotals();
-  prefillCustomerDetails();
-  setupForm();
-  setupSuccessButtons();
 
-  console.log("ZEVORIA checkout initialized.");
+  renderCart();
+
+  renderTotals();
+
+  prefillCustomerDetails();
+
+
+  const form =
+    $("#checkoutForm");
+
+
+  if (form) {
+
+    form.addEventListener(
+      "submit",
+      placeOrder
+    );
+
+  }
+
+
+  console.log(
+    "ZEVORIA checkout initialized."
+  );
+
 }
+
 
 document.addEventListener(
   "DOMContentLoaded",
