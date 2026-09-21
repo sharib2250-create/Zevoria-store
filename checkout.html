@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>Checkout | ZEVORIA</title>
 
@@ -19,359 +22,648 @@
 
 <body>
 
-  <!-- HEADER -->
+  <!-- ================= HEADER ================= -->
+
   <header class="checkout-header">
 
     <a href="index.html" class="brand">
-      <span class="brand-mark">Z</span>
 
-      <span class="brand-text">
+      <div class="brand-logo">
+        Z
+      </div>
+
+      <div class="brand-name">
         <strong>ZEVORIA</strong>
-        <small>THE SCENT OF LUXURY</small>
-      </span>
+        <span>THE SCENT OF LUXURY</span>
+      </div>
+
     </a>
 
-    <div class="secure-checkout">
-      <span class="lock-icon">♢</span>
-      <span>Secure Checkout</span>
+
+    <div class="secure-header">
+
+      <span class="secure-icon">⌑</span>
+
+      <span>
+        Secure Checkout
+      </span>
+
     </div>
 
   </header>
 
 
-  <!-- MAIN -->
-  <main class="checkout-container">
+  <!-- ================= CHECKOUT ================= -->
 
-    <!-- LEFT SIDE -->
-    <section class="checkout-main">
+  <main class="checkout-wrapper">
 
-      <div class="page-heading">
-        <span class="eyebrow">ZEVORIA</span>
-        <h1>Complete Your Order</h1>
+    <!-- ================= LEFT ================= -->
+
+    <section class="checkout-left">
+
+      <div class="checkout-intro">
+
+        <span class="intro-label">
+          CHECKOUT
+        </span>
+
+        <h1>
+          Complete Your Order
+        </h1>
+
         <p>
-          Enter your delivery details and place your order with
-          Cash on Delivery.
+          Enter your delivery details and place your order
+          with Cash on Delivery.
         </p>
+
       </div>
 
 
-      <!-- ORDER MESSAGE -->
+      <!-- MESSAGE -->
+
       <div id="checkoutMessage"></div>
 
 
-      <!-- CUSTOMER DETAILS -->
-      <section class="checkout-card">
+      <!-- ================= FORM ================= -->
 
-        <div class="section-heading">
-          <span class="step-number">01</span>
-
-          <div>
-            <h2>Contact Information</h2>
-            <p>Where should we send your order confirmation?</p>
-          </div>
-        </div>
-
-
-        <div class="form-grid">
-
-          <div class="form-group full">
-            <label for="customerName">
-              Full Name
-            </label>
-
-            <input
-              type="text"
-              id="customerName"
-              name="customerName"
-              placeholder="Enter your full name"
-              autocomplete="name"
-              required
-            >
-          </div>
-
-
-          <div class="form-group">
-            <label for="customerEmail">
-              Email Address
-            </label>
-
-            <input
-              type="email"
-              id="customerEmail"
-              name="customerEmail"
-              placeholder="you@example.com"
-              autocomplete="email"
-              required
-            >
-          </div>
-
-
-          <div class="form-group">
-            <label for="phone">
-              Mobile Number
-            </label>
-
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              placeholder="10-digit mobile number"
-              maxlength="10"
-              autocomplete="tel"
-              required
-            >
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- DELIVERY ADDRESS -->
-      <section class="checkout-card">
-
-        <div class="section-heading">
-          <span class="step-number">02</span>
-
-          <div>
-            <h2>Delivery Address</h2>
-            <p>Enter the address where you want your order delivered.</p>
-          </div>
-        </div>
-
-
-        <div class="form-grid">
-
-          <div class="form-group full">
-            <label for="address">
-              Complete Address
-            </label>
-
-            <textarea
-              id="address"
-              name="address"
-              rows="4"
-              placeholder="House / Flat No., Building, Street, Area"
-              autocomplete="street-address"
-              required
-            ></textarea>
-          </div>
-
-
-          <div class="form-group">
-            <label for="city">
-              City
-            </label>
-
-            <input
-              type="text"
-              id="city"
-              name="city"
-              placeholder="Mumbai"
-              autocomplete="address-level2"
-              required
-            >
-          </div>
-
-
-          <div class="form-group">
-            <label for="state">
-              State
-            </label>
-
-            <input
-              type="text"
-              id="state"
-              name="state"
-              placeholder="Maharashtra"
-              autocomplete="address-level1"
-              required
-            >
-          </div>
-
-
-          <div class="form-group">
-            <label for="pincode">
-              PIN Code
-            </label>
-
-            <input
-              type="text"
-              id="pincode"
-              name="pincode"
-              placeholder="400001"
-              maxlength="6"
-              inputmode="numeric"
-              autocomplete="postal-code"
-              required
-            >
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- PAYMENT -->
-      <section class="checkout-card">
-
-        <div class="section-heading">
-          <span class="step-number">03</span>
-
-          <div>
-            <h2>Payment Method</h2>
-            <p>Choose your available payment method.</p>
-          </div>
-        </div>
-
-
-        <div class="payment-option selected">
-
-          <div class="payment-radio">
-            <span></span>
-          </div>
-
-          <div class="payment-info">
-            <strong>Cash on Delivery</strong>
-
-            <small>
-              Pay in cash when your ZEVORIA order arrives.
-            </small>
-          </div>
-
-          <div class="payment-badge">
-            COD
-          </div>
-
-        </div>
-
-      </section>
-
-
-      <!-- FORM -->
       <form id="checkoutForm">
 
-        <!-- The actual customer/payment fields are above.
-             This hidden area keeps the form submission accessible. -->
 
-        <button
-          type="submit"
-          id="placeOrderBtn"
-          class="place-order-button"
-        >
-          <span>Place Order</span>
-          <span class="button-arrow">→</span>
-        </button>
+        <!-- ================= CONTACT ================= -->
 
-        <div class="checkout-note">
-          <span>🔒</span>
+        <section class="checkout-section">
 
-          <p>
-            Your order details are securely processed by ZEVORIA.
-            No online payment is required.
-          </p>
-        </div>
+          <div class="section-title">
+
+            <div class="step-circle">
+              01
+            </div>
+
+            <div>
+
+              <h2>
+                Contact Information
+              </h2>
+
+              <p>
+                Where should we send your order confirmation?
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="form-grid">
+
+            <div class="form-field">
+
+              <label for="customerName">
+                FULL NAME <span>*</span>
+              </label>
+
+              <input
+                type="text"
+                id="customerName"
+                name="customerName"
+                placeholder="Enter your full name"
+                autocomplete="name"
+                required
+              >
+
+            </div>
+
+
+            <div class="form-field">
+
+              <label for="customerEmail">
+                EMAIL ADDRESS <span>*</span>
+              </label>
+
+              <input
+                type="email"
+                id="customerEmail"
+                name="customerEmail"
+                placeholder="you@example.com"
+                autocomplete="email"
+                required
+              >
+
+            </div>
+
+
+            <div class="form-field">
+
+              <label for="phone">
+                MOBILE NUMBER <span>*</span>
+              </label>
+
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                placeholder="10-digit mobile number"
+                maxlength="10"
+                inputmode="numeric"
+                autocomplete="tel"
+                required
+              >
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- ================= ADDRESS ================= -->
+
+        <section class="checkout-section">
+
+          <div class="section-title">
+
+            <div class="step-circle">
+              02
+            </div>
+
+            <div>
+
+              <h2>
+                Delivery Address
+              </h2>
+
+              <p>
+                Enter the address where you want your order delivered.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="form-grid">
+
+
+            <div class="form-field full">
+
+              <label for="address">
+                COMPLETE ADDRESS <span>*</span>
+              </label>
+
+              <textarea
+                id="address"
+                name="address"
+                placeholder="House / Flat No., Building, Street, Area"
+                rows="4"
+                autocomplete="street-address"
+                required
+              ></textarea>
+
+            </div>
+
+
+            <div class="form-field">
+
+              <label for="city">
+                CITY <span>*</span>
+              </label>
+
+              <input
+                type="text"
+                id="city"
+                name="city"
+                placeholder="Mumbai"
+                autocomplete="address-level2"
+                required
+              >
+
+            </div>
+
+
+            <div class="form-field">
+
+              <label for="state">
+                STATE <span>*</span>
+              </label>
+
+              <select
+                id="state"
+                name="state"
+                required
+              >
+
+                <option value="">
+                  Select state
+                </option>
+
+                <option value="Andhra Pradesh">
+                  Andhra Pradesh
+                </option>
+
+                <option value="Delhi">
+                  Delhi
+                </option>
+
+                <option value="Gujarat">
+                  Gujarat
+                </option>
+
+                <option value="Karnataka">
+                  Karnataka
+                </option>
+
+                <option value="Maharashtra">
+                  Maharashtra
+                </option>
+
+                <option value="Madhya Pradesh">
+                  Madhya Pradesh
+                </option>
+
+                <option value="Rajasthan">
+                  Rajasthan
+                </option>
+
+                <option value="Tamil Nadu">
+                  Tamil Nadu
+                </option>
+
+                <option value="Telangana">
+                  Telangana
+                </option>
+
+                <option value="Uttar Pradesh">
+                  Uttar Pradesh
+                </option>
+
+                <option value="West Bengal">
+                  West Bengal
+                </option>
+
+                <option value="Other">
+                  Other
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="form-field">
+
+              <label for="pincode">
+                PIN CODE <span>*</span>
+              </label>
+
+              <input
+                type="text"
+                id="pincode"
+                name="pincode"
+                placeholder="400001"
+                maxlength="6"
+                inputmode="numeric"
+                autocomplete="postal-code"
+                required
+              >
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- ================= PAYMENT ================= -->
+
+        <section class="checkout-section payment-section">
+
+          <div class="section-title">
+
+            <div class="step-circle">
+              03
+            </div>
+
+            <div>
+
+              <h2>
+                Payment Method
+              </h2>
+
+              <p>
+                Choose your available payment method.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="payment-option">
+
+            <div class="payment-radio">
+
+              <span></span>
+
+            </div>
+
+
+            <div class="payment-symbol">
+              ₹
+            </div>
+
+
+            <div class="payment-content">
+
+              <strong>
+                Cash on Delivery
+              </strong>
+
+              <p>
+                Pay in cash when your ZEVORIA order arrives.
+              </p>
+
+            </div>
+
+
+            <span class="cod-badge">
+              COD
+            </span>
+
+          </div>
+
+
+          <!-- PLACE ORDER -->
+
+          <button
+            type="submit"
+            id="placeOrderBtn"
+            class="place-order-btn"
+          >
+
+            <span>
+              PLACE ORDER
+            </span>
+
+            <span class="place-arrow">
+              →
+            </span>
+
+          </button>
+
+
+          <!-- REASSURANCE -->
+
+          <div class="checkout-benefits">
+
+            <div class="benefit">
+
+              <span class="benefit-icon">
+                ♢
+              </span>
+
+              <div>
+                <strong>
+                  Secure Order
+                </strong>
+
+                <small>
+                  Your details are safe.
+                </small>
+              </div>
+
+            </div>
+
+
+            <div class="benefit">
+
+              <span class="benefit-icon">
+                ✉
+              </span>
+
+              <div>
+                <strong>
+                  Order Confirmation
+                </strong>
+
+                <small>
+                  Sent to your email.
+                </small>
+              </div>
+
+            </div>
+
+
+            <div class="benefit">
+
+              <span class="benefit-icon">
+                ♧
+              </span>
+
+              <div>
+                <strong>
+                  Order Tracking
+                </strong>
+
+                <small>
+                  Track after placing.
+                </small>
+              </div>
+
+            </div>
+
+          </div>
+
+        </section>
+
 
       </form>
 
     </section>
 
 
-    <!-- RIGHT SIDE -->
-    <aside class="checkout-sidebar">
+    <!-- ================= RIGHT ================= -->
+
+    <aside class="checkout-right">
+
+
+      <!-- ORDER SUMMARY -->
 
       <div class="summary-card">
 
-        <div class="summary-header">
+
+        <div class="summary-heading">
+
           <div>
-            <span class="eyebrow">YOUR BAG</span>
-            <h2>Order Summary</h2>
+
+            <span>
+              YOUR BAG
+            </span>
+
+            <h2>
+              Order Summary
+            </h2>
+
           </div>
 
-          <a href="index.html" class="edit-bag">
-            Edit Bag
+
+          <a
+            href="index.html"
+            class="edit-bag"
+          >
+            Edit Bag →
           </a>
+
         </div>
 
 
-        <!-- CART ITEMS -->
-        <div id="checkoutItems" class="checkout-items">
-          <!-- checkout.js fills this -->
+        <!-- PRODUCTS -->
+
+        <div
+          id="checkoutItems"
+          class="checkout-items"
+        >
+
+          <!-- Filled automatically by checkout.js -->
+
         </div>
 
 
         <!-- TOTALS -->
-        <div class="summary-divider"></div>
 
-        <div class="summary-row">
-          <span>Subtotal</span>
-          <strong id="checkoutSubtotal">₹0</strong>
+        <div class="summary-lines">
+
+          <div class="summary-line">
+
+            <span>
+              Subtotal
+            </span>
+
+            <strong id="checkoutSubtotal">
+              ₹0
+            </strong>
+
+          </div>
+
+
+          <div class="summary-line">
+
+            <span>
+              Delivery
+            </span>
+
+            <strong class="free-delivery" id="checkoutDelivery">
+              FREE
+            </strong>
+
+          </div>
+
         </div>
-
-        <div class="summary-row">
-          <span>Delivery</span>
-          <strong id="checkoutDelivery">FREE</strong>
-        </div>
-
-
-        <div class="summary-divider"></div>
 
 
         <div class="summary-total">
-          <span>Total</span>
-          <strong id="checkoutTotal">₹0</strong>
+
+          <span>
+            Total
+          </span>
+
+          <strong id="checkoutTotal">
+            ₹0
+          </strong>
+
         </div>
 
 
-        <div class="cod-note">
+        <!-- COD INFO -->
 
-          <div class="cod-icon">
+        <div class="summary-cod">
+
+          <div class="summary-cod-icon">
             ₹
           </div>
 
           <div>
-            <strong>Cash on Delivery</strong>
+
+            <strong>
+              Cash on Delivery
+            </strong>
 
             <p>
               Pay when your order is delivered to your address.
             </p>
+
           </div>
 
         </div>
 
-      </div>
+
+        <!-- TRUST -->
+
+        <div class="why-shop">
+
+          <h3>
+            Why shop with ZEVORIA?
+          </h3>
 
 
-      <!-- TRUST -->
-      <div class="trust-card">
+          <div class="trust-grid">
 
-        <div class="trust-item">
-          <span>✓</span>
+            <div class="trust-item">
 
-          <div>
-            <strong>Secure Order</strong>
-            <small>Your order is safely processed.</small>
+              <span>
+                ♢
+              </span>
+
+              <strong>
+                Secure Order
+              </strong>
+
+              <small>
+                Your order is safe
+              </small>
+
+            </div>
+
+
+            <div class="trust-item">
+
+              <span>
+                ✉
+              </span>
+
+              <strong>
+                Confirmation
+              </strong>
+
+              <small>
+                Sent to your email
+              </small>
+
+            </div>
+
+
+            <div class="trust-item">
+
+              <span>
+                ♧
+              </span>
+
+              <strong>
+                Order Tracking
+              </strong>
+
+              <small>
+                Track after placing
+              </small>
+
+            </div>
+
           </div>
+
         </div>
 
 
-        <div class="trust-item">
-          <span>✓</span>
-
-          <div>
-            <strong>Order Confirmation</strong>
-            <small>Confirmation sent to your email.</small>
-          </div>
-        </div>
-
-
-        <div class="trust-item">
-          <span>✓</span>
-
-          <div>
-            <strong>Order Tracking</strong>
-            <small>Track your order after placing it.</small>
-          </div>
+        <div class="summary-brand">
+          ZEVORIA
         </div>
 
       </div>
@@ -381,13 +673,11 @@
   </main>
 
 
-  <!--
-    SUCCESS SECTION
+  <!-- ================= SUCCESS ================= -->
 
+  <!--
     IMPORTANT:
-    This is hidden by default.
-    It only becomes visible after checkout.js
-    successfully receives an order from the backend.
+    Hidden until an order is successfully created.
   -->
 
   <section
@@ -396,63 +686,96 @@
     style="display:none;"
   >
 
-    <div class="success-box">
+    <div class="success-card">
 
       <div class="success-check">
         ✓
       </div>
 
-      <span class="eyebrow">
+      <span class="success-label">
         ORDER CONFIRMED
       </span>
 
-      <h2>Thank You For Your Order</h2>
+      <h2>
+        Thank You For Your Order
+      </h2>
 
       <p>
-        Your ZEVORIA fragrance is now on its way to becoming
-        part of your story.
+        Your ZEVORIA fragrance order has been successfully placed.
       </p>
+
 
       <div class="success-details">
 
         <div>
-          <span>Order Number</span>
-          <strong id="successOrderId">—</strong>
+
+          <span>
+            ORDER NUMBER
+          </span>
+
+          <strong id="successOrderId">
+            —
+          </strong>
+
         </div>
 
-        <div>
-          <span>Total</span>
-          <strong id="successTotal">—</strong>
-        </div>
 
         <div>
-          <span>Payment</span>
-          <strong>Cash on Delivery</strong>
+
+          <span>
+            TOTAL
+          </span>
+
+          <strong id="successTotal">
+            —
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <span>
+            PAYMENT
+          </span>
+
+          <strong>
+            CASH ON DELIVERY
+          </strong>
+
         </div>
 
       </div>
 
 
-      <div class="success-actions">
-
-        <a href="index.html" class="success-primary">
-          Continue Shopping
-        </a>
-
-      </div>
+      <a
+        href="index.html"
+        class="success-btn"
+      >
+        CONTINUE SHOPPING
+      </a>
 
     </div>
 
   </section>
 
 
-  <!-- FOOTER -->
+  <!-- ================= FOOTER ================= -->
+
   <footer class="checkout-footer">
 
-    <div>
-      <strong>ZEVORIA</strong>
-      <span>THE SCENT OF LUXURY</span>
+    <div class="footer-brand">
+
+      <strong>
+        ZEVORIA
+      </strong>
+
+      <span>
+        THE SCENT OF LUXURY
+      </span>
+
     </div>
+
 
     <p>
       © 2026 ZEVORIA. All rights reserved.
