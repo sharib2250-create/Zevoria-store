@@ -433,11 +433,8 @@ app.get("/api/products", (req, res) => {
 
 const signupSchema = z.object({
   name: z.string().min(2).max(100),
-
   email: z.string().email().max(150),
-
   phone: z.string().min(7).max(30).optional(),
-
   password: z.string().min(6).max(100)
 });
 
@@ -609,11 +606,7 @@ app.post(
       }
 
       const sessionToken = createRandomToken();
-
-      const tokenHash = hashToken(
-        sessionToken
-      );
-
+      const tokenHash = hashToken(sessionToken);
       const csrfToken = createRandomToken();
 
       const expiresAt =
@@ -887,8 +880,26 @@ async function sendOrderConfirmationEmail({
   items,
   total
 }) {
-  if (!resend || !customerEmail) {
-    return false;
+  if (!resend) {
+    console.error(
+      `Order #${orderId}: RESEND_API_KEY is missing`
+    );
+
+    return {
+      sent: false,
+      email: customerEmail || null
+    };
+  }
+
+  if (!customerEmail) {
+    console.log(
+      `Order #${orderId}: no customer email was provided`
+    );
+
+    return {
+      sent: false,
+      email: null
+    };
   }
 
   try {
@@ -912,9 +923,8 @@ async function sendOrderConfirmationEmail({
       )
       .join("");
 
-    await resend.emails.send({
+    const result = await resend.emails.send({
       from: EMAIL_FROM,
-
       to: customerEmail,
 
       subject:
@@ -1044,14 +1054,32 @@ async function sendOrderConfirmationEmail({
       `
     });
 
-    return true;
+    console.log(
+      `Order #${orderId} email sent: true → ${customerEmail}`
+    );
+
+    console.log(
+      `Resend response for Order #${orderId}:`,
+      result
+    );
+
+    return {
+      sent: true,
+      email: customerEmail,
+      result
+    };
+
   } catch (error) {
     console.error(
-      "Email sending failed:",
+      `Order #${orderId} email sending failed to ${customerEmail}:`,
       error
     );
 
-    return false;
+    return {
+      sent: false,
+      email: customerEmail,
+      error: error.message
+    };
   }
 }
 
@@ -1133,6 +1161,19 @@ app.post("/api/orders", (req, res) => {
       0
     );
 
+    /* Normalize customer email */
+    const normalizedCustomerEmail =
+      data.customerEmail
+        ? data.customerEmail.trim().toLowerCase()
+        : null;
+
+    /* Show submitted customer email in Render logs */
+    console.log(
+      `New order request → customer email: ${
+        normalizedCustomerEmail || "none"
+      }`
+    );
+
     /* PRIVATE ORDER TOKEN */
 
     const orderAccessToken =
@@ -1159,11 +1200,7 @@ app.post("/api/orders", (req, res) => {
         .run(
           data.customerName.trim(),
 
-          data.customerEmail
-            ? data.customerEmail
-                .trim()
-                .toLowerCase()
-            : null,
+          normalizedCustomerEmail,
 
           data.phone.trim(),
 
@@ -1216,18 +1253,20 @@ app.post("/api/orders", (req, res) => {
 
     const orderId = createOrder();
 
+    console.log(
+      `Order #${orderId} created → customer email: ${
+        normalizedCustomerEmail || "none"
+      }`
+    );
+
+    /* Send confirmation email to customer's email */
     sendOrderConfirmationEmail({
       orderId,
       customerName: data.customerName,
-      customerEmail: data.customerEmail,
+      customerEmail: normalizedCustomerEmail,
       address: data.address,
       items: checkedItems,
       total
-    }).then((emailSent) => {
-      console.log(
-        `Order #${orderId} email sent:`,
-        emailSent
-      );
     });
 
     /*
@@ -1244,6 +1283,7 @@ app.post("/api/orders", (req, res) => {
       paymentMethod: "COD",
       orderToken: orderAccessToken
     });
+
   } catch (error) {
     console.error(
       "Order error:",
@@ -1341,6 +1381,7 @@ app.get(
         ...order,
         items
       });
+
     } catch (error) {
       console.error(
         "Order lookup error:",
@@ -1364,6 +1405,7 @@ setInterval(() => {
       DELETE FROM admin_sessions
       WHERE expires_at <= ?
     `).run(Date.now());
+
   } catch (error) {
     console.error(
       "Session cleanup error:",
