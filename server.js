@@ -4,11 +4,11 @@ const express = require("express");
 const helmet = require("helmet");
 const cors = require("cors");
 const rateLimit = require("express-rate-limit");
-const Database = require("better-sqlite3");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 const { z } = require("zod");
 const { Resend } = require("resend");
+const { Pool } = require("pg");
 
 const app = express();
 
@@ -28,6 +28,167 @@ const resend = process.env.RESEND_API_KEY
 
 const EMAIL_FROM =
   process.env.EMAIL_FROM || "onboarding@resend.dev";
+
+/* =========================================================
+   DATABASE - SUPABASE POSTGRESQL
+========================================================= */
+
+if (!process.env.DATABASE_URL) {
+  console.error("DATABASE_URL is missing.");
+  process.exit(1);
+}
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+
+  // Supabase Session Pooler uses SSL.
+  ssl: {
+    rejectUnauthorized: false
+  },
+
+  max: 5,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 10000
+});
+
+/* =========================================================
+   DATABASE INITIALIZATION
+========================================================= */
+
+async function initializeDatabase() {
+  const client = await pool.connect();
+
+  try {
+    console.log("Connecting to Supabase PostgreSQL...");
+
+    await client.query("SELECT 1");
+
+    console.log("Supabase PostgreSQL connection successful.");
+
+    /*
+      Your Supabase SQL already created the main tables.
+
+      These ALTER statements make sure the columns required
+      by this backend exist.
+    */
+
+    await client.query(`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS phone text;
+    `);
+
+    await client.query(`
+      ALTER TABLE admin_sessions
+      ADD COLUMN IF NOT EXISTS csrf_token text;
+    `);
+
+    await client.query(`
+      ALTER TABLE orders
+      ADD COLUMN IF NOT EXISTS access_token_hash text;
+    `);
+
+    console.log("Database structure checked.");
+
+    /* =====================================================
+       SEED PRODUCTS IF EMPTY
+    ===================================================== */
+
+    const countResult = await client.query(`
+      SELECT COUNT(*)::int AS count
+      FROM products
+    `);
+
+    const productCount = countResult.rows[0].count;
+
+    if (productCount === 0) {
+      const products = [
+        {
+          id: 1,
+          name: "No. 01 Noir",
+          category: "men",
+          price: 1499,
+          stock: 25,
+          note: "Amber • Oud • Vanilla"
+        },
+        {
+          id: 2,
+          name: "No. 02 Santal",
+          category: "unisex",
+          price: 1699,
+          stock: 25,
+          note: "Sandalwood • Musk • Cedar"
+        },
+        {
+          id: 3,
+          name: "No. 03 Bloom",
+          category: "women",
+          price: 1399,
+          stock: 25,
+          note: "Rose • Peony • Vanilla"
+        },
+        {
+          id: 4,
+          name: "No. 04 Oud",
+          category: "unisex",
+          price: 899,
+          stock: 25,
+          note: "Oud • Saffron • Amber"
+        },
+        {
+          id: 5,
+          name: "No. 05 Azure",
+          category: "men",
+          price: 1599,
+          stock: 25,
+          note: "Bergamot • Marine • Musk"
+        },
+        {
+          id: 6,
+          name: "No. 06 Velvet",
+          category: "women",
+          price: 1499,
+          stock: 25,
+          note: "Iris • Tonka • Amber"
+        }
+      ];
+
+      for (const product of products) {
+        await client.query(
+          `
+          INSERT INTO products
+          (
+            id,
+            name,
+            category,
+            price,
+            stock,
+            description,
+            active
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, true)
+          ON CONFLICT (id) DO NOTHING
+          `,
+          [
+            product.id,
+            product.name,
+            product.category,
+            product.price,
+            product.stock,
+            product.note
+          ]
+        );
+      }
+
+      console.log("ZEVORIA products seeded.");
+    } else {
+      console.log(
+        `Products already exist: ${productCount}`
+      );
+    }
+  } finally {
+    client.release();
+  }
+}
 
 /* =========================================================
    SECURITY
@@ -73,180 +234,6 @@ const adminLoginLimiter = rateLimit({
 });
 
 app.use(generalLimiter);
-
-/* =========================================================
-   DATABASE
-========================================================= */
-
-const db = new Database("zevovia.db");
-
-db.pragma("journal_mode = WAL");
-
-db.exec(`
-CREATE TABLE IF NOT EXISTS products (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  category TEXT NOT NULL,
-  price REAL NOT NULL,
-  stock INTEGER NOT NULL DEFAULT 0,
-  note TEXT
-);
-
-CREATE TABLE IF NOT EXISTS orders (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  customer_name TEXT NOT NULL,
-  customer_email TEXT,
-  phone TEXT NOT NULL,
-  address TEXT NOT NULL,
-  total REAL NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending',
-  access_token_hash TEXT,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS order_items (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  order_id INTEGER NOT NULL,
-  product_id INTEGER NOT NULL,
-  name TEXT NOT NULL,
-  qty INTEGER NOT NULL,
-  price REAL NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  email TEXT UNIQUE NOT NULL,
-  phone TEXT,
-  password_hash TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS admin_sessions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  token_hash TEXT UNIQUE NOT NULL,
-  csrf_token TEXT NOT NULL,
-  expires_at INTEGER NOT NULL,
-  created_at INTEGER NOT NULL
-);
-`);
-
-/* =========================================================
-   DATABASE MIGRATIONS
-========================================================= */
-
-let orderColumns = db
-  .prepare("PRAGMA table_info(orders)")
-  .all()
-  .map((x) => x.name);
-
-if (!orderColumns.includes("customer_email")) {
-  db.exec(`
-    ALTER TABLE orders
-    ADD COLUMN customer_email TEXT
-  `);
-}
-
-orderColumns = db
-  .prepare("PRAGMA table_info(orders)")
-  .all()
-  .map((x) => x.name);
-
-if (!orderColumns.includes("access_token_hash")) {
-  db.exec(`
-    ALTER TABLE orders
-    ADD COLUMN access_token_hash TEXT
-  `);
-}
-
-/* =========================================================
-   PRODUCTS
-========================================================= */
-
-const products = [
-  {
-    id: 1,
-    name: "No. 01 Noir",
-    category: "men",
-    price: 1499,
-    stock: 25,
-    note: "Amber • Oud • Vanilla"
-  },
-  {
-    id: 2,
-    name: "No. 02 Santal",
-    category: "unisex",
-    price: 1699,
-    stock: 25,
-    note: "Sandalwood • Musk • Cedar"
-  },
-  {
-    id: 3,
-    name: "No. 03 Bloom",
-    category: "women",
-    price: 1399,
-    stock: 25,
-    note: "Rose • Peony • Vanilla"
-  },
-  {
-    id: 4,
-    name: "No. 04 Oud",
-    category: "unisex",
-    price: 899,
-    stock: 25,
-    note: "Oud • Saffron • Amber"
-  },
-  {
-    id: 5,
-    name: "No. 05 Azure",
-    category: "men",
-    price: 1599,
-    stock: 25,
-    note: "Bergamot • Marine • Musk"
-  },
-  {
-    id: 6,
-    name: "No. 06 Velvet",
-    category: "women",
-    price: 1499,
-    stock: 25,
-    note: "Iris • Tonka • Amber"
-  }
-];
-
-const insertProduct = db.prepare(`
-  INSERT INTO products
-  (
-    id,
-    name,
-    category,
-    price,
-    stock,
-    note
-  )
-  VALUES (?, ?, ?, ?, ?, ?)
-`);
-
-const existingProductCount = db
-  .prepare("SELECT COUNT(*) AS count FROM products")
-  .get().count;
-
-if (existingProductCount === 0) {
-  const seedProducts = db.transaction(() => {
-    for (const product of products) {
-      insertProduct.run(
-        product.id,
-        product.name,
-        product.category,
-        product.price,
-        product.stock,
-        product.note
-      );
-    }
-  });
-
-  seedProducts();
-}
 
 /* =========================================================
    HELPERS
@@ -330,40 +317,52 @@ function clearAdminCookie(res) {
    ADMIN AUTH
 ========================================================= */
 
-function requireAdmin(req, res, next) {
-  const sessionToken = getCookie(
-    req,
-    "zevoria_admin_session"
-  );
+async function requireAdmin(req, res, next) {
+  try {
+    const sessionToken = getCookie(
+      req,
+      "zevoria_admin_session"
+    );
 
-  if (!sessionToken) {
-    return res.status(401).json({
-      error: "Admin login required"
-    });
-  }
+    if (!sessionToken) {
+      return res.status(401).json({
+        error: "Admin login required"
+      });
+    }
 
-  const tokenHash = hashToken(sessionToken);
+    const tokenHash = hashToken(sessionToken);
 
-  const session = db
-    .prepare(`
+    const result = await pool.query(
+      `
       SELECT *
       FROM admin_sessions
-      WHERE token_hash = ?
-      AND expires_at > ?
-    `)
-    .get(tokenHash, Date.now());
+      WHERE token_hash = $1
+      AND expires_at > NOW()
+      LIMIT 1
+      `,
+      [tokenHash]
+    );
 
-  if (!session) {
-    clearAdminCookie(res);
+    const session = result.rows[0];
 
-    return res.status(401).json({
-      error: "Admin session expired"
+    if (!session) {
+      clearAdminCookie(res);
+
+      return res.status(401).json({
+        error: "Admin session expired"
+      });
+    }
+
+    req.adminSession = session;
+
+    next();
+  } catch (error) {
+    console.error("Admin authentication error:", error);
+
+    return res.status(500).json({
+      error: "Admin authentication failed"
     });
   }
-
-  req.adminSession = session;
-
-  next();
 }
 
 /* =========================================================
@@ -399,32 +398,51 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    ok: true
-  });
+app.get("/api/health", async (req, res) => {
+  try {
+    await pool.query("SELECT 1");
+
+    res.json({
+      ok: true,
+      database: "connected"
+    });
+  } catch (error) {
+    console.error("Health check database error:", error);
+
+    res.status(500).json({
+      ok: false,
+      database: "disconnected"
+    });
+  }
 });
 
 /* =========================================================
    PRODUCTS
 ========================================================= */
 
-app.get("/api/products", (req, res) => {
-  const rows = db
-    .prepare(`
+app.get("/api/products", async (req, res) => {
+  try {
+    const result = await pool.query(`
       SELECT
         id,
         name,
         category,
         price,
         stock,
-        note
+        description AS note
       FROM products
+      WHERE active = true
       ORDER BY id ASC
-    `)
-    .all();
+    `);
 
-  res.json(rows);
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Products error:", error);
+
+    res.status(500).json({
+      error: "Could not load products"
+    });
+  }
 });
 
 /* =========================================================
@@ -446,15 +464,17 @@ app.post("/api/auth/signup", async (req, res) => {
       .trim()
       .toLowerCase();
 
-    const existing = db
-      .prepare(`
-        SELECT id
-        FROM users
-        WHERE email = ?
-      `)
-      .get(email);
+    const existing = await pool.query(
+      `
+      SELECT id
+      FROM users
+      WHERE email = $1
+      LIMIT 1
+      `,
+      [email]
+    );
 
-    if (existing) {
+    if (existing.rows.length > 0) {
       return res.status(409).json({
         error: "Email already registered"
       });
@@ -465,35 +485,47 @@ app.post("/api/auth/signup", async (req, res) => {
       12
     );
 
-    const result = db
-      .prepare(`
-        INSERT INTO users
-        (
-          name,
-          email,
-          phone,
-          password_hash
-        )
-        VALUES (?, ?, ?, ?)
-      `)
-      .run(
+    const result = await pool.query(
+      `
+      INSERT INTO users
+      (
+        name,
+        email,
+        phone,
+        password_hash
+      )
+      VALUES ($1, $2, $3, $4)
+      RETURNING id, name, email, phone
+      `,
+      [
         data.name.trim(),
         email,
         data.phone || null,
         passwordHash
-      );
+      ]
+    );
+
+    const user = result.rows[0];
 
     res.status(201).json({
       user: {
-        id: result.lastInsertRowid,
-        name: data.name.trim(),
-        email,
-        phone: data.phone || ""
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone || ""
       }
     });
   } catch (error) {
-    res.status(400).json({
-      error: "Invalid signup details"
+    console.error("Signup error:", error);
+
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: "Invalid signup details"
+      });
+    }
+
+    res.status(500).json({
+      error: "Signup failed"
     });
   }
 });
@@ -515,13 +547,17 @@ app.post("/api/auth/login", async (req, res) => {
       .trim()
       .toLowerCase();
 
-    const user = db
-      .prepare(`
-        SELECT *
-        FROM users
-        WHERE email = ?
-      `)
-      .get(email);
+    const result = await pool.query(
+      `
+      SELECT *
+      FROM users
+      WHERE email = $1
+      LIMIT 1
+      `,
+      [email]
+    );
+
+    const user = result.rows[0];
 
     if (!user) {
       return res.status(401).json({
@@ -549,8 +585,16 @@ app.post("/api/auth/login", async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(400).json({
-      error: "Invalid login details"
+    console.error("Login error:", error);
+
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: "Invalid login details"
+      });
+    }
+
+    res.status(500).json({
+      error: "Login failed"
     });
   }
 });
@@ -562,7 +606,7 @@ app.post("/api/auth/login", async (req, res) => {
 app.post(
   "/api/admin/login",
   adminLoginLimiter,
-  (req, res) => {
+  async (req, res) => {
     try {
       if (!ADMIN_KEY) {
         return res.status(500).json({
@@ -609,11 +653,12 @@ app.post(
       const tokenHash = hashToken(sessionToken);
       const csrfToken = createRandomToken();
 
-      const expiresAt =
-        Date.now() +
-        8 * 60 * 60 * 1000;
+      const expiresAt = new Date(
+        Date.now() + 8 * 60 * 60 * 1000
+      );
 
-      db.prepare(`
+      const result = await pool.query(
+        `
         INSERT INTO admin_sessions
         (
           token_hash,
@@ -621,12 +666,14 @@ app.post(
           expires_at,
           created_at
         )
-        VALUES (?, ?, ?, ?)
-      `).run(
-        tokenHash,
-        csrfToken,
-        expiresAt,
-        Date.now()
+        VALUES ($1, $2, $3, NOW())
+        RETURNING expires_at
+        `,
+        [
+          tokenHash,
+          csrfToken,
+          expiresAt
+        ]
       );
 
       setAdminCookie(
@@ -637,7 +684,7 @@ app.post(
       res.json({
         success: true,
         csrfToken,
-        expiresAt
+        expiresAt: result.rows[0].expires_at
       });
     } catch (error) {
       console.error(
@@ -678,17 +725,28 @@ app.post(
   "/api/admin/logout",
   requireAdmin,
   requireAdminCsrf,
-  (req, res) => {
-    db.prepare(`
-      DELETE FROM admin_sessions
-      WHERE id = ?
-    `).run(req.adminSession.id);
+  async (req, res) => {
+    try {
+      await pool.query(
+        `
+        DELETE FROM admin_sessions
+        WHERE id = $1
+        `,
+        [req.adminSession.id]
+      );
 
-    clearAdminCookie(res);
+      clearAdminCookie(res);
 
-    res.json({
-      success: true
-    });
+      res.json({
+        success: true
+      });
+    } catch (error) {
+      console.error("Admin logout error:", error);
+
+      res.status(500).json({
+        error: "Logout failed"
+      });
+    }
   }
 );
 
@@ -699,41 +757,53 @@ app.post(
 app.get(
   "/api/admin/orders",
   requireAdmin,
-  (req, res) => {
-    const orders = db
-      .prepare(`
+  async (req, res) => {
+    try {
+      const ordersResult = await pool.query(`
         SELECT
           id,
           customer_name,
           customer_email,
-          phone,
+          customer_phone AS phone,
           address,
           total,
           status,
+          payment_method,
           created_at
         FROM orders
         ORDER BY id DESC
-      `)
-      .all();
+      `);
 
-    const itemQuery = db.prepare(`
-      SELECT
-        id,
-        order_id,
-        product_id,
-        name,
-        qty,
-        price
-      FROM order_items
-      WHERE order_id = ?
-    `);
+      const orders = ordersResult.rows;
 
-    const result = orders.map((order) => ({
-      ...order,
-      items: itemQuery.all(order.id)
-    }));
+      for (const order of orders) {
+        const itemsResult = await pool.query(
+          `
+          SELECT
+            id,
+            order_id,
+            product_id,
+            product_name AS name,
+            quantity AS qty,
+            price
+          FROM order_items
+          WHERE order_id = $1
+          ORDER BY id ASC
+          `,
+          [order.id]
+        );
 
-    res.json(result);
+        order.items = itemsResult.rows;
+      }
+
+      res.json(orders);
+    } catch (error) {
+      console.error("Admin orders error:", error);
+
+      res.status(500).json({
+        error: "Could not load orders"
+      });
+    }
   }
 );
 
@@ -753,51 +823,67 @@ app.patch(
   "/api/admin/orders/:id/status",
   requireAdmin,
   requireAdminCsrf,
-  (req, res) => {
-    const id = Number(req.params.id);
+  async (req, res) => {
+    try {
+      const id = Number(req.params.id);
 
-    const status =
-      typeof req.body?.status === "string"
-        ? req.body.status
-        : "";
+      const status =
+        typeof req.body?.status === "string"
+          ? req.body.status
+          : "";
 
-    if (!Number.isInteger(id)) {
-      return res.status(400).json({
-        error: "Invalid order ID"
-      });
-    }
+      if (!Number.isInteger(id)) {
+        return res.status(400).json({
+          error: "Invalid order ID"
+        });
+      }
 
-    if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({
-        error: "Invalid order status"
-      });
-    }
+      if (!allowedStatuses.includes(status)) {
+        return res.status(400).json({
+          error: "Invalid order status"
+        });
+      }
 
-    const order = db
-      .prepare(`
+      const orderResult = await pool.query(
+        `
         SELECT id
         FROM orders
-        WHERE id = ?
-      `)
-      .get(id);
+        WHERE id = $1
+        LIMIT 1
+        `,
+        [id]
+      );
 
-    if (!order) {
-      return res.status(404).json({
-        error: "Order not found"
+      if (orderResult.rows.length === 0) {
+        return res.status(404).json({
+          error: "Order not found"
+        });
+      }
+
+      await pool.query(
+        `
+        UPDATE orders
+        SET status = $1
+        WHERE id = $2
+        `,
+        [status, id]
+      );
+
+      res.json({
+        success: true,
+        orderId: id,
+        status
+      });
+    } catch (error) {
+      console.error(
+        "Status update error:",
+        error
+      );
+
+      res.status(500).json({
+        error: "Could not update order status"
       });
     }
-
-    db.prepare(`
-      UPDATE orders
-      SET status = ?
-      WHERE id = ?
-    `).run(status, id);
-
-    res.json({
-      success: true,
-      orderId: id,
-      status
-    });
   }
 );
 
@@ -808,63 +894,78 @@ app.patch(
 app.get(
   "/api/admin/stats",
   requireAdmin,
-  (req, res) => {
-    const totalOrders = db
-      .prepare(`
-        SELECT COUNT(*) AS count
-        FROM orders
-      `)
-      .get().count;
+  async (req, res) => {
+    try {
+      const totalOrdersResult =
+        await pool.query(`
+          SELECT COUNT(*)::int AS count
+          FROM orders
+        `);
 
-    const totalSales = db
-      .prepare(`
-        SELECT
-          COALESCE(SUM(total), 0) AS total
-        FROM orders
-        WHERE status != 'cancelled'
-      `)
-      .get().total;
+      const totalSalesResult =
+        await pool.query(`
+          SELECT
+            COALESCE(SUM(total), 0)::numeric AS total
+          FROM orders
+          WHERE status != 'cancelled'
+        `);
 
-    const pending = db
-      .prepare(`
-        SELECT COUNT(*) AS count
-        FROM orders
-        WHERE status = 'pending'
-      `)
-      .get().count;
+      const pendingResult =
+        await pool.query(`
+          SELECT COUNT(*)::int AS count
+          FROM orders
+          WHERE status = 'pending'
+        `);
 
-    const confirmed = db
-      .prepare(`
-        SELECT COUNT(*) AS count
-        FROM orders
-        WHERE status = 'confirmed'
-      `)
-      .get().count;
+      const confirmedResult =
+        await pool.query(`
+          SELECT COUNT(*)::int AS count
+          FROM orders
+          WHERE status = 'confirmed'
+        `);
 
-    const shipped = db
-      .prepare(`
-        SELECT COUNT(*) AS count
-        FROM orders
-        WHERE status = 'shipped'
-      `)
-      .get().count;
+      const shippedResult =
+        await pool.query(`
+          SELECT COUNT(*)::int AS count
+          FROM orders
+          WHERE status = 'shipped'
+        `);
 
-    const delivered = db
-      .prepare(`
-        SELECT COUNT(*) AS count
-        FROM orders
-        WHERE status = 'delivered'
-      `)
-      .get().count;
+      const deliveredResult =
+        await pool.query(`
+          SELECT COUNT(*)::int AS count
+          FROM orders
+          WHERE status = 'delivered'
+        `);
 
-    res.json({
-      totalOrders,
-      totalSales,
-      pending,
-      confirmed,
-      shipped,
-      delivered
-    });
+      res.json({
+        totalOrders:
+          totalOrdersResult.rows[0].count,
+
+        totalSales:
+          Number(
+            totalSalesResult.rows[0].total
+          ),
+
+        pending:
+          pendingResult.rows[0].count,
+
+        confirmed:
+          confirmedResult.rows[0].count,
+
+        shipped:
+          shippedResult.rows[0].count,
+
+        delivered:
+          deliveredResult.rows[0].count
+      });
+    } catch (error) {
+      console.error("Admin stats error:", error);
+
+      res.status(500).json({
+        error: "Could not load statistics"
+      });
+    }
   }
 );
 
@@ -881,7 +982,7 @@ async function sendOrderConfirmationEmail({
   total
 }) {
   if (!resend) {
-    console.error(
+    console.log(
       `Order #${orderId}: RESEND_API_KEY is missing`
     );
 
@@ -1054,13 +1155,26 @@ async function sendOrderConfirmationEmail({
       `
     });
 
-    console.log(
-      `Order #${orderId} email sent: true → ${customerEmail}`
-    );
+    /*
+      Resend can return an error object instead of throwing.
+      Therefore we check result.error.
+    */
+
+    if (result && result.error) {
+      console.error(
+        `Order #${orderId} email failed:`,
+        result.error
+      );
+
+      return {
+        sent: false,
+        email: customerEmail,
+        error: result.error.message
+      };
+    }
 
     console.log(
-      `Resend response for Order #${orderId}:`,
-      result
+      `Order #${orderId} email sent successfully → ${customerEmail}`
     );
 
     return {
@@ -1068,7 +1182,6 @@ async function sendOrderConfirmationEmail({
       email: customerEmail,
       result
     };
-
   } catch (error) {
     console.error(
       `Order #${orderId} email sending failed to ${customerEmail}:`,
@@ -1116,31 +1229,92 @@ const orderSchema = z.object({
     .min(1)
 });
 
-app.post("/api/orders", (req, res) => {
+app.post("/api/orders", async (req, res) => {
+  const client = await pool.connect();
+
   try {
     const data = orderSchema.parse(req.body);
 
-    const productQuery = db.prepare(`
-      SELECT *
-      FROM products
-      WHERE id = ?
-    `);
+    const normalizedCustomerEmail =
+      data.customerEmail
+        ? data.customerEmail.trim().toLowerCase()
+        : null;
+
+    console.log(
+      `New order request → customer email: ${
+        normalizedCustomerEmail || "none"
+      }`
+    );
+
+    await client.query("BEGIN");
 
     const checkedItems = [];
 
-    for (const item of data.items) {
-      const product = productQuery.get(
-        item.productId
-      );
+    /*
+      Combine duplicate product IDs before processing.
+      This prevents someone from ordering the same product
+      multiple times in separate entries and bypassing stock.
+    */
 
-      if (!product) {
+    const quantities = new Map();
+
+    for (const item of data.items) {
+      const current =
+        quantities.get(item.productId) || 0;
+
+      quantities.set(
+        item.productId,
+        current + item.qty
+      );
+    }
+
+    for (const [productId, qty] of quantities) {
+      if (qty > 20) {
+        await client.query("ROLLBACK");
+
         return res.status(400).json({
           error:
-            `Product ${item.productId} not found`
+            "Maximum quantity for one product is 20"
         });
       }
 
-      if (product.stock < item.qty) {
+      /*
+        FOR UPDATE locks the product row during
+        order creation so two customers cannot
+        safely purchase the same last stock.
+      */
+
+      const productResult =
+        await client.query(
+          `
+          SELECT
+            id,
+            name,
+            price,
+            stock,
+            active
+          FROM products
+          WHERE id = $1
+          FOR UPDATE
+          `,
+          [productId]
+        );
+
+      const product =
+        productResult.rows[0];
+
+      if (!product || !product.active) {
+        await client.query("ROLLBACK");
+
+        return res.status(400).json({
+          error:
+            `Product ${productId} not found`
+        });
+      }
+
+      if (product.stock < qty) {
+        await client.query("ROLLBACK");
+
         return res.status(400).json({
           error:
             `${product.name} does not have enough stock`
@@ -1150,8 +1324,8 @@ app.post("/api/orders", (req, res) => {
       checkedItems.push({
         productId: product.id,
         name: product.name,
-        qty: item.qty,
-        price: product.price
+        qty,
+        price: Number(product.price)
       });
     }
 
@@ -1161,20 +1335,9 @@ app.post("/api/orders", (req, res) => {
       0
     );
 
-    /* Normalize customer email */
-    const normalizedCustomerEmail =
-      data.customerEmail
-        ? data.customerEmail.trim().toLowerCase()
-        : null;
-
-    /* Show submitted customer email in Render logs */
-    console.log(
-      `New order request → customer email: ${
-        normalizedCustomerEmail || "none"
-      }`
-    );
-
-    /* PRIVATE ORDER TOKEN */
+    /*
+      PRIVATE ORDER TOKEN
+    */
 
     const orderAccessToken =
       createRandomToken();
@@ -1182,76 +1345,94 @@ app.post("/api/orders", (req, res) => {
     const orderAccessTokenHash =
       hashToken(orderAccessToken);
 
-    const createOrder = db.transaction(() => {
-      const orderResult = db
-        .prepare(`
-          INSERT INTO orders
-          (
-            customer_name,
-            customer_email,
-            phone,
-            address,
-            total,
-            status,
-            access_token_hash
-          )
-          VALUES (?, ?, ?, ?, ?, 'pending', ?)
-        `)
-        .run(
-          data.customerName.trim(),
+    /*
+      Create order
+    */
 
-          normalizedCustomerEmail,
-
-          data.phone.trim(),
-
-          data.address.trim(),
-
+    const orderResult =
+      await client.query(
+        `
+        INSERT INTO orders
+        (
+          customer_name,
+          customer_email,
+          customer_phone,
+          address,
           total,
-
+          status,
+          payment_method,
+          access_token_hash
+        )
+        VALUES
+        (
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          'pending',
+          'COD',
+          $6
+        )
+        RETURNING id, created_at
+        `,
+        [
+          data.customerName.trim(),
+          normalizedCustomerEmail,
+          data.phone.trim(),
+          data.address.trim(),
+          total,
           orderAccessTokenHash
-        );
-
-      const orderId = Number(
-        orderResult.lastInsertRowid
+        ]
       );
 
-      const insertItem = db.prepare(`
+    const orderId =
+      Number(orderResult.rows[0].id);
+
+    /*
+      Insert order items
+    */
+
+    for (const item of checkedItems) {
+      await client.query(
+        `
         INSERT INTO order_items
         (
           order_id,
           product_id,
-          name,
-          qty,
-          price
+          product_name,
+          price,
+          quantity
         )
-        VALUES (?, ?, ?, ?, ?)
-      `);
-
-      const decreaseStock = db.prepare(`
-        UPDATE products
-        SET stock = stock - ?
-        WHERE id = ?
-      `);
-
-      for (const item of checkedItems) {
-        insertItem.run(
+        VALUES ($1, $2, $3, $4, $5)
+        `,
+        [
           orderId,
           item.productId,
           item.name,
-          item.qty,
-          item.price
-        );
+          item.price,
+          item.qty
+        ]
+      );
 
-        decreaseStock.run(
+      /*
+        Decrease stock
+      */
+
+      await client.query(
+        `
+        UPDATE products
+        SET stock = stock - $1
+        WHERE id = $2
+        `,
+        [
           item.qty,
           item.productId
-        );
-      }
+        ]
+      );
+    }
 
-      return orderId;
-    });
-
-    const orderId = createOrder();
+    await client.query("COMMIT");
 
     console.log(
       `Order #${orderId} created → customer email: ${
@@ -1259,8 +1440,12 @@ app.post("/api/orders", (req, res) => {
       }`
     );
 
-    /* Send confirmation email to customer's email */
-    sendOrderConfirmationEmail({
+    /*
+      Email is intentionally NOT allowed to break
+      successful order creation.
+    */
+
+    void sendOrderConfirmationEmail({
       orderId,
       customerName: data.customerName,
       customerEmail: normalizedCustomerEmail,
@@ -1271,10 +1456,7 @@ app.post("/api/orders", (req, res) => {
 
     /*
       The order token is returned only once.
-      The frontend must save it together with
-      the order ID.
-
-      It is required for secure tracking.
+      Frontend must save it with the order ID.
     */
 
     res.status(201).json({
@@ -1283,8 +1465,13 @@ app.post("/api/orders", (req, res) => {
       paymentMethod: "COD",
       orderToken: orderAccessToken
     });
-
   } catch (error) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (_) {
+      // Ignore rollback error.
+    }
+
     console.error(
       "Order error:",
       error
@@ -1299,6 +1486,8 @@ app.post("/api/orders", (req, res) => {
     res.status(500).json({
       error: "Could not create order"
     });
+  } finally {
+    client.release();
   }
 });
 
@@ -1308,7 +1497,7 @@ app.post("/api/orders", (req, res) => {
 
 app.get(
   "/api/orders/:id",
-  (req, res) => {
+  async (req, res) => {
     try {
       const id = Number(
         req.params.id
@@ -1336,25 +1525,32 @@ app.get(
       const tokenHash =
         hashToken(orderToken);
 
-      const order = db
-        .prepare(`
+      const orderResult =
+        await pool.query(
+          `
           SELECT
             id,
             customer_name,
             customer_email,
-            phone,
+            customer_phone AS phone,
             address,
             total,
             status,
+            payment_method,
             created_at
           FROM orders
-          WHERE id = ?
-          AND access_token_hash = ?
-        `)
-        .get(
-          id,
-          tokenHash
+          WHERE id = $1
+          AND access_token_hash = $2
+          LIMIT 1
+          `,
+          [
+            id,
+            tokenHash
+          ]
         );
+
+      const order =
+        orderResult.rows[0];
 
       if (!order) {
         return res.status(404).json({
@@ -1363,25 +1559,27 @@ app.get(
         });
       }
 
-      const items = db
-        .prepare(`
+      const itemsResult =
+        await pool.query(
+          `
           SELECT
             id,
             order_id,
             product_id,
-            name,
-            qty,
+            product_name AS name,
+            quantity AS qty,
             price
           FROM order_items
-          WHERE order_id = ?
-        `)
-        .all(id);
+          WHERE order_id = $1
+          ORDER BY id ASC
+          `,
+          [id]
+        );
 
       res.json({
         ...order,
-        items
+        items: itemsResult.rows
       });
-
     } catch (error) {
       console.error(
         "Order lookup error:",
@@ -1399,13 +1597,12 @@ app.get(
    CLEAN EXPIRED ADMIN SESSIONS
 ========================================================= */
 
-setInterval(() => {
+setInterval(async () => {
   try {
-    db.prepare(`
+    await pool.query(`
       DELETE FROM admin_sessions
-      WHERE expires_at <= ?
-    `).run(Date.now());
-
+      WHERE expires_at <= NOW()
+    `);
   } catch (error) {
     console.error(
       "Session cleanup error:",
@@ -1418,8 +1615,23 @@ setInterval(() => {
    START SERVER
 ========================================================= */
 
-app.listen(PORT, () => {
-  console.log(
-    `ZEVORIA backend running on port ${PORT}`
-  );
-});
+async function startServer() {
+  try {
+    await initializeDatabase();
+
+    app.listen(PORT, () => {
+      console.log(
+        `ZEVORIA backend running on port ${PORT}`
+      );
+    });
+  } catch (error) {
+    console.error(
+      "Could not start ZEVORIA backend:",
+      error
+    );
+
+    process.exit(1);
+  }
+}
+
+startServer();
